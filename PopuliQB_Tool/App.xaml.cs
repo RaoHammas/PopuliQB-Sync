@@ -2,6 +2,8 @@
 using System.Data;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
+using PopuliQB_Tool.BusinessServices;
+using PopuliQB_Tool.Services;
 using PopuliQB_Tool.ViewModels;
 using QBFC16Lib;
 
@@ -34,6 +36,8 @@ public partial class App : Application
         var services = new ServiceCollection();
 
         services.AddTransient<MainWindowViewModel>();
+        services.AddTransient<MessageBoxService>();
+        services.AddTransient<QbdAccessService>();
 
 
         return services.BuildServiceProvider();

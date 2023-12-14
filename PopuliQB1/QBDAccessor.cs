@@ -2,19 +2,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
-using System.Xml.Linq;
-using Newtonsoft.Json;
 using QBFC16Lib;
 using QBXMLRP2Lib;
 using Populi;
-using System.Deployment.Application;
-using System.Data.Entity.Core.Metadata.Edm;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace PopuliQB1
 {
