@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Libs\Interop.QBFC16Lib.dll" />
+    <None Remove="Libs\QBXMLRP2.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <COMReference Include="QBXMLRP2Lib">
+      <VersionMinor>0</VersionMinor>
+      <VersionMajor>1</VersionMajor>
+      <Guid>4351618f-9059-4a79-b638-dcb8b97b3262</Guid>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Libs\Interop.QBFC16Lib.dll" />
+    <Content Include="Libs\QBXMLRP2.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Interop.QBFC16Lib">
+      <HintPath>Libs\Interop.QBFC16Lib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
