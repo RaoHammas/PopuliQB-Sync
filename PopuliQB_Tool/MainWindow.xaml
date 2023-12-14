@@ -6,9 +6,12 @@
     xmlns:local="clr-namespace:PopuliQB_Tool"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="clr-namespace:PopuliQB_Tool.ViewModels"
     Title="Populi to QuickBooks Sync"
     Width="800"
     Height="450"
+    d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel,
+                                     IsDesignTimeCreatable=False}"
     mc:Ignorable="d">
 
     <Grid>
@@ -34,7 +37,8 @@
                     Margin="0,0,0,0"
                     materialDesign:HintAssist.FloatingScale="1"
                     materialDesign:HintAssist.Hint="QuickBooks Desktop Company"
-                    Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                    Text="{Binding CompanyName}" />
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                     <DatePicker
@@ -42,6 +46,7 @@
                         Margin="10,0,0,0"
                         materialDesign:HintAssist.FloatingScale="1"
                         materialDesign:HintAssist.Hint="Start Transaction Date"
+                        SelectedDate="{Binding StartTransDate}"
                         Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
                 </StackPanel>
             </Grid>
@@ -52,11 +57,13 @@
                 <Button
                     Height="40"
                     Padding="10"
+                    Command="{Binding ConnectToQbCommand}"
                     Content="Connect to QB" />
                 <Button
                     Height="40"
                     Margin="10,0,0,0"
                     Padding="10"
+                    Command="{Binding StartSyncCommand}"
                     Content="Start Populi to QB Sync" />
             </StackPanel>
 
@@ -77,6 +84,7 @@
                     Background="Beige"
                     IsReadOnly="True"
                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                    Text="{Binding SyncStatusMessages}"
                     TextWrapping="Wrap"
                     VerticalScrollBarVisibility="Auto" />
 
@@ -90,6 +98,7 @@
                     Background="Azure"
                     IsReadOnly="True"
                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                    Text="{Binding StatisticsMessages}"
                     TextWrapping="Wrap"
                     VerticalScrollBarVisibility="Auto" />
             </Grid>
