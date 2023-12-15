@@ -1,7 +1,4 @@
-﻿using System.Xml;
-using NLog;
-using PopuliQB_Tool.BusinessObjects;
-using PopuliQB_Tool.QBBusinessObjects;
+﻿using NLog;
 using QBFC16Lib;
 using QBXMLRP2Lib;
 
@@ -15,6 +12,8 @@ public class QbdAccessService
     private bool booSessionBegun;
     private string _appId = "PopuliToQbSync";
     private string _appName = "PopuliToQbSync";
+    public bool IsConnected { get; private set; }
+
     public QbdAccessService()
     {
         // Create the session manager object using QBFC
@@ -26,13 +25,20 @@ public class QbdAccessService
     {
         try
         {
+            if (IsConnected)
+            {
+                return true;
+            }
+
             sessionManager.OpenConnection(_appId, _appName);
             qbXMLProc.OpenConnection(_appId, _appName);
-
+            IsConnected = true;
             return true;
         }
         catch (Exception ex)
         {
+            sessionManager.EndSession();
+            IsConnected = false;
             _logger.Error(ex);
             return false;
         }
@@ -42,15 +48,24 @@ public class QbdAccessService
     {
         try
         {
+            if (!IsConnected)
+            {
+                return true;
+            }
+
             sessionManager.CloseConnection();
             qbXMLProc.CloseConnection();
-            
             return true;
         }
         catch (Exception ex)
         {
+            sessionManager.EndSession();
             _logger.Error(ex);
             return false;
+        }
+        finally
+        {
+            IsConnected = false;
         }
     }
 

@@ -8,7 +8,7 @@ namespace PopuliQB_Tool.BusinessServices;
 
 public class PopuliAccessService
 {
-    /*private readonly string dev_url = "https://divinemercyedu-validation.populi.co/api2/";
+    private readonly string dev_url = "https://divinemercyedu-validation.populi.co/api2/";
     private readonly string prod_url = "https://divinemercyedu.populiweb.com/api2/";
 
     private readonly string auth_token =
@@ -414,5 +414,5 @@ public class PopuliAccessService
     {
         var selInvList = new List<Invoice>();
         return invoiceList.Where(x => x.posted_on >= date).ToList();
-    }*/
+    }
 }

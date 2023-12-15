@@ -1,7 +1,10 @@
 ﻿using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PopuliQB_Tool.BusinessServices;
+using PopuliQB_Tool.Helpers;
 using PopuliQB_Tool.Models;
 using PopuliQB_Tool.Services;
 
@@ -19,23 +22,25 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
     public MainWindowViewModel(
         MessageBoxService messageBoxService
-        ,QbdAccessService qbdAccessService)
+        , QbdAccessService qbdAccessService)
     {
         _messageBoxService = messageBoxService;
         _qbdAccessService = qbdAccessService;
     }
 
     [RelayCommand]
-    private Task ConnectToQb()
+    private async Task ConnectToQb()
     {
         try
         {
-            if (_qbdAccessService.OpenConnection())
+            await Task.Run(() =>
             {
-                CompanyName = _qbdAccessService.GetCompanyName();
-                SetSyncStatusMessage("Connected to QuickBooks.", StatusMessageType.Success);
-            }
-
+                if (_qbdAccessService.OpenConnection())
+                {
+                    CompanyName = _qbdAccessService.GetCompanyName();
+                    SetSyncStatusMessage("Connected to QuickBooks.", StatusMessageType.Success);
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -45,32 +50,46 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             _qbdAccessService.CloseConnection();
             SetSyncStatusMessage("QuickBooks isn't running.", StatusMessageType.Info);
         }
-
-        return Task.CompletedTask;
     }
 
     [RelayCommand]
     private Task StartSync()
     {
+        try
+        {
+            SetSyncStatusMessage($"Populi to QBD Sync. Version: {VersionHelper.Version}", StatusMessageType.Info);
+
+
+        }
+        catch (Exception ex)
+        {
+            
+        }
         return Task.CompletedTask;
     }
 
 
     private void SetSyncStatusMessage(string message, StatusMessageType type)
     {
-        SyncStatusMessages.Add(new StatusMessage
+        Application.Current.Dispatcher.Invoke(() =>
         {
-            Message = message,
-            MessageType = type
+            SyncStatusMessages.Add(new StatusMessage
+            {
+                Message = message,
+                MessageType = type
+            });
         });
     }
 
     private void SetStatisticsMessage(string message, StatusMessageType type)
     {
-        StatisticsMessages.Add(new StatusMessage
+        Application.Current.Dispatcher.Invoke(() =>
         {
-            Message = message,
-            MessageType = type
+            StatisticsMessages.Add(new StatusMessage
+            {
+                Message = message,
+                MessageType = type
+            });
         });
     }
 
