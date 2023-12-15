@@ -30,11 +30,11 @@ namespace PopuliQB1
             btPopQBSync.Enabled = false;
         }
 
-        private void btPopQBSync_Click(object sender, EventArgs e)
+        private void btPopQBSync_Click(object? sender, EventArgs e)
         {
             Console.WriteLine("Populi to QBD Sync Utility. Version {0}", Utils.GetVersion());
             var popQBSync = new Sync();
-            List<string> listID = new List<string>();
+            List<string?> listID = new List<string?>();
             //listID.Add("8000000A-1543833601");
             listID.Add("800030B9-1700435003"); // cust: "Test, Test"
             //var invLst = qBAccessor.GetInvoices(listID);
@@ -56,7 +56,7 @@ namespace PopuliQB1
             var studtList = popAccessor.GetPersons1();
             var fsNames = studtList.data.Select(/*x => x.last_name + " " +  x.first_name + " " +*/ x => x.id).Distinct().ToList();
             var selVal = dtStartTxn.Value;
-            string dateStr = "11/10/2023";
+            string? dateStr = "11/10/2023";
             DateTime startDate = new DateTime();
             startDate = DateTime.Parse(dateStr);
             //var start = DateTime.Now;
@@ -95,7 +95,7 @@ namespace PopuliQB1
             statusBox.AddStatusMsg("Synching completed.", StatusBox.MsgType.Info);
         }
 
-        private void btConnectQB_Click(object sender, EventArgs e)
+        private void btConnectQB_Click(object? sender, EventArgs e)
         {
             try
             {

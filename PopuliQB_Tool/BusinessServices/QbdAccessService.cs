@@ -6,19 +6,19 @@ namespace PopuliQB_Tool.BusinessServices;
 
 public class QbdAccessService
 {
-    private Logger _logger = LogManager.GetCurrentClassLogger();
-    public QBSessionManager sessionManager;
-    RequestProcessor2 qbXMLProc;
-    private bool booSessionBegun;
-    private string _appId = "PopuliToQbSync";
-    private string _appName = "PopuliToQbSync";
+    private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    public QBSessionManager SessionManager;
+    private readonly RequestProcessor2 _qbXmlProc;
+
+    private const string AppId = "PopuliToQbSync";
+    private const string AppName = "PopuliToQbSync";
     public bool IsConnected { get; private set; }
 
     public QbdAccessService()
     {
-        // Create the session manager object using QBFC
-        sessionManager = new QBSessionManager();
-        qbXMLProc = new RequestProcessor2();
+        // Create the session manager object? using QBFC
+        SessionManager = new QBSessionManager();
+        _qbXmlProc = new RequestProcessor2();
     }
 
     public bool OpenConnection()
@@ -30,21 +30,21 @@ public class QbdAccessService
                 return true;
             }
 
-            sessionManager.OpenConnection(_appId, _appName);
-            qbXMLProc.OpenConnection(_appId, _appName);
+            SessionManager.OpenConnection(AppId, AppName);
+            _qbXmlProc.OpenConnection(AppId, AppName);
             IsConnected = true;
             return true;
         }
         catch (Exception ex)
         {
-            sessionManager.EndSession();
+            SessionManager.EndSession();
             IsConnected = false;
             _logger.Error(ex);
             return false;
         }
     }
 
-    public bool CloseConnection()
+    public bool? CloseConnection()
     {
         try
         {
@@ -53,13 +53,13 @@ public class QbdAccessService
                 return true;
             }
 
-            sessionManager.CloseConnection();
-            qbXMLProc.CloseConnection();
+            SessionManager.CloseConnection();
+            _qbXmlProc.CloseConnection();
             return true;
         }
         catch (Exception ex)
         {
-            sessionManager.EndSession();
+            SessionManager.EndSession();
             _logger.Error(ex);
             return false;
         }
@@ -69,13 +69,13 @@ public class QbdAccessService
         }
     }
 
-    public string GetCompanyName()
+    public string? GetCompanyName()
     {
         try
         {
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            SessionManager.BeginSession("", ENOpenMode.omDontCare);
 
-            var compName = sessionManager.GetCurrentCompanyFileName();
+            var compName = SessionManager.GetCurrentCompanyFileName();
             return compName;
         }
         catch (Exception ex)
@@ -85,7 +85,7 @@ public class QbdAccessService
         }
         finally
         {
-            sessionManager.EndSession();
+            SessionManager.EndSession();
         }
     }
 
@@ -93,10 +93,10 @@ public class QbdAccessService
 
 
     /*
-    public Customer GetCustomerByListID(string ListID)
+    public Customer GetCustomerByListID(string? ListID)
     {
         Customer customer = null;
-        string ticket = null;
+        string? ticket = null;
 
         try
         {
@@ -105,7 +105,7 @@ public class QbdAccessService
 
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 12, 0);
 
-            //Step 3: Create the query object needed to perform CustomerQueryRq
+            //Step 3: Create the query object? needed to perform CustomerQueryRq
             ICustomerQuery customerQuery = requestSet.AppendCustomerQueryRq();
             // get all customers - active and inactive
             //customerQuery.ORCustomerListQuery.CustomerListFilter.ActiveStatus.SetValue(ENActiveStatus.asAll);
@@ -113,14 +113,14 @@ public class QbdAccessService
             var xmlReq = requestSet.ToXMLString();
 
             var strOutXML = qbXMLProc.ProcessRequest(ticket, xmlReq);
-            XmlDocument xmlDoc = new XmlDocument(); // Create an XML document object
+            XmlDocument xmlDoc = new XmlDocument(); // Create an XML document object?
             xmlDoc.LoadXml(strOutXML);
             // Get elements
             XmlNodeList listIDnd = xmlDoc.GetElementsByTagName("CustomerRet");
             customer = new Customer();
-            for (int i = 0; i < listIDnd.Count; i++)
+            for (int? i = 0; i < listIDnd.Count; i++)
             {
-                string xml = listIDnd[i].InnerXml;
+                string? xml = listIDnd[i].InnerXml;
                 XmlNodeList listCont = listIDnd[i].ChildNodes;
                 foreach (XmlNode node in listCont)
                 {
@@ -196,7 +196,7 @@ public class QbdAccessService
     public List<Customer> GetCustomers()
     {
         List<Customer> customersLst = null;
-        string ticket = null;
+        string? ticket = null;
 
         try
         {
@@ -205,7 +205,7 @@ public class QbdAccessService
 
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 12, 0);
 
-            //Step 3: Create the query object needed to perform CustomerQueryRq
+            //Step 3: Create the query object? needed to perform CustomerQueryRq
             ICustomerQuery customerQuery = requestSet.AppendCustomerQueryRq();
 #if !TEST_QB_FILE
             // get all customers - active and inactive
@@ -217,13 +217,13 @@ public class QbdAccessService
 
             var strOutXML = qbXMLProc.ProcessRequest(ticket, xmlReq);
             customersLst = new List<Customer>();
-            XmlDocument xmlDoc = new XmlDocument(); // Create an XML document object
+            XmlDocument xmlDoc = new XmlDocument(); // Create an XML document object?
             xmlDoc.LoadXml(strOutXML);
             // Get elements
             XmlNodeList listIDnd = xmlDoc.GetElementsByTagName("CustomerRet");
-            for (int i = 0; i < listIDnd.Count; i++)
+            for (int? i = 0; i < listIDnd.Count; i++)
             {
-                string xml = listIDnd[i].InnerXml;
+                string? xml = listIDnd[i].InnerXml;
                 XmlNodeList listCont = listIDnd[i].ChildNodes;
                 Customer customer = new Customer();
                 foreach (XmlNode node in listCont)
@@ -278,7 +278,7 @@ public class QbdAccessService
                             break;
                         case "AdditionalContactRef":
                             XmlNodeList addContactRefNodes = node.ChildNodes;
-                            string name = "";
+                            string? name = "";
                             foreach (XmlNode addCntNode in addContactRefNodes)
                             {
                                 if (addCntNode.Name == "ContactName")
@@ -335,7 +335,7 @@ public class QbdAccessService
     public List<QBInvoice> GetInvoicesXML()
     {
         List<QBInvoice> invoicesLst = null;
-        string ticket = null;
+        string? ticket = null;
 
         try
         {
@@ -344,19 +344,19 @@ public class QbdAccessService
 
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 12, 0);
 
-            //Step 3: Create the query object needed to perform InvoiceQueryRq
+            //Step 3: Create the query object? needed to perform InvoiceQueryRq
             IInvoiceQuery invoiceQuery = requestSet.AppendInvoiceQueryRq();
             var xmlReq = requestSet.ToXMLString();
 
             var strOutXML = qbXMLProc.ProcessRequest(ticket, xmlReq);
             invoicesLst = new List<QBInvoice>();
-            XmlDocument xmlDoc = new XmlDocument(); // Create an XML document object
+            XmlDocument xmlDoc = new XmlDocument(); // Create an XML document object?
             xmlDoc.LoadXml(strOutXML);
             // Get elements
             XmlNodeList listIDnd = xmlDoc.GetElementsByTagName("InvoiceRet");
-            for (int i = 0; i < listIDnd.Count; i++)
+            for (int? i = 0; i < listIDnd.Count; i++)
             {
-                string xml = listIDnd[i].InnerXml;
+                string? xml = listIDnd[i].InnerXml;
                 XmlNodeList listCont = listIDnd[i].ChildNodes;
                 QBInvoice invoice = new QBInvoice();
                 foreach (XmlNode node in listCont)
@@ -423,7 +423,7 @@ public class QbdAccessService
     }
 
     // Gets Invoices list by specified customers listID 
-    public List<QBInvoice> GetInvoices(List<string> listIDs)
+    public List<QBInvoice> GetInvoices(List<string?> listIDs)
     {
         List<QBInvoice> invoiceLst = new List<QBInvoice>();
 
@@ -434,7 +434,7 @@ public class QbdAccessService
 
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 12, 0);
 
-            //Step 3: Create the query object needed to perform InvoiceQueryRq
+            //Step 3: Create the query object? needed to perform InvoiceQueryRq
             IInvoiceQuery invoiceQuery = requestSet.AppendInvoiceQueryRq();
             invoiceQuery.IncludeLineItems.SetValue(true);
             foreach (var id in listIDs)
@@ -447,7 +447,7 @@ public class QbdAccessService
             IInvoiceRetList invRetList = (IInvoiceRetList)response.Detail;
             if (invRetList != null)
             {
-                for (int i = 0; i < invRetList.Count; i++)
+                for (int? i = 0; i < invRetList.Count; i++)
                 {
                     IInvoiceRet invoiceRet = invRetList.GetAt(i);
                     var invoice = new QBInvoice();
@@ -455,7 +455,7 @@ public class QbdAccessService
                     invoice.CustomerListID = invoiceRet.CustomerRef.ListID.GetValue();
                     invoice.Subtotal = invoiceRet.Subtotal.GetValue();
                     invoice.Items = new List<QBItem>();
-                    for (int j = 0; j < invoiceRet.ORInvoiceLineRetList.Count; j++)
+                    for (int? j = 0; j < invoiceRet.ORInvoiceLineRetList.Count; j++)
                     {
                         var item = invoiceRet.ORInvoiceLineRetList.GetAt(j);
                         if (item.InvoiceLineRet.ItemRef != null)
@@ -490,7 +490,7 @@ public class QbdAccessService
         return invoiceLst;
     }
 
-    public QBInvoice GetInvoice(string txnID)
+    public QBInvoice GetInvoice(string? txnID)
     {
         QBInvoice invoiceRs = null;
 
@@ -501,7 +501,7 @@ public class QbdAccessService
 
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 12, 0);
 
-            //Step 3: Create the query object needed to perform InvoiceQueryRq
+            //Step 3: Create the query object? needed to perform InvoiceQueryRq
             IInvoiceQuery invoiceQuery = requestSet.AppendInvoiceQueryRq();
             invoiceQuery.IncludeLineItems.SetValue(true);
             invoiceQuery.ORInvoiceQuery.TxnIDList.Add(txnID);
@@ -517,7 +517,7 @@ public class QbdAccessService
                 invoiceRs = new QBInvoice();
                 invoiceRs.TxnID = invoiceRet.TxnID.GetValue();
                 invoiceRs.EditSeq = invoiceRet.EditSequence.GetValue();
-                for (int j = 0; j < invoiceRet.ORInvoiceLineRetList.Count; j++)
+                for (int? j = 0; j < invoiceRet.ORInvoiceLineRetList.Count; j++)
                 {
                     var item = invoiceRet.ORInvoiceLineRetList.GetAt(j);
                     invoiceRs.Items = new List<QBItem>();
@@ -548,7 +548,7 @@ public class QbdAccessService
     }
 
     // Adds additional contact info like Phones, Email
-    private void AddAdditContactRef(XmlDocument inputXMLDoc, XmlElement customerAdd, string name, string value)
+    private void AddAdditContactRef(XmlDocument inputXMLDoc, XmlElement customerAdd, string? name, string? value)
     {
         if (value == null || value.Trim() == "")
             return;
@@ -633,7 +633,7 @@ public class QbdAccessService
         }
     }
 
-    private string TreatName(string name)
+    private string? TreatName(string? name)
     {
         var res = name;
         if (name.Length > 25)
@@ -657,7 +657,7 @@ public class QbdAccessService
         // Set Bill Addr
         AddBillAddr(inputXMLDoc, customerEl, stud.report_data);
 
-        // set Emails in one string line
+        // set Emails in one string? line
         if (stud.email_addresses != null)
         {
             var conctEmailsStr = AddEntityOperat.ConcatEmails(stud.email_addresses);
@@ -669,7 +669,7 @@ public class QbdAccessService
     }
 
     // Creation variant - with name tag
-    private void AddCustomerFields(XmlDocument inputXMLDoc, XmlElement customerEl, Person stud, int countDup)
+    private void AddCustomerFields(XmlDocument inputXMLDoc, XmlElement customerEl, Person stud, int? countDup)
     {
         XmlElement customerName = inputXMLDoc.CreateElement("Name");
         var dupSufix = "";
@@ -685,9 +685,9 @@ public class QbdAccessService
     }
 
     // Create Customer through xml
-    public bool CreateCustomerXML(Person stud, ref CustomerIDs custIDs, int countDup)
+    public bool? CreateCustomerXML(Person stud, ref CustomerIDs custIDs, int? countDup)
     {
-        string strRequestXML = "";
+        string? strRequestXML = "";
         XmlDocument inputXMLDoc = null;
 
         // CustomerQuery
@@ -711,7 +711,7 @@ public class QbdAccessService
         strRequestXML = inputXMLDoc.OuterXml;
 
         booSessionBegun = false;
-        bool operSuccess = true;
+        bool? operSuccess = true;
 
         try
         {
@@ -720,10 +720,10 @@ public class QbdAccessService
             IMsgSetResponse responseSet = sessionManager.DoRequestsFromXMLString(strRequestXML);
             var respXML = responseSet.ToXMLString();
             IResponse response = responseSet.ResponseList.GetAt(0);
-            int statusCode = response.StatusCode;
-            string statusMessage = response.StatusMessage;
-            string statusSeverity = response.StatusSeverity;
-            string resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
+            int? statusCode = response.StatusCode;
+            string? statusMessage = response.StatusMessage;
+            string? statusSeverity = response.StatusSeverity;
+            string? resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
                             statusSeverity;
             Console.WriteLine(resMes);
 
@@ -786,10 +786,10 @@ public class QbdAccessService
         return operSuccess;
     }
 
-    public bool UpdateCustomerXML(string ListID, Person stud)
+    public bool? UpdateCustomerXML(string? ListID, Person stud)
     {
         var methodName = System.Reflection.MethodBase.GetCurrentMethod().Name;
-        string strRequestXML = "";
+        string? strRequestXML = "";
         XmlDocument inputXMLDoc = null;
         // Get Customer by ListID
         var customer = GetCustomerByListID(ListID);
@@ -824,7 +824,7 @@ public class QbdAccessService
         strRequestXML = inputXMLDoc.OuterXml;
 
         booSessionBegun = false;
-        bool operSuccess = true;
+        bool? operSuccess = true;
 
         try
         {
@@ -833,10 +833,10 @@ public class QbdAccessService
             IMsgSetResponse responseSet = sessionManager.DoRequestsFromXMLString(strRequestXML);
 
             IResponse response = responseSet.ResponseList.GetAt(0);
-            int statusCode = response.StatusCode;
-            string statusMessage = response.StatusMessage;
-            string statusSeverity = response.StatusSeverity;
-            string resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
+            int? statusCode = response.StatusCode;
+            string? statusMessage = response.StatusMessage;
+            string? statusSeverity = response.StatusSeverity;
+            string? resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
                             statusSeverity;
             Console.WriteLine(resMes);
 
@@ -863,12 +863,12 @@ public class QbdAccessService
         return operSuccess;
     }
 
-    public bool CreateCustomer(Person stud)
+    public bool? CreateCustomer(Person stud)
     {
         // We want to know if we begun a session so we can end it if an
         // error happens
         booSessionBegun = false;
-        bool importSuccess = true;
+        bool? importSuccess = true;
 
         try
         {
@@ -876,13 +876,13 @@ public class QbdAccessService
             booSessionBegun = true;
 
             // Get the RequestMsgSet based on the correct QB Version
-            // Create the message set request object
+            // Create the message set request object?
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 13, 0);
 
-            // Initialize the message set request object
+            // Initialize the message set request object?
             requestSet.Attributes.OnError = ENRqOnError.roeStop;
 
-            // Add the request to the message set request object
+            // Add the request to the message set request object?
             var Custq = (ICustomerAdd)requestSet.AppendCustomerAddRq();
             var fullName = stud.last_name + ", " + stud.first_name;
             Custq.Name.SetValue(fullName);
@@ -900,7 +900,7 @@ public class QbdAccessService
             // set Phones
             foreach (var item in stud.phone_numbers)
             {
-                bool wasWork = false;
+                bool? wasWork = false;
                 switch (item.type)
                 {
                     case "work":
@@ -919,7 +919,7 @@ public class QbdAccessService
                 }
             }
 
-            // Bill Address
+            // Bill PopAddress
             Custq.BillAddress.Country.SetValue(stud.report_data.primary_address_country);
             Custq.BillAddress.State.SetValue(stud.report_data.primary_address_state);
             Custq.BillAddress.City.SetValue(stud.report_data.primary_address_city);
@@ -934,14 +934,14 @@ public class QbdAccessService
 
             Custq.BillAddress.Addr1.SetValue(prim_addr);
 
-            // Do the request and get the response message set object
+            // Do the request and get the response message set object?
             var xml = requestSet.ToXMLString();
             IMsgSetResponse responseSet = sessionManager.DoRequests(requestSet);
             IResponse response = responseSet.ResponseList.GetAt(0);
-            int statusCode = response.StatusCode;
-            string statusMessage = response.StatusMessage;
-            string statusSeverity = response.StatusSeverity;
-            string resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
+            int? statusCode = response.StatusCode;
+            string? statusMessage = response.StatusMessage;
+            string? statusSeverity = response.StatusSeverity;
+            string? resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
                             statusSeverity;
             Console.WriteLine(resMes);
 
@@ -968,12 +968,12 @@ public class QbdAccessService
         return importSuccess;
     }
 
-    public bool UpdateCustomer(string ListID, string EditSeq, Person stud)
+    public bool? UpdateCustomer(string? ListID, string? EditSeq, Person stud)
     {
         // We want to know if we begun a session so we can end it if an
         // error happens
         booSessionBegun = false;
-        bool operSuccess = true;
+        bool? operSuccess = true;
 
         try
         {
@@ -981,13 +981,13 @@ public class QbdAccessService
             booSessionBegun = true;
 
             // Get the RequestMsgSet based on the correct QB Version
-            // Create the message set request object
+            // Create the message set request object?
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 13, 0);
 
-            // Initialize the message set request object
+            // Initialize the message set request object?
             requestSet.Attributes.OnError = ENRqOnError.roeStop;
 
-            // Add the request to the message set request object
+            // Add the request to the message set request object?
             var CustModq = requestSet.AppendCustomerModRq();
             CustModq.ListID.SetValue(ListID);
             CustModq.EditSequence.SetValue(EditSeq);
@@ -1003,7 +1003,7 @@ public class QbdAccessService
             // set Phones
             foreach (var item in stud.phone_numbers)
             {
-                bool wasWork = false;
+                bool? wasWork = false;
                 switch (item.type)
                 {
                     case "work":
@@ -1022,7 +1022,7 @@ public class QbdAccessService
                 }
             }
 
-            // Bill Address
+            // Bill PopAddress
             CustModq.BillAddress.Country.SetValue(stud.report_data.primary_address_country);
             CustModq.BillAddress.State.SetValue(stud.report_data.primary_address_state);
             CustModq.BillAddress.City.SetValue(stud.report_data.primary_address_city);
@@ -1037,13 +1037,13 @@ public class QbdAccessService
                 CustModq.BillAddress.Addr1.SetValue(prim_addr);
             }
 
-            // Do the request and get the response message set object
+            // Do the request and get the response message set object?
             IMsgSetResponse responseSet = sessionManager.DoRequests(requestSet);
             IResponse response = responseSet.ResponseList.GetAt(0);
-            int statusCode = response.StatusCode;
-            string statusMessage = response.StatusMessage;
-            string statusSeverity = response.StatusSeverity;
-            string resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
+            int? statusCode = response.StatusCode;
+            string? statusMessage = response.StatusMessage;
+            string? statusSeverity = response.StatusSeverity;
+            string? resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
                             statusSeverity;
             Console.WriteLine(resMes);
 
@@ -1098,13 +1098,13 @@ public class QbdAccessService
             booSessionBegun = true;
 
             // Get the RequestMsgSet based on the correct QB Version
-            // Create the message set request object
+            // Create the message set request object?
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 13, 0);
 
-            // Initialize the message set request object
+            // Initialize the message set request object?
             requestSet.Attributes.OnError = ENRqOnError.roeStop;
 
-            // Add the request to the message set request object
+            // Add the request to the message set request object?
             var invAddq = requestSet.AppendInvoiceAddRq();
             // get corresponding QB student by its popId in DB
             var studListID = "";
@@ -1133,14 +1133,14 @@ public class QbdAccessService
             }
 
             var xmlRq = requestSet.ToXMLString();
-            // Do the request and get the response message set object
+            // Do the request and get the response message set object?
             IMsgSetResponse responseSet = sessionManager.DoRequests(requestSet);
             IResponse response = responseSet.ResponseList.GetAt(0);
             invRet = (IInvoiceRet)response.Detail;
-            int statusCode = response.StatusCode;
-            string statusMessage = response.StatusMessage;
-            string statusSeverity = response.StatusSeverity;
-            string resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
+            int? statusCode = response.StatusCode;
+            string? statusMessage = response.StatusMessage;
+            string? statusSeverity = response.StatusSeverity;
+            string? resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
                             statusSeverity;
             Console.WriteLine(resMes);
 
@@ -1160,8 +1160,8 @@ public class QbdAccessService
         return invRet;
     }
 
-    // Gets an item with specified name from QB, return null object if not found
-    public IORItemRet GetItem(string itemName)
+    // Gets an item with specified name from QB, return null object? if not found
+    public IORItemRet GetItem(string? itemName)
     {
         IORItemRet itemRet = null;
         booSessionBegun = false;
@@ -1171,16 +1171,16 @@ public class QbdAccessService
             sessionManager.BeginSession("", ENOpenMode.omDontCare);
             booSessionBegun = true;
 
-            // Create the message set request object
+            // Create the message set request object?
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 13, 0);
 
-            // Add the request to the message set request object
+            // Add the request to the message set request object?
             IItemQuery item = requestSet.AppendItemQueryRq();
             item.ORListQuery.FullNameList.Add(itemName);
             IMsgSetResponse responseMsgSet = sessionManager.DoRequests(requestSet);
             IResponse response = responseMsgSet.ResponseList.GetAt(0);
             var xmlRs = responseMsgSet.ToXMLString();
-            int statusCode = response.StatusCode;
+            int? statusCode = response.StatusCode;
             String statusMessage = response.StatusMessage;
             String statusSeverity = response.StatusSeverity;
 
@@ -1215,12 +1215,12 @@ public class QbdAccessService
         return itemRet;
     }
 
-    public bool CreateItem(string name)
+    public bool? CreateItem(string? name)
     {
         // We want to know if we begun a session so we can end it if an
         // error happens
         booSessionBegun = false;
-        bool operSuccess = true;
+        bool? operSuccess = true;
 
         try
         {
@@ -1228,26 +1228,26 @@ public class QbdAccessService
             booSessionBegun = true;
 
             // Get the RequestMsgSet based on the correct QB Version
-            // Create the message set request object
+            // Create the message set request object?
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 13, 0);
 
-            // Initialize the message set request object
+            // Initialize the message set request object?
             requestSet.Attributes.OnError = ENRqOnError.roeStop;
 
-            // Add the request to the message set request object
+            // Add the request to the message set request object?
             var item = (IItemServiceAdd)requestSet.AppendItemServiceAddRq();
             item.Name.SetValue(name);
             item.ORSalesPurchase.SalesOrPurchase.AccountRef.FullName.SetValue(
                 "120010 · Allowance for Tuition Rec (New)");
 
-            // Do the request and get the response message set object
+            // Do the request and get the response message set object?
             var xml = requestSet.ToXMLString();
             IMsgSetResponse responseSet = sessionManager.DoRequests(requestSet);
             IResponse response = responseSet.ResponseList.GetAt(0);
-            int statusCode = response.StatusCode;
-            string statusMessage = response.StatusMessage;
-            string statusSeverity = response.StatusSeverity;
-            string resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
+            int? statusCode = response.StatusCode;
+            string? statusMessage = response.StatusMessage;
+            string? statusSeverity = response.StatusSeverity;
+            string? resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
                             statusSeverity;
             Console.WriteLine(resMes);
 
@@ -1278,12 +1278,12 @@ public class QbdAccessService
     }
 
     // Update invoice by its TxnID
-    public bool UpdateInvoice(QBInvoice updInvoice, Populi.Invoice fromInvoice)
+    public bool? UpdateInvoice(QBInvoice updInvoice, Populi.Invoice fromInvoice)
     {
         // We want to know if we begun a session so we can end it if an
         // error happens
         booSessionBegun = false;
-        bool operSuccess = true;
+        bool? operSuccess = true;
         var txnId = updInvoice.TxnID;
         var curInv = GetInvoice(txnId);
         var editSeq = curInv.EditSeq;
@@ -1294,13 +1294,13 @@ public class QbdAccessService
             booSessionBegun = true;
 
             // Get the RequestMsgSet based on the correct QB Version
-            // Create the message set request object
+            // Create the message set request object?
             IMsgSetRequest requestSet = sessionManager.CreateMsgSetRequest("US", 13, 0);
 
-            // Initialize the message set request object
+            // Initialize the message set request object?
             requestSet.Attributes.OnError = ENRqOnError.roeStop;
 
-            // Add the request to the message set request object
+            // Add the request to the message set request object?
             var invModq = requestSet.AppendInvoiceModRq();
             invModq.TxnID.SetValue(txnId);
             invModq.EditSequence.SetValue(editSeq);
@@ -1325,13 +1325,13 @@ public class QbdAccessService
             }
 
             var xmlRq = requestSet.ToXMLString();
-            // Do the request and get the response message set object
+            // Do the request and get the response message set object?
             IMsgSetResponse responseSet = sessionManager.DoRequests(requestSet);
             IResponse response = responseSet.ResponseList.GetAt(0);
-            int statusCode = response.StatusCode;
-            string statusMessage = response.StatusMessage;
-            string statusSeverity = response.StatusSeverity;
-            string resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
+            int? statusCode = response.StatusCode;
+            string? statusMessage = response.StatusMessage;
+            string? statusSeverity = response.StatusSeverity;
+            string? resMes = "Status: Code = " + statusCode + "Message = " + statusMessage + "Severity = " +
                             statusSeverity;
             Console.WriteLine(resMes);
 

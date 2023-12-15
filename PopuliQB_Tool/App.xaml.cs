@@ -37,7 +37,9 @@ public partial class App : Application
 
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<MessageBoxService>();
+
         services.AddTransient<QbdAccessService>();
+        services.AddTransient<PopuliAccessService>();
 
 
         return services.BuildServiceProvider();
