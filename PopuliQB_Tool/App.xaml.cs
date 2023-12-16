@@ -2,6 +2,7 @@
 using System.Data;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
+using PopuliQB_Tool.BusinessObjectsBuilders;
 using PopuliQB_Tool.BusinessServices;
 using PopuliQB_Tool.Services;
 using PopuliQB_Tool.ViewModels;
@@ -40,6 +41,8 @@ public partial class App : Application
 
         services.AddTransient<QbdAccessService>();
         services.AddTransient<PopuliAccessService>();
+        services.AddTransient<QbCustomerService>();
+        services.AddTransient<PopPersonToQbCustomerBuilder>();
 
 
         return services.BuildServiceProvider();

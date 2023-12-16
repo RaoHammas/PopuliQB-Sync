@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NLog;
 using PopuliQB_Tool.BusinessServices;
+using PopuliQB_Tool.EventArgs;
 using PopuliQB_Tool.Helpers;
 using PopuliQB_Tool.Models;
 using PopuliQB_Tool.Services;
@@ -17,6 +18,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly MessageBoxService _messageBoxService;
     private readonly QbdAccessService _qbdAccessService;
     private readonly PopuliAccessService _populiAccessService;
+    private readonly QbCustomerService _customerService;
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
     [ObservableProperty] private ObservableCollection<StatusMessage> _statisticsMessages = new();
 
@@ -24,14 +26,34 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty] private DateTime _startTransDate = DateTime.Now;
 
     public MainWindowViewModel(
-        MessageBoxService messageBoxService
-        , QbdAccessService qbdAccessService
-        , PopuliAccessService populiAccessService
+        MessageBoxService messageBoxService,
+        QbdAccessService qbdAccessService,
+        PopuliAccessService populiAccessService,
+        QbCustomerService customerService
     )
     {
         _messageBoxService = messageBoxService;
         _qbdAccessService = qbdAccessService;
         _populiAccessService = populiAccessService;
+        _customerService = customerService;
+
+        _customerService.OnProgressChanged += ProgressChanged;
+    }
+
+    private void ProgressChanged(object? sender, PopToQbCustomerImportArgs args)
+    {
+        if (args.Data is Exception ex)
+        {
+            SetSyncStatusMessage($"{args.Status} : {ex.Message}", StatusMessageType.Error);
+        }
+        else if (args.Data is string msg)
+        {
+            SetSyncStatusMessage($"{args.Status}: {msg}", StatusMessageType.Info);
+        }
+        else
+        {
+            SetSyncStatusMessage($"{args.Status}", StatusMessageType.Info);
+        }
     }
 
     [RelayCommand]
@@ -55,6 +77,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
             _qbdAccessService.CloseConnection();
             SetSyncStatusMessage("QuickBooks isn't running.", StatusMessageType.Info);
+            _logger.Error(ex);
         }
     }
 
@@ -70,6 +93,14 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             if (persons != null)
             {
                 SetSyncStatusMessage($"Fetched Persons : {persons.Count}", StatusMessageType.Success);
+                var resp = await _customerService.AddCustomersAsync(persons);
+                if (resp)
+                {
+                    SetSyncStatusMessage($"Completed Successfully.", StatusMessageType.Success);
+                    return;
+                }
+
+                SetSyncStatusMessage($"Failed.", StatusMessageType.Error);
             }
             else
             {
@@ -79,7 +110,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             SetSyncStatusMessage("Failed to fetch Persons", StatusMessageType.Error);
-            _logger.Error("Failed to fetch Persons. {@ex}", ex);
+            _logger.Error(ex);
         }
     }
 
@@ -111,5 +142,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         // TODO release managed resources here
+        _customerService.OnProgressChanged -= ProgressChanged;
+
     }
 }

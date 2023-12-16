@@ -1,61 +1,81 @@
 ﻿using QBFC16Lib;
-using System.Windows;
+using PopuliQB_Tool.BusinessObjects;
+using PopuliQB_Tool.BusinessObjectsBuilders;
+using NLog;
+using PopuliQB_Tool.EventArgs;
 
 namespace PopuliQB_Tool.BusinessServices;
 
 public class QbCustomerService
 {
-    public QbCustomerService()
+    private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private readonly PopPersonToQbCustomerBuilder _customerBuilder;
+
+    public bool IsConnected { get; set; }
+    public bool IsSessionOpen { get; set; }
+    public EventHandler<PopToQbCustomerImportArgs>? OnProgressChanged { get; set; }
+    private const string AppId = "PopuliToQbSync";
+    private const string AppName = "PopuliToQbSync";
+
+    public QbCustomerService(PopPersonToQbCustomerBuilder customerBuilder)
     {
+        _customerBuilder = customerBuilder;
     }
 
-    /*public void AddCustomer()
+    public async Task<bool> AddCustomersAsync(List<PopPerson> persons)
     {
-        var sessionBegun = false;
-        var connectionOpen = false;
-        QBSessionManager sessionManager = null;
+        var sessionManager = new QBSessionManager();
 
         try
         {
-            //Create the session Manager object?
-            sessionManager = new QBSessionManager();
-
-            //Create the message set request object? to hold our request
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-            BuildCustomerAddRq(requestMsgSet);
-
             //Connect to QuickBooks and begin a session
-            sessionManager.OpenConnection("", "Sample Code from OSR");
-            connectionOpen = true;
+            sessionManager.OpenConnection(AppId, AppName);
+            IsConnected = true;
+            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs("Connected to QB.", null));
+
             sessionManager.BeginSession("", ENOpenMode.omDontCare);
-            sessionBegun = true;
+            IsSessionOpen = true;
+            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs("Session Started.", null));
 
-            //Send the request and get the response from QuickBooks
-            var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
+            await Task.Run(() =>
+            {
+                foreach (var person in persons)
+                {
+                    _customerBuilder.BuildCustomerAddRequest(requestMsgSet, person);
+                    var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
 
-            //End the session and close the connection to QuickBooks
-            sessionManager.EndSession();
-            sessionBegun = false;
-            sessionManager.CloseConnection();
-            connectionOpen = false;
+                    OnProgressChanged?.Invoke(this,
+                        new PopToQbCustomerImportArgs(responseMsgSet.Attributes.MessageSetStatusCode, person));
+                }
+            });
+
+            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs("Completed.", null));
+            return true;
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            MessageBox.Show(e.Message, "Error");
-            if (sessionBegun)
+            _logger.Error(ex);
+            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs("Error: ", ex));
+            return false;
+        }
+        finally
+        {
+            if (IsSessionOpen)
             {
                 sessionManager.EndSession();
+                IsSessionOpen = false;
+                OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs("Session Ended.", null));
             }
 
-            if (connectionOpen)
+            if (IsConnected)
             {
                 sessionManager.CloseConnection();
+                IsConnected = false;
+                OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs("Disconnected.", null));
             }
         }
-    }*/
-
-
-
+    }
 }

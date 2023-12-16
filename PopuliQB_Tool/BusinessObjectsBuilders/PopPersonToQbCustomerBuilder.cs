@@ -5,7 +5,7 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopPersonToQbCustomerBuilder
 {
-    void BuildCustomerAddRequest(IMsgSetRequest requestMsgSet, PopPerson person)
+    public void BuildCustomerAddRequest(IMsgSetRequest requestMsgSet, PopPerson person)
     {
         var customerAddRq = requestMsgSet.AppendCustomerAddRq();
 
@@ -63,8 +63,8 @@ public class PopPersonToQbCustomerBuilder
         if (person.PopStudent.LoaStartDate != null)
         {
             customerAddRq.JobStartDate.SetValue(person.PopStudent.LoaStartDate.Value);
-           
         }
+
         if (person.PopStudent.LoaStartDate != null)
         {
             customerAddRq.JobProjectedEndDate.SetValue(person.PopStudent.LoaStartDate.Value);
