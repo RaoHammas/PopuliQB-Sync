@@ -17,7 +17,11 @@
                                      IsDesignTimeCreatable=False}"
     ResizeMode="CanResize"
     mc:Ignorable="d">
-
+    <b:Interaction.Triggers>
+        <b:EventTrigger EventName="Loaded">
+            <b:InvokeCommandAction Command="{Binding LoadedCommand}" />
+        </b:EventTrigger>
+    </b:Interaction.Triggers>
     <Grid>
         <Grid.Background>
             <SolidColorBrush Opacity="0.2" Color="LightGray" />
@@ -42,6 +46,7 @@
                     Margin="0,0,0,0"
                     materialDesign:HintAssist.FloatingScale="1"
                     materialDesign:HintAssist.Hint="Company Name"
+                    IsReadOnly="True"
                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                     Text="{Binding CompanyName}" />
 
@@ -59,31 +64,47 @@
                 Grid.Row="1"
                 Margin="0,20,0,0"
                 Orientation="Horizontal">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CompanyName}" Value="">
+                                <Setter Property="StackPanel.IsEnabled" Value="False" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+
+                </StackPanel.Style>
                 <Button
                     Height="40"
-                    Padding="10"
-                    Command="{Binding ConnectToQbCommand}"
-                    Content="Connect to QB" />
-                <Button
-                    Height="40"
-                    Margin="10,0,0,0"
+                    Margin="0,0,0,0"
                     Padding="10"
                     Command="{Binding StartPopuliStudentsSyncCommand}"
                     Content="Sync Populi Students To QB" />
-                <Button
-                    Height="40"
-                    Margin="10,0,0,0"
-                    Padding="10"
-                    Command="{Binding GetAllASyncCommand}"
-                    Content="Get All" />
             </StackPanel>
 
-            <ProgressBar
-                Grid.Row="2"
-                Margin="0,20,0,0"
-                Maximum="{Binding TotalRecords}"
-                Minimum="0"
-                Value="{Binding ProgressCount}" />
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ProgressBar
+                    Grid.Column="0"
+                    Height="10"
+                    Margin="0,20,10,0"
+                    VerticalAlignment="Center"
+                    Maximum="{Binding TotalRecords}"
+                    Minimum="0"
+                    Value="{Binding ProgressCount}" />
+                <TextBlock
+                    Grid.Column="1"
+                    Margin="0,0,0,-2"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom">
+                    <Run Text="{Binding ProgressCount}" />
+                    <Run>/</Run>
+                    <Run Text="{Binding TotalRecords}" />
+                </TextBlock>
+            </Grid>
 
             <Grid Grid.Row="3" Margin="0,20,0,0">
                 <Grid.ColumnDefinitions>
@@ -122,7 +143,7 @@
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Warn">
-                                                        <Setter Property="Foreground" Value="OrangeRed" />
+                                                        <Setter Property="Foreground" Value="DarkOrange" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Error">
                                                         <Setter Property="Foreground" Value="Red" />
@@ -169,19 +190,26 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:StatusMessage}">
-                                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap">
+                                    <TextBlock Margin="0,0,0,2" TextWrapping="Wrap">
+                                        <Run Text="{Binding MessageType}" />
+                                        <Run Text=" : " />
+                                        <Run Text="{Binding Message}" />
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding MessageType}" Value="Warn">
+                                                        <Setter Property="Foreground" Value="DarkOrange" />
+                                                    </DataTrigger>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Error">
                                                         <Setter Property="Foreground" Value="Red" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Info">
-                                                        <Setter Property="Foreground" Value="DodgerBlue" />
+                                                        <Setter Property="Foreground" Value="Blue" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Success">
-                                                        <Setter Property="Foreground" Value="Green" />
+                                                        <Setter Property="Foreground" Value="DarkGreen" />
                                                     </DataTrigger>
+
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>

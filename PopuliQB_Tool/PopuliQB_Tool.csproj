@@ -8,6 +8,13 @@
     <UseWPF>true</UseWPF>
     <PlatformTarget>x64</PlatformTarget>
     <Platforms>AnyCPU;x64</Platforms>
+    <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+    <Title>Populi to QuickBooks Sync</Title>
+    <Description>Populi to QuickBooks Sync</Description>
+    <Authors>Populi to QuickBooks Sync</Authors>
+    <Company>Populi to QuickBooks Sync</Company>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageTags>Populi; QuickBooks; Sync;</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,6 +37,7 @@
   <ItemGroup>
     <Content Include="Libs\Interop.QBFC16Lib.dll" />
     <Content Include="Libs\QBXMLRP2.dll" />
+    <Content Include="Resources\icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,6 +57,13 @@
 
   <ItemGroup>
     <Folder Include="Models\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

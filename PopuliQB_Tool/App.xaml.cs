@@ -39,7 +39,7 @@ public partial class App : Application
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<MessageBoxService>();
 
-        services.AddTransient<QBConnectionCheckService>();
+        services.AddTransient<QBCompanyService>();
         services.AddTransient<PopuliAccessService>();
         services.AddTransient<QbCustomerService>();
         services.AddTransient<PopPersonToQbCustomerBuilder>();

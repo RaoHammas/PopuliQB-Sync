@@ -25,15 +25,13 @@ public class PopuliAccessService
         });
     }
 
-    public async Task<List<PopPerson>> GetAllPersonsAsync()
+    public async Task<PopuliResponse<PopPerson>> GetAllPersonsAsync(int page=1)
     {
-        AllPopuliPersons.Clear();
         var request = new RestRequest($"{DevUrl}people/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
-        const string? body = """
-                            {"expand": ["addresses", "phone_numbers", "student"]}
-                            """;
+
+        var body = $@"{{""expand"": [""addresses"", ""phone_numbers"", ""student""], ""page"": {page}}}";
 
         request.AddStringBody(body, DataFormat.Json);
 
@@ -43,10 +41,11 @@ public class PopuliAccessService
             if (response.Data != null)
             {
                 AllPopuliPersons = response.Data.Data;
+                return response.Data;
             }
         }
 
         _logger.Error("Failed to fetch Persons. {@response}", response);
-        return AllPopuliPersons;
+        return new ();
     }
 }

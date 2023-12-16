@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NLog;
@@ -17,9 +16,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly MessageBoxService _messageBoxService;
-    private readonly QBConnectionCheckService _qbConnectionCheckService;
+    private readonly QBCompanyService _qbCompanyService;
     private readonly PopuliAccessService _populiAccessService;
-    private readonly QbCustomerService _customerService;
+    private readonly QbCustomerService _qbCustomerService;
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
     [ObservableProperty] private ObservableCollection<StatusMessage> _statisticsMessages = new();
 
@@ -30,23 +29,23 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
     public MainWindowViewModel(
         MessageBoxService messageBoxService,
-        QBConnectionCheckService qbConnectionCheckService,
+        QBCompanyService qbCompanyService,
         PopuliAccessService populiAccessService,
-        QbCustomerService customerService
+        QbCustomerService qbCustomerService
     )
     {
         _messageBoxService = messageBoxService;
-        _qbConnectionCheckService = qbConnectionCheckService;
+        _qbCompanyService = qbCompanyService;
         _populiAccessService = populiAccessService;
-        _customerService = customerService;
+        _qbCustomerService = qbCustomerService;
 
-        _customerService.OnSyncStatusChanged += SyncStatusChanged;
-        _customerService.OnSyncProgressChanged += SyncProgressChanged;
+        _qbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
+        _qbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
     }
 
     private void SyncProgressChanged(object? sender, ProgressArgs e)
     {
-        ProgressCount ++;
+        ProgressCount++;
     }
 
     private void SyncStatusChanged(object? sender, StatusMessageArgs args)
@@ -55,44 +54,31 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private async Task GetAllASync()
+    private void Loaded()
     {
-        try
-        {
-            await _customerService.GetPersonsAsync();
-        }
-        catch (Exception ex)
-        {
-        }
+        ConnectToQb();
     }
 
-
-    [RelayCommand]
-    private async Task ConnectToQb()
+    private void ConnectToQb()
     {
         try
         {
-            await Task.Run(() =>
-            {
-                if (_qbConnectionCheckService.OpenConnection())
-                {
-                    CompanyName = _qbConnectionCheckService.GetCompanyName();
-                    SetSyncStatusMessage(StatusMessageType.Success, "Connected to QuickBooks.");
-                }
-            });
+            CompanyName = _qbCompanyService.GetCompanyName();
+            SetSyncStatusMessage(StatusMessageType.Success, $"Connected to QuickBooks {CompanyName}.");
         }
         catch (Exception ex)
         {
-            _messageBoxService.ShowError("Error", ex.Message);
             SetSyncStatusMessage(StatusMessageType.Error, "Failed to connect to QuickBooks.");
-
-            _qbConnectionCheckService.CloseConnection();
-            SetSyncStatusMessage(StatusMessageType.Info, "QuickBooks isn't running.");
+            SetSyncStatusMessage(StatusMessageType.Error, "Make sure QuickBooks is running on your system or try reopening the tool.");
             _logger.Error(ex);
         }
     }
 
-    [RelayCommand]
+    private Task<PopuliResponse<PopPerson>> GetNextBatchOfPersonsFromPopuli(int page)
+    {
+        return _populiAccessService.GetAllPersonsAsync(page);
+    }
+
     private async Task StartPopuliStudentsSync()
     {
         try
@@ -103,42 +89,58 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Info, $"Populi to QBD Sync. Version: {VersionHelper.Version}");
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
 
-            var populiPersonsTask = Task.Run(() => _populiAccessService.GetAllPersonsAsync());
-            var qbPersonsTask = Task.Run(() => _customerService.GetPersonsAsync());
+            SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from QB.");
+
+            var qbCustomers = await _qbCustomerService.GetAllExistingCustomersAsync();
+            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Persons from QB : {qbCustomers.Count}");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from Populi.");
-            SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from QB.");
-            await Task.WhenAll(populiPersonsTask, qbPersonsTask);
+            var page = 1;
+            var persons = await GetNextBatchOfPersonsFromPopuli(page);
+            TotalRecords = persons.Results ?? 0;
+            SetSyncStatusMessage(StatusMessageType.Success, $"Total Persons found on Populi : {persons.Results}");
 
-            var persons = populiPersonsTask.Result;
-            if (persons.Any())
+            if (!persons.Data.Any())
             {
-                TotalRecords = persons.Count;
-                SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Persons from Populi : {persons.Count}");
+                SetSyncStatusMessage(StatusMessageType.Warn, $"Fetched Persons : 0");
+                return;
+            }
 
-                var qbCustomers = qbPersonsTask.Result;
-                if (qbCustomers.Any())
+            while (page <= 3)
+            {
+                if (page != 1)
                 {
-                    SetSyncStatusMessage(StatusMessageType.Info, $"Fetched Persons from QB : {qbCustomers.Count}");
+                    persons.Data.Clear();
+                    SetSyncStatusMessage(StatusMessageType.Info,
+                        $"Fetching next {persons.ResultsPerPage} from Populi.");
+
+                    persons = await GetNextBatchOfPersonsFromPopuli(page);
+                    SetSyncStatusMessage(StatusMessageType.Success,
+                        $"Fetched {persons.Data.Count} Persons from Populi.");
                 }
 
-                var resp = await _customerService.AddCustomersAsync(persons);
-                if (resp)
+                page++;
+                if (persons.Data.Any())
                 {
-                    SetSyncStatusMessage(StatusMessageType.Success, $"Completed Successfully.");
+                    SetSyncStatusMessage(StatusMessageType.Info, $"Adding next {persons.Data.Count} to QB.");
+                    var resp = await _qbCustomerService.AddCustomersAsync(persons.Data);
+                    if (resp)
+                    {
+                        SetSyncStatusMessage(StatusMessageType.Success, $"Added {persons.Data.Count} to QB.");
+                    }
+                }
+                else
+                {
+                    SetSyncStatusMessage(StatusMessageType.Warn, $"Fetched Persons : 0");
                     return;
                 }
+            }
 
-                SetSyncStatusMessage(StatusMessageType.Error, $"Failed.");
-            }
-            else
-            {
-                SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Persons : 0");
-            }
+            SetSyncStatusMessage(StatusMessageType.Success, $"Completed. Added total: {ProgressCount} to QB.");
         }
         catch (Exception ex)
         {
-            SetSyncStatusMessage(StatusMessageType.Error, "Failed to fetch Persons");
+            SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
             _logger.Error(ex);
         }
     }
@@ -171,7 +173,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         // TODO release managed resources here
-        _customerService.OnSyncStatusChanged -= SyncStatusChanged;
-        _customerService.OnSyncProgressChanged -= SyncProgressChanged;
+        _qbCustomerService.OnSyncStatusChanged -= SyncStatusChanged;
+        _qbCustomerService.OnSyncProgressChanged -= SyncProgressChanged;
     }
 }

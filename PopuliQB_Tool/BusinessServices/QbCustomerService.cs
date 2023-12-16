@@ -54,7 +54,7 @@ public class QbCustomerService
                     if (AllExistingCustomersList.FirstOrDefault(x => x.Id == person.Id) != null)
                     {
                         OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Warn, $"{personFullName} already exists."));
+                            new StatusMessageArgs(StatusMessageType.Warn, $"{personFullName} | Id = {person.Id} already exists."));
                         OnSyncProgressChanged?.Invoke(this, new ProgressArgs(index));
                         continue;
                     }
@@ -64,15 +64,20 @@ public class QbCustomerService
 
                     if (ReadAddedCustomer(responseMsgSet))
                     {
-                        AllExistingCustomersList.Add(person);
+                        AllExistingCustomersList.Add(new PopPerson
+                        {
+                            Id = person.Id,
+                            DisplayName = personFullName,
+                        });
+
                         OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Success, $"{personFullName}"));
+                            new StatusMessageArgs(StatusMessageType.Success, $"{personFullName} | Id = {person.Id}"));
                         OnSyncProgressChanged?.Invoke(this, new ProgressArgs(index));
                     }
                     else
                     {
                         OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Error, $"{personFullName}"));
+                            new StatusMessageArgs(StatusMessageType.Error, $"{personFullName} | Id = {person.Id}"));
                     }
                 }
             });
@@ -84,7 +89,7 @@ public class QbCustomerService
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-            return false;
+            throw;
         }
         finally
         {
@@ -107,9 +112,15 @@ public class QbCustomerService
 
     private bool ReadAddedCustomer(IMsgSetResponse? responseMsgSet)
     {
-        if (responseMsgSet == null) return false;
+        if (responseMsgSet == null)
+        {
+            return false;
+        }
         var responseList = responseMsgSet.ResponseList;
-        if (responseList == null) return false;
+        if (responseList == null)
+        {
+            return false;
+        }
 
         //if we sent only one request, there is only one response, we'll walk the list for this sample
         for (var i = 0; i < responseList.Count; i++)
@@ -147,7 +158,7 @@ public class QbCustomerService
 
     #region GET ALL CUSTOMERS
 
-    public async Task<List<PopPerson>> GetPersonsAsync()
+    public async Task<List<PopPerson>> GetAllExistingCustomersAsync()
     {
         var sessionManager = new QBSessionManager();
 
