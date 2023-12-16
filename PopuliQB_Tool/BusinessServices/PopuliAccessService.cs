@@ -15,6 +15,7 @@ public class PopuliAccessService
         "sk_y75vZUhN4fP14zXrGcnl8ThHDiLf0xAdGVLWekgcbvgKN8KJHcEw7y0JOp8YlrZ4ZtNSRahQGnkK8dhHFsHNyG";
 
     private readonly RestClient _client;
+    public List<PopPerson> AllPopuliPersons { get; set; } = new();
 
     public PopuliAccessService()
     {
@@ -24,8 +25,9 @@ public class PopuliAccessService
         });
     }
 
-    public async Task<List<PopPerson>?> GetAllPersonsAsync()
+    public async Task<List<PopPerson>> GetAllPersonsAsync()
     {
+        AllPopuliPersons.Clear();
         var request = new RestRequest($"{DevUrl}people/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
@@ -38,10 +40,13 @@ public class PopuliAccessService
         var response = await _client.ExecuteAsync<PopuliResponse<PopPerson>>(request, Method.Get, CancellationToken.None);
         if (response is { IsSuccessStatusCode: true, Content: not null })
         {
-            return response.Data?.Data;
+            if (response.Data != null)
+            {
+                AllPopuliPersons = response.Data.Data;
+            }
         }
 
         _logger.Error("Failed to fetch Persons. {@response}", response);
-        return new();
+        return AllPopuliPersons;
     }
 }

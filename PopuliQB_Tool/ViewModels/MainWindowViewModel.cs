@@ -4,6 +4,7 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NLog;
+using PopuliQB_Tool.BusinessObjects;
 using PopuliQB_Tool.BusinessServices;
 using PopuliQB_Tool.EventArgs;
 using PopuliQB_Tool.Helpers;
@@ -57,6 +58,20 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    private async Task GetAllASync()
+    {
+        try
+        {
+            await _customerService.GetPersonsAsync();
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
+
+    [RelayCommand]
     private async Task ConnectToQb()
     {
         try
@@ -88,12 +103,26 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         {
             SetSyncStatusMessage($"Populi to QBD Sync. Version: {VersionHelper.Version}", StatusMessageType.Info);
             SetSyncStatusMessage("Starting Sync.", StatusMessageType.Info);
+
+            var populiPersonsTask = Task.Run(() => _populiAccessService.GetAllPersonsAsync());
+            var qbPersonsTask = Task.Run(() => _customerService.GetPersonsAsync());
             
-            var persons = await _populiAccessService.GetAllPersonsAsync();
-            if (persons != null)
+            SetSyncStatusMessage("Fetching Persons from Populi.", StatusMessageType.Info);
+            SetSyncStatusMessage("Fetching Persons from QB.", StatusMessageType.Info);
+            await Task.WhenAll(populiPersonsTask, qbPersonsTask);
+
+            var persons = populiPersonsTask.Result;
+            if (persons.Any())
             {
-                SetSyncStatusMessage($"Fetched Persons : {persons.Count}", StatusMessageType.Success);
-                var resp = await _customerService.AddCustomersAsync(persons);
+                SetSyncStatusMessage($"Fetched Persons from Populi : {persons.Count}", StatusMessageType.Success);
+
+                var qbCustomers = qbPersonsTask.Result;
+                if (qbCustomers.Any())
+                {
+                    SetSyncStatusMessage($"Fetched Persons from QB : {qbCustomers.Count}", StatusMessageType.Info);
+                }
+
+                var resp = await _customerService.AddCustomersAsync(persons.Take(20).ToList());
                 if (resp)
                 {
                     SetSyncStatusMessage($"Completed Successfully.", StatusMessageType.Success);
@@ -119,7 +148,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
-            SyncStatusMessages.Add(new StatusMessage
+            SyncStatusMessages.Insert(0, new StatusMessage
             {
                 Message = message,
                 MessageType = type
@@ -131,7 +160,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
-            StatisticsMessages.Add(new StatusMessage
+            StatisticsMessages.Insert(0, new StatusMessage
             {
                 Message = message,
                 MessageType = type
@@ -143,6 +172,5 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         // TODO release managed resources here
         _customerService.OnProgressChanged -= ProgressChanged;
-
     }
 }

@@ -15,6 +15,7 @@
     Height="450"
     d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel,
                                      IsDesignTimeCreatable=False}"
+    ResizeMode="CanResize"
     mc:Ignorable="d">
 
     <Grid>
@@ -68,6 +69,12 @@
                     Padding="10"
                     Command="{Binding StartSyncCommand}"
                     Content="Start Populi to QB Sync" />
+                <Button
+                    Height="40"
+                    Margin="10,0,0,0"
+                    Padding="10"
+                    Command="{Binding GetAllASyncCommand}"
+                    Content="Get All" />
             </StackPanel>
 
             <Grid Grid.Row="2" Margin="0,20,0,0">
@@ -90,34 +97,36 @@
                                 Text="Sync Status" />
                         </DataTemplate>
                     </GroupBox.HeaderTemplate>
-                    <ItemsControl Background="AntiqueWhite" ItemsSource="{Binding SyncStatusMessages}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Margin="5" Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type models:StatusMessage}">
-                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding MessageType}" Value="Error">
-                                                    <Setter Property="Foreground" Value="Red" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding MessageType}" Value="Info">
-                                                    <Setter Property="Foreground" Value="DodgerBlue" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding MessageType}" Value="Success">
-                                                    <Setter Property="Foreground" Value="Green" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl Background="AntiqueWhite" ItemsSource="{Binding SyncStatusMessages}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Margin="5" Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:StatusMessage}">
+                                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding MessageType}" Value="Error">
+                                                        <Setter Property="Foreground" Value="Red" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding MessageType}" Value="Info">
+                                                        <Setter Property="Foreground" Value="DodgerBlue" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding MessageType}" Value="Success">
+                                                        <Setter Property="Foreground" Value="Green" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
 
                 </GroupBox>
 
@@ -136,34 +145,36 @@
                                 Text="Statistics" />
                         </DataTemplate>
                     </GroupBox.HeaderTemplate>
-                    <ItemsControl ItemsSource="{Binding StatisticsMessages}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type models:StatusMessage}">
-                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding MessageType}" Value="Error">
-                                                    <Setter Property="Foreground" Value="Red" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding MessageType}" Value="Info">
-                                                    <Setter Property="Foreground" Value="DodgerBlue" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding MessageType}" Value="Success">
-                                                    <Setter Property="Foreground" Value="Green" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding StatisticsMessages}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:StatusMessage}">
+                                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding MessageType}" Value="Error">
+                                                        <Setter Property="Foreground" Value="Red" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding MessageType}" Value="Info">
+                                                        <Setter Property="Foreground" Value="DodgerBlue" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding MessageType}" Value="Success">
+                                                        <Setter Property="Foreground" Value="Green" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </GroupBox>
             </Grid>
         </Grid>
