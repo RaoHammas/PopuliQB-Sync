@@ -46,7 +46,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private void SyncProgressChanged(object? sender, ProgressArgs e)
     {
-        ProgressCount += e.ProgressValue;
+        ProgressCount ++;
     }
 
     private void SyncStatusChanged(object? sender, StatusMessageArgs args)
@@ -113,7 +113,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             var persons = populiPersonsTask.Result;
             if (persons.Any())
             {
-                TotalRecords = persons.Count;
+                TotalRecords = 20;
                 SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Persons from Populi : {persons.Count}");
 
                 var qbCustomers = qbPersonsTask.Result;

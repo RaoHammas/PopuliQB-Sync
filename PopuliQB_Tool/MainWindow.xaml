@@ -102,7 +102,7 @@
                             <TextBlock
                                 Padding="5"
                                 FontWeight="Bold"
-                                Text="Sync StatusType" />
+                                Text="Sync Status" />
                         </DataTemplate>
                     </GroupBox.HeaderTemplate>
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
@@ -114,12 +114,15 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:StatusMessage}">
-                                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap">
+                                    <TextBlock Margin="0,0,0,2" TextWrapping="Wrap">
+                                        <Run Text="{Binding MessageType}" />
+                                        <Run Text=" : " />
+                                        <Run Text="{Binding Message}" />
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Warn">
-                                                        <Setter Property="Foreground" Value="DarkOrange" />
+                                                        <Setter Property="Foreground" Value="OrangeRed" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Error">
                                                         <Setter Property="Foreground" Value="Red" />
@@ -128,7 +131,7 @@
                                                         <Setter Property="Foreground" Value="Blue" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Success">
-                                                        <Setter Property="Foreground" Value="Green" />
+                                                        <Setter Property="Foreground" Value="DarkGreen" />
                                                     </DataTrigger>
 
                                                 </Style.Triggers>
