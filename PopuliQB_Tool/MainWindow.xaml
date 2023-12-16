@@ -78,7 +78,12 @@
                     Content="Get All" />
             </StackPanel>
 
-            <ProgressBar Grid.Row="2" Margin="0,20,0,0" Maximum="{Binding TotalRecords}" Minimum="0" Value="{Binding ProgressCount}"/>
+            <ProgressBar
+                Grid.Row="2"
+                Margin="0,20,0,0"
+                Maximum="{Binding TotalRecords}"
+                Minimum="0"
+                Value="{Binding ProgressCount}" />
 
             <Grid Grid.Row="3" Margin="0,20,0,0">
                 <Grid.ColumnDefinitions>
@@ -114,7 +119,7 @@
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Warn">
-                                                        <Setter Property="Foreground" Value="Aqua" />
+                                                        <Setter Property="Foreground" Value="DarkOrange" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Error">
                                                         <Setter Property="Foreground" Value="Red" />
