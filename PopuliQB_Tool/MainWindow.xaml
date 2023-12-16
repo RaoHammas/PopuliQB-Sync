@@ -26,6 +26,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -67,8 +68,8 @@
                     Height="40"
                     Margin="10,0,0,0"
                     Padding="10"
-                    Command="{Binding StartSyncCommand}"
-                    Content="Start Populi to QB Sync" />
+                    Command="{Binding StartPopuliStudentsSyncCommand}"
+                    Content="Sync Populi Students To QB" />
                 <Button
                     Height="40"
                     Margin="10,0,0,0"
@@ -77,7 +78,9 @@
                     Content="Get All" />
             </StackPanel>
 
-            <Grid Grid.Row="2" Margin="0,20,0,0">
+            <ProgressBar Grid.Row="2" Margin="0,20,0,0" Maximum="{Binding TotalRecords}" Minimum="0" Value="{Binding ProgressCount}"/>
+
+            <Grid Grid.Row="3" Margin="0,20,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
                     <ColumnDefinition Width="20" />
@@ -94,11 +97,11 @@
                             <TextBlock
                                 Padding="5"
                                 FontWeight="Bold"
-                                Text="Sync Status" />
+                                Text="Sync StatusType" />
                         </DataTemplate>
                     </GroupBox.HeaderTemplate>
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl Background="AntiqueWhite" ItemsSource="{Binding SyncStatusMessages}">
+                        <ItemsControl Background="White" ItemsSource="{Binding SyncStatusMessages}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel Margin="5" Orientation="Vertical" />
@@ -110,15 +113,19 @@
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding MessageType}" Value="Warn">
+                                                        <Setter Property="Foreground" Value="Aqua" />
+                                                    </DataTrigger>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Error">
                                                         <Setter Property="Foreground" Value="Red" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Info">
-                                                        <Setter Property="Foreground" Value="DodgerBlue" />
+                                                        <Setter Property="Foreground" Value="Blue" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding MessageType}" Value="Success">
                                                         <Setter Property="Foreground" Value="Green" />
                                                     </DataTrigger>
+
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>

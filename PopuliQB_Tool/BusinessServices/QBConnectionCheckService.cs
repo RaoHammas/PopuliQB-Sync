@@ -4,7 +4,7 @@ using QBXMLRP2Lib;
 
 namespace PopuliQB_Tool.BusinessServices;
 
-public class QbdAccessService
+public class QBConnectionCheckService
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     public QBSessionManager SessionManager;
@@ -14,7 +14,7 @@ public class QbdAccessService
     private const string AppName = "PopuliToQbSync";
     public bool IsConnected { get; private set; }
 
-    public QbdAccessService()
+    public QBConnectionCheckService()
     {
         SessionManager = new QBSessionManager();
         _qbXmlProc = new RequestProcessor2();

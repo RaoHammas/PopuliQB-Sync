@@ -14,7 +14,8 @@ public class QbCustomerService
 
     public bool IsConnected { get; set; }
     public bool IsSessionOpen { get; set; }
-    public EventHandler<PopToQbCustomerImportArgs>? OnProgressChanged { get; set; }
+    public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
+    public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
     public List<PopPerson> AllExistingCustomersList { get; set; } = new();
     private const string AppId = "PopuliToQbSync";
     private const string AppName = "PopuliToQbSync";
@@ -34,25 +35,27 @@ public class QbCustomerService
         {
             sessionManager.OpenConnection(AppId, AppName);
             IsConnected = true;
-            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs(StatusMessageType.Info, "Connected to QB."));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
             sessionManager.BeginSession("", ENOpenMode.omDontCare);
             IsSessionOpen = true;
-            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs(StatusMessageType.Info, "Session Started."));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
             await Task.Run(() =>
             {
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-                foreach (var person in persons)
+                for (var index = 0; index < persons.Count; index++)
                 {
+                    var person = persons[index];
                     var personFullName = PopPersonToQbCustomerBuilder.GetFullName(person);
 
                     if (AllExistingCustomersList.FirstOrDefault(x => x.Id == person.Id) != null)
                     {
-                        OnProgressChanged?.Invoke(this,
-                            new PopToQbCustomerImportArgs(StatusMessageType.Info, $"{personFullName} already exists."));
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Warn, $"{personFullName} already exists."));
+                        OnSyncProgressChanged?.Invoke(this, new ProgressArgs(index));
                         continue;
                     }
 
@@ -61,24 +64,25 @@ public class QbCustomerService
 
                     if (ReadAddedCustomer(responseMsgSet))
                     {
-                        OnProgressChanged?.Invoke(this,
-                            new PopToQbCustomerImportArgs(StatusMessageType.Success, $"{personFullName}"));
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Success, $"{personFullName}"));
+                        OnSyncProgressChanged?.Invoke(this, new ProgressArgs(index));
                     }
                     else
                     {
-                        OnProgressChanged?.Invoke(this,
-                            new PopToQbCustomerImportArgs(StatusMessageType.Error, $"{personFullName}"));
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Error, $"{personFullName}"));
                     }
                 }
             });
 
-            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs(StatusMessageType.Success, "Completed."));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
             return true;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
-            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs(StatusMessageType.Error, ex.Message));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
             return false;
         }
         finally
@@ -87,15 +91,15 @@ public class QbCustomerService
             {
                 sessionManager.EndSession();
                 IsSessionOpen = false;
-                OnProgressChanged?.Invoke(this,
-                    new PopToQbCustomerImportArgs(StatusMessageType.Info, "Session Ended."));
+                OnSyncStatusChanged?.Invoke(this,
+                    new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
             }
 
             if (IsConnected)
             {
                 sessionManager.CloseConnection();
                 IsConnected = false;
-                OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs(StatusMessageType.Info, "Disconnected."));
+                OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
             }
         }
     }
@@ -152,11 +156,11 @@ public class QbCustomerService
 
             sessionManager.OpenConnection(AppId, AppName);
             IsConnected = true;
-            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs(StatusMessageType.Info, "Connected to QB."));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
             sessionManager.BeginSession("", ENOpenMode.omDontCare);
             IsSessionOpen = true;
-            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs(StatusMessageType.Info, "Session Started."));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
             await Task.Run(() =>
             {
@@ -169,14 +173,14 @@ public class QbCustomerService
                 ReadFetchedCustomers(responseMsgSet);
             });
 
-            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs(StatusMessageType.Success, "Completed."));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
 
             return AllExistingCustomersList;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
-            OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs(StatusMessageType.Error, ex.Message));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
             return AllExistingCustomersList;
         }
         finally
@@ -185,15 +189,15 @@ public class QbCustomerService
             {
                 sessionManager.EndSession();
                 IsSessionOpen = false;
-                OnProgressChanged?.Invoke(this,
-                    new PopToQbCustomerImportArgs(StatusMessageType.Info, "Session Ended."));
+                OnSyncStatusChanged?.Invoke(this,
+                    new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
             }
 
             if (IsConnected)
             {
                 sessionManager.CloseConnection();
                 IsConnected = false;
-                OnProgressChanged?.Invoke(this, new PopToQbCustomerImportArgs(StatusMessageType.Info, "Disconnected."));
+                OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
             }
         }
     }

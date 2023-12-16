@@ -17,44 +17,41 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly MessageBoxService _messageBoxService;
-    private readonly QbdAccessService _qbdAccessService;
+    private readonly QBConnectionCheckService _qbConnectionCheckService;
     private readonly PopuliAccessService _populiAccessService;
     private readonly QbCustomerService _customerService;
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
     [ObservableProperty] private ObservableCollection<StatusMessage> _statisticsMessages = new();
 
+    [ObservableProperty] private int _totalRecords = 0;
+    [ObservableProperty] private int _progressCount = 0;
     [ObservableProperty] private string? _companyName = "";
     [ObservableProperty] private DateTime _startTransDate = DateTime.Now;
 
     public MainWindowViewModel(
         MessageBoxService messageBoxService,
-        QbdAccessService qbdAccessService,
+        QBConnectionCheckService qbConnectionCheckService,
         PopuliAccessService populiAccessService,
         QbCustomerService customerService
     )
     {
         _messageBoxService = messageBoxService;
-        _qbdAccessService = qbdAccessService;
+        _qbConnectionCheckService = qbConnectionCheckService;
         _populiAccessService = populiAccessService;
         _customerService = customerService;
 
-        _customerService.OnProgressChanged += ProgressChanged;
+        _customerService.OnSyncStatusChanged += SyncStatusChanged;
+        _customerService.OnSyncProgressChanged += SyncProgressChanged;
     }
 
-    private void ProgressChanged(object? sender, PopToQbCustomerImportArgs args)
+    private void SyncProgressChanged(object? sender, ProgressArgs e)
     {
-        if (args.Data is Exception ex)
-        {
-            SetSyncStatusMessage($"{args.Status} : {ex.Message}", StatusMessageType.Error);
-        }
-        else if (args.Data is string msg)
-        {
-            SetSyncStatusMessage($"{args.Status}: {msg}", StatusMessageType.Info);
-        }
-        else
-        {
-            SetSyncStatusMessage($"{args.Status}", StatusMessageType.Info);
-        }
+        ProgressCount += e.ProgressValue;
+    }
+
+    private void SyncStatusChanged (object? sender, StatusMessageArgs args)
+    {
+        SetSyncStatusMessage($"{args.StatusType}", args.StatusType);
     }
 
     [RelayCommand]
@@ -78,9 +75,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         {
             await Task.Run(() =>
             {
-                if (_qbdAccessService.OpenConnection())
+                if (_qbConnectionCheckService.OpenConnection())
                 {
-                    CompanyName = _qbdAccessService.GetCompanyName();
+                    CompanyName = _qbConnectionCheckService.GetCompanyName();
                     SetSyncStatusMessage("Connected to QuickBooks.", StatusMessageType.Success);
                 }
             });
@@ -90,17 +87,20 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             _messageBoxService.ShowError("Error", ex.Message);
             SetSyncStatusMessage("Failed to connect to QuickBooks.", StatusMessageType.Error);
 
-            _qbdAccessService.CloseConnection();
+            _qbConnectionCheckService.CloseConnection();
             SetSyncStatusMessage("QuickBooks isn't running.", StatusMessageType.Info);
             _logger.Error(ex);
         }
     }
 
     [RelayCommand]
-    private async Task StartSync()
+    private async Task StartPopuliStudentsSync()
     {
         try
         {
+            TotalRecords = 0;
+            ProgressCount = 0;
+
             SetSyncStatusMessage($"Populi to QBD Sync. Version: {VersionHelper.Version}", StatusMessageType.Info);
             SetSyncStatusMessage("Starting Sync.", StatusMessageType.Info);
 
@@ -114,6 +114,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             var persons = populiPersonsTask.Result;
             if (persons.Any())
             {
+                TotalRecords = persons.Count;
                 SetSyncStatusMessage($"Fetched Persons from Populi : {persons.Count}", StatusMessageType.Success);
 
                 var qbCustomers = qbPersonsTask.Result;
@@ -144,7 +145,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
 
-    private void SetSyncStatusMessage(string? message, StatusMessageType type)
+    private void SetSyncStatusMessage(string message, StatusMessageType type)
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
@@ -156,7 +157,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         });
     }
 
-    private void SetStatisticsMessage(string? message, StatusMessageType type)
+    private void SetStatisticsMessage(string message, StatusMessageType type)
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
@@ -171,6 +172,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         // TODO release managed resources here
-        _customerService.OnProgressChanged -= ProgressChanged;
+        _customerService.OnSyncStatusChanged -= SyncStatusChanged;
+        _customerService.OnSyncProgressChanged -= SyncProgressChanged;
+
     }
 }
