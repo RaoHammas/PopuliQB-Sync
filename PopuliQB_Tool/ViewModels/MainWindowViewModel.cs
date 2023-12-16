@@ -113,7 +113,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             var persons = populiPersonsTask.Result;
             if (persons.Any())
             {
-                TotalRecords = 20;
+                TotalRecords = persons.Count;
                 SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Persons from Populi : {persons.Count}");
 
                 var qbCustomers = qbPersonsTask.Result;
@@ -122,7 +122,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                     SetSyncStatusMessage(StatusMessageType.Info, $"Fetched Persons from QB : {qbCustomers.Count}");
                 }
 
-                var resp = await _customerService.AddCustomersAsync(persons.Take(20).ToList());
+                var resp = await _customerService.AddCustomersAsync(persons);
                 if (resp)
                 {
                     SetSyncStatusMessage(StatusMessageType.Success, $"Completed Successfully.");

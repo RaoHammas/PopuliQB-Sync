@@ -64,6 +64,7 @@ public class QbCustomerService
 
                     if (ReadAddedCustomer(responseMsgSet))
                     {
+                        AllExistingCustomersList.Add(person);
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Success, $"{personFullName}"));
                         OnSyncProgressChanged?.Invoke(this, new ProgressArgs(index));
