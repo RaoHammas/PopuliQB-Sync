@@ -19,6 +19,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly QBCompanyService _qbCompanyService;
     private readonly PopuliAccessService _populiAccessService;
     private readonly QbCustomerService _qbCustomerService;
+    private readonly QBInvoiceService _qbInvoiceService;
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
     [ObservableProperty] private ObservableCollection<StatusMessage> _statisticsMessages = new();
 
@@ -31,16 +32,21 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         MessageBoxService messageBoxService,
         QBCompanyService qbCompanyService,
         PopuliAccessService populiAccessService,
-        QbCustomerService qbCustomerService
+        QbCustomerService qbCustomerService,
+        QBInvoiceService qbInvoiceService
     )
     {
         _messageBoxService = messageBoxService;
         _qbCompanyService = qbCompanyService;
         _populiAccessService = populiAccessService;
         _qbCustomerService = qbCustomerService;
+        _qbInvoiceService = qbInvoiceService;
 
         _qbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
         _qbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
+
+        _qbInvoiceService.OnSyncStatusChanged += SyncStatusChanged;
+        _qbInvoiceService.OnSyncProgressChanged += SyncProgressChanged;
     }
 
     private void SyncProgressChanged(object? sender, ProgressArgs e)
@@ -63,17 +69,15 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         try
         {
-            await Task.Run(() =>
-            {
-                CompanyName = _qbCompanyService.GetCompanyName();
-            });
+            await Task.Run(() => { CompanyName = _qbCompanyService.GetCompanyName(); });
 
             SetSyncStatusMessage(StatusMessageType.Success, $"Connected to QuickBooks {CompanyName}.");
         }
         catch (Exception ex)
         {
             SetSyncStatusMessage(StatusMessageType.Error, "Failed to connect to QuickBooks.");
-            SetSyncStatusMessage(StatusMessageType.Error, "Make sure QuickBooks is running on your system or try reopening the tool.");
+            SetSyncStatusMessage(StatusMessageType.Error,
+                "Make sure QuickBooks is running on your system or try reopening the tool.");
             _logger.Error(ex);
         }
     }
@@ -91,7 +95,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             TotalRecords = 0;
             ProgressCount = 0;
 
-            SetSyncStatusMessage(StatusMessageType.Info, $"Populi to QBD Sync. Version: {VersionHelper.Version}");
+            SetSyncStatusMessage(StatusMessageType.Success, $"Populi to QBD Sync. Version: {VersionHelper.Version}");
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from QB.");
@@ -129,10 +133,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                 {
                     SetSyncStatusMessage(StatusMessageType.Info, $"Adding next {persons.Data.Count} to QB.");
                     var resp = await _qbCustomerService.AddCustomersAsync(persons.Data);
-                    if (resp)
-                    {
-                        SetSyncStatusMessage(StatusMessageType.Success, $"Added {persons.Data.Count} to QB.");
-                    }
                 }
                 else
                 {
@@ -140,8 +140,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                     return;
                 }
             }
-
-            SetSyncStatusMessage(StatusMessageType.Success, $"Completed. Added total: {ProgressCount} to QB.");
         }
         catch (Exception ex)
         {
@@ -150,6 +148,38 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
+    [RelayCommand]
+    private async Task StartPopuliInvoicesSync()
+    {
+        try
+        {
+            SetSyncStatusMessage(StatusMessageType.Success, $"Populi to QBD Sync. Version: {VersionHelper.Version}");
+            SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from Populi.");
+            var popInvoices = await _populiAccessService.GetAllInvoicesAsync(1);
+            if (popInvoices.Data.Any())
+            {
+                SetSyncStatusMessage(StatusMessageType.Success, $"Fetched {popInvoices.Count} Invoices from Populi.");
+
+                SetSyncStatusMessage(StatusMessageType.Info, $"Fetching existing Invoices from QB.");
+                var existingInvoices = await _qbInvoiceService.GetAllExistingInvoicesAsync();
+                SetSyncStatusMessage(StatusMessageType.Success, $"Fetched {existingInvoices.Count} Invoices from QB.");
+
+                SetSyncStatusMessage(StatusMessageType.Info, $"Adding {popInvoices.Count} Invoices to QB.");
+                var resp = await _qbInvoiceService.AddInvoicesAsync(popInvoices.Data);
+            }
+            else
+            {
+                SetSyncStatusMessage(StatusMessageType.Warn, $"Fetched Invoices : 0");
+            }
+        }
+        catch (Exception ex)
+        {
+            SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
+            _logger.Error(ex);
+        }
+    }
 
     private void SetSyncStatusMessage(StatusMessageType type, string message)
     {

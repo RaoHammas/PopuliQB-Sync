@@ -7,9 +7,10 @@ public class QBCompanyService
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    private const string AppId = "PopuliToQbSync";
-    private const string AppName = "PopuliToQbSync";
-    public static string CompanyName { get; set; } = "";
+    public static string AppId => "PopuliToQbSync";
+    public static string AppName => "PopuliToQbSync";
+    public static string CompanyName { get; private set; } = "";
+
     public QBCompanyService()
     {
     }

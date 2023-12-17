@@ -445,7 +445,7 @@ public class PersonReportData
     public int PersonId { get; set; }
 
     [JsonPropertyName("active_roles")]
-    public object ActiveRoles { get; set; }
+    public object? ActiveRoles { get; set; }
 
     [JsonPropertyName("username")]
     public string? Username { get; set; }
@@ -472,12 +472,12 @@ public class PersonReportData
     public string? PrimaryOrgName { get; set; }
 
     [JsonPropertyName("contact_primary_email")]
-    public string ContactPrimaryEmail { get; set; }
+    public string? ContactPrimaryEmail { get; set; }
 
     [JsonPropertyName("contact_primary_phone")]
     public string? ContactPrimaryPhone { get; set; }
 
     [JsonPropertyName("visible_student_id")]
-    public int? VisibleStudentId { get; set; }
+    public object? VisibleStudentId { get; set; }
 }
 

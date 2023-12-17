@@ -1,32 +1,34 @@
-﻿using QBFC16Lib;
+﻿using NLog;
 using PopuliQB_Tool.BusinessObjects;
 using PopuliQB_Tool.BusinessObjectsBuilders;
-using NLog;
 using PopuliQB_Tool.EventArgs;
 using PopuliQB_Tool.Helpers;
 using PopuliQB_Tool.Models;
+using QBFC16Lib;
 
 namespace PopuliQB_Tool.BusinessServices;
 
-public class QbCustomerService
+public class QBInvoiceService
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
-    private readonly PopPersonToQbCustomerBuilder _customerBuilder;
+    private readonly PopInvoiceToQbInvoiceBuilder _invoiceBuilder;
+    private readonly QbCustomerService _customerService;
 
-    public bool IsConnected { get; set; }
-    public bool IsSessionOpen { get; set; }
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
-    public List<QBCustomer> AllExistingCustomersList { get; set; } = new();
+    public bool IsConnected { get; set; }
+    public bool IsSessionOpen { get; set; }
+    public List<QbInvoice> AllExistingInvoicesList { get; set; } = new();
 
-    public QbCustomerService(PopPersonToQbCustomerBuilder customerBuilder)
+    public QBInvoiceService(
+        PopInvoiceToQbInvoiceBuilder invoiceBuilder,
+        QbCustomerService customerService)
     {
-        _customerBuilder = customerBuilder;
+        _invoiceBuilder = invoiceBuilder;
+        _customerService = customerService;
     }
 
-    #region ADD NEW CUSTOMER
-
-    public async Task<bool> AddCustomersAsync(List<PopPerson> persons)
+    public async Task<bool> AddInvoicesAsync(List<PopInvoice> invoices)
     {
         var sessionManager = new QBSessionManager();
 
@@ -45,35 +47,42 @@ public class QbCustomerService
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-                for (var index = 0; index < persons.Count; index++)
+                for (var index = 0; index < invoices.Count; index++)
                 {
-                    var person = persons[index];
+                    var invoice = invoices[index];
+                    var personFullName = invoice.ReportData?.DisplayName;
+                    var existingCustomer =
+                        _customerService.AllExistingCustomersList.FirstOrDefault(x =>
+                            x.PopPersonId == invoice.ReportData?.PersonId);
 
-                    if (AllExistingCustomersList.FirstOrDefault(x => x.PopPersonId == person.Id) != null)
+                    if (existingCustomer != null)
                     {
-                        OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Warn, $"{person.DisplayName} | Id = {person.Id} already exists."));
-                        continue;
-                    }
-
-                    _customerBuilder.BuildQbCustomerAddRequest(requestMsgSet, person);
-
-                    var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-                    if (ReadAddedCustomer(responseMsgSet))
-                    {
-                        OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Success, $"{person.DisplayName} | Id = {person.Id}"));
+                        _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, existingCustomer.QbListId!);
+                        var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
+                        if (ReadAddedCustomer(responseMsgSet))
+                        {
+                            OnSyncStatusChanged?.Invoke(this,
+                                new StatusMessageArgs(StatusMessageType.Success,
+                                    $"{personFullName} | Id = {invoice.Number}"));
+                        }
+                        else
+                        {
+                            var xmResp = responseMsgSet.ToXMLString();
+                            var msg = PQExtensions.GetXmlNodeValue(xmResp,
+                                "/QBXML/QBXMLMsgsRs/InvoiceAddRs/@statusMessage");
+                            OnSyncStatusChanged?.Invoke(this,
+                                new StatusMessageArgs(StatusMessageType.Error,
+                                    $"{personFullName} | Id = {invoice.Id} | {msg}"));
+                        }
                     }
                     else
                     {
-                        var xmResp = responseMsgSet.ToXMLString();
-                        var msg = PQExtensions.GetXmlNodeValue(xmResp, "/QBXML/QBXMLMsgsRs/InvoiceAddRs/@statusMessage");
                         OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Error, $"{person.DisplayName} | Id = {person.Id} | {msg}"));
+                            new StatusMessageArgs(StatusMessageType.Warn,
+                                $"{personFullName} | Id = {invoice.Number} Customer not found."));
                     }
 
                     OnSyncProgressChanged?.Invoke(this, new ProgressArgs(index));
-
                 }
             });
 
@@ -111,6 +120,7 @@ public class QbCustomerService
         {
             return false;
         }
+
         var responseList = responseMsgSet.ResponseList;
         if (responseList == null)
         {
@@ -149,17 +159,16 @@ public class QbCustomerService
         return false;
     }
 
-    #endregion
 
-    #region GET ALL CUSTOMERS
+    #region GET ALL INVOICES
 
-    public async Task<List<QBCustomer>> GetAllExistingCustomersAsync()
+    public async Task<List<QbInvoice>> GetAllExistingInvoicesAsync()
     {
         var sessionManager = new QBSessionManager();
 
         try
         {
-            AllExistingCustomersList.Clear();
+            AllExistingInvoicesList.Clear();
 
             sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
             IsConnected = true;
@@ -174,21 +183,21 @@ public class QbCustomerService
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-                _customerBuilder.BuildGetAllQbCustomersRequest(requestMsgSet);
+                _invoiceBuilder.BuildGetAllInvoicesRequest(requestMsgSet);
                 var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-
+                //var xmResp = responseMsgSet.ToXMLString();
                 ReadFetchedCustomers(responseMsgSet);
             });
 
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
 
-            return AllExistingCustomersList;
+            return AllExistingInvoicesList;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-            return AllExistingCustomersList;
+            return AllExistingInvoicesList;
         }
         finally
         {
@@ -228,17 +237,17 @@ public class QbCustomerService
                 {
                     //make sure the response is the type we're expecting
                     var responseType = (ENResponseType)response.Type.GetValue();
-                    if (responseType == ENResponseType.rtCustomerQueryRs)
+                    if (responseType == ENResponseType.rtInvoiceQueryRs)
                     {
                         //upcast to more specific type here, this is safe because we checked with response.Type check above
-                        var customerRet = (ICustomerRetList)response.Detail;
+                        var retList = (IInvoiceRetList)response.Detail;
 
-                        for (var x = 0; x < customerRet.Count; x++)
+                        for (var x = 0; x < retList.Count; x++)
                         {
-                            var person = ReadCustomerProperties(customerRet.GetAt(x));
+                            var person = ReadProperties(retList.GetAt(x));
                             if (person != null)
                             {
-                                AllExistingCustomersList.Add(person);
+                                AllExistingInvoicesList.Add(person);
                             }
                         }
                     }
@@ -247,20 +256,22 @@ public class QbCustomerService
         }
     }
 
-    private QBCustomer? ReadCustomerProperties(ICustomerRet? customerRet)
+    private QbInvoice? ReadProperties(IInvoiceRet? ret)
     {
         try
         {
-            if (customerRet == null) return null;
+            if (ret == null) return null;
 
-            var customer =  new QBCustomer()
+            var customer = new QbInvoice()
             {
-                QbListId = customerRet.ListID.GetValue(),
-                PopPersonId = Convert.ToInt32(customerRet.Fax.GetValue()),
-                QbName = customerRet.Name.GetValue(),
+                PopInvoiceId = Convert.ToInt32(ret.PONumber.GetValue()), //unique inv id from populi
+                PopInvoiceNumber = Convert.ToInt32(ret.RefNumber.GetValue()),
+                QbCustomerListId = ret.CustomerRef.ListID.GetValue(),
+                QbName = ret.CustomerRef.FullName.GetValue()
             };
 
-            AllExistingCustomersList.Add(customer);
+            AllExistingInvoicesList.Add(customer);
+            return customer;
         }
         catch (Exception ex)
         {

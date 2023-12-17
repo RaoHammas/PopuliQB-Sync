@@ -1,6 +1,8 @@
-﻿namespace PopuliQB_Tool.Helpers;
+﻿using System.Xml;
 
-public static class StringExtensions
+namespace PopuliQB_Tool.Helpers;
+
+public static class PQExtensions
 {
     public static List<string> DivideIntoEqualParts(this string input, int maxLength)
     {
@@ -24,5 +26,19 @@ public static class StringExtensions
         }
 
         return dividedStrings;
+    }
+
+    public static string GetXmlNodeValue(string xmlString, string nodePath)
+    {
+        var xmlDoc = new XmlDocument();
+        xmlDoc.LoadXml(xmlString);
+
+        var statusMessageNode = xmlDoc.SelectSingleNode(nodePath);
+        if (statusMessageNode is { Value: not null })
+        {
+            return statusMessageNode.Value;
+        }
+        
+        return "";
     }
 }

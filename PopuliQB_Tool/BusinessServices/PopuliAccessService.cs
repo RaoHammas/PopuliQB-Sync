@@ -16,6 +16,7 @@ public class PopuliAccessService
 
     private readonly RestClient _client;
     public List<PopPerson> AllPopuliPersons { get; set; } = new();
+    public List<PopInvoice> AllPopuliInvoices { get; set; } = new();
 
     public PopuliAccessService()
     {
@@ -27,7 +28,7 @@ public class PopuliAccessService
 
     public async Task<PopuliResponse<PopPerson>> GetAllPersonsAsync(int page = 1)
     {
-        var request = new RestRequest($"{DevUrl}people/");
+        var request = new RestRequest($"{ProdUrl}people/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
 
@@ -50,23 +51,23 @@ public class PopuliAccessService
         return new();
     }
 
-    public async Task<PopuliResponse<PopPerson>> GetAllInvoicesAsync(int page = 1)
+    public async Task<PopuliResponse<PopInvoice>> GetAllInvoicesAsync(int page = 1)
     {
-        var request = new RestRequest($"{DevUrl}people/");
+        var request = new RestRequest($"{ProdUrl}invoices/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
 
-        var body = $@"{{""expand"": [""items"", ""payments"", ""credits""], ""page"": {page}}}";
+        var body = $@"{{""page"": {page}}}";
 
         request.AddStringBody(body, DataFormat.Json);
 
         var response =
-            await _client.ExecuteAsync<PopuliResponse<PopPerson>>(request, Method.Get, CancellationToken.None);
+            await _client.ExecuteAsync<PopuliResponse<PopInvoice>>(request, Method.Get, CancellationToken.None);
         if (response is { IsSuccessStatusCode: true, Content: not null })
         {
             if (response.Data != null)
             {
-                AllPopuliPersons = response.Data.Data;
+                AllPopuliInvoices = response.Data.Data;
                 return response.Data;
             }
         }

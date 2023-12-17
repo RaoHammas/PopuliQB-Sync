@@ -36,13 +36,17 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
 
-        services.AddTransient<MainWindowViewModel>();
-        services.AddTransient<MessageBoxService>();
+        services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<MessageBoxService>();
 
-        services.AddTransient<QBCompanyService>();
-        services.AddTransient<PopuliAccessService>();
-        services.AddTransient<QbCustomerService>();
-        services.AddTransient<PopPersonToQbCustomerBuilder>();
+        services.AddSingleton<QBCompanyService>();
+        services.AddSingleton<PopuliAccessService>();
+
+        services.AddSingleton<QbCustomerService>();
+        services.AddSingleton<PopPersonToQbCustomerBuilder>();
+        
+        services.AddSingleton<QBInvoiceService>();
+        services.AddSingleton<PopInvoiceToQbInvoiceBuilder>();
 
 
         return services.BuildServiceProvider();

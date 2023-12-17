@@ -16,6 +16,7 @@
     d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel,
                                      IsDesignTimeCreatable=False}"
     ResizeMode="CanResize"
+    WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <b:Interaction.Triggers>
         <b:EventTrigger EventName="Loaded">
@@ -80,6 +81,12 @@
                     Padding="10"
                     Command="{Binding StartPopuliStudentsSyncCommand}"
                     Content="Sync Populi Students To QB" />
+                <Button
+                    Height="40"
+                    Margin="10,0,0,0"
+                    Padding="10"
+                    Command="{Binding StartPopuliInvoicesSyncCommand}"
+                    Content="Sync Populi Invoices To QB" />
             </StackPanel>
 
             <Grid Grid.Row="2">
@@ -136,8 +143,9 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:StatusMessage}">
                                     <TextBlock Margin="0,0,0,2" TextWrapping="Wrap">
+                                        <Run Text="[" />
                                         <Run Text="{Binding MessageType}" />
-                                        <Run Text=" : " />
+                                        <Run Text="] " />
                                         <Run Text="{Binding Message}" />
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">

@@ -23,60 +23,61 @@ public class PopPersonToQbCustomerBuilder
         return fullName;
     }*/
 
-    public void BuildPersonAddRequest(IMsgSetRequest request, PopPerson person)
+    public void BuildQbCustomerAddRequest(IMsgSetRequest requestMsgSet, PopPerson person)
     {
-        var customerAddRq = request.AppendCustomerAddRq();
+        requestMsgSet.ClearRequests();
+        var request = requestMsgSet.AppendCustomerAddRq();
 
-        customerAddRq.Fax.SetValue(person.Id.ToString());
+        request.Fax.SetValue(person.Id.ToString());
 
-        var maxLength = Convert.ToInt32(customerAddRq.Salutation.GetMaxLength());
-        customerAddRq.Salutation.SetValue(person.Prefix?.Length <= maxLength ? person.Prefix : "");
+        var maxLength = Convert.ToInt32(request.Salutation.GetMaxLength());
+        request.Salutation.SetValue(person.Prefix?.Length <= maxLength ? person.Prefix : "");
 
-        maxLength = Convert.ToInt32(customerAddRq.Name.GetMaxLength());
+        maxLength = Convert.ToInt32(request.Name.GetMaxLength());
         if (!string.IsNullOrEmpty(person.DisplayName) && person.DisplayName.Length <= maxLength)
         {
-            customerAddRq.Name.SetValue(person.DisplayName);
+            request.Name.SetValue(person.DisplayName);
         }
         else
         {
-            customerAddRq.Name.SetValue(person.DisplayName?.DivideIntoEqualParts(maxLength)[0]);
+            request.Name.SetValue(person.DisplayName?.DivideIntoEqualParts(maxLength)[0]);
         }
 
         if (!string.IsNullOrEmpty(person.FirstName))
         {
-            maxLength = Convert.ToInt32(customerAddRq.FirstName.GetMaxLength());
-            customerAddRq.FirstName.SetValue(person.FirstName?.Length <= maxLength ? person.FirstName : "");
+            maxLength = Convert.ToInt32(request.FirstName.GetMaxLength());
+            request.FirstName.SetValue(person.FirstName?.Length <= maxLength ? person.FirstName : "");
         }
 
         if (!string.IsNullOrEmpty(person.LastName))
         {
-            maxLength = Convert.ToInt32(customerAddRq.LastName.GetMaxLength());
+            maxLength = Convert.ToInt32(request.LastName.GetMaxLength());
             if (person.LastName.Length <= maxLength)
             {
-                customerAddRq.LastName.SetValue(person.LastName);
+                request.LastName.SetValue(person.LastName);
             }
         }
 
         if (!string.IsNullOrEmpty(person.Suffix))
         {
-            maxLength = Convert.ToInt32(customerAddRq.Suffix.GetMaxLength());
+            maxLength = Convert.ToInt32(request.Suffix.GetMaxLength());
             if (person.Suffix.Length <= maxLength)
             {
-                customerAddRq.JobTitle.SetValue(person.Suffix);
+                request.JobTitle.SetValue(person.Suffix);
             }
         }
 
-        customerAddRq.Email.SetValue(person.ReportData?.ContactPrimaryEmail ?? "");
-        customerAddRq.IsActive.SetValue(true);
-        customerAddRq.CompanyName.SetValue(QBCompanyService.CompanyName);
+        request.Email.SetValue(person.ReportData?.ContactPrimaryEmail ?? "");
+        request.IsActive.SetValue(true);
+        request.CompanyName.SetValue(QBCompanyService.CompanyName);
 
         if (person.Addresses!= null && person.Addresses.Any())
         {
             var add = person.Addresses[0];
-            maxLength = Convert.ToInt32(customerAddRq.BillAddress.Addr1.GetMaxLength());
+            maxLength = Convert.ToInt32(request.BillAddress.Addr1.GetMaxLength());
             if (add.Street?.Length <= maxLength)
             {
-                customerAddRq.BillAddress.Addr1.SetValue(add.Street);
+                request.BillAddress.Addr1.SetValue(add.Street);
             }
             else
             {
@@ -85,35 +86,35 @@ public class PopPersonToQbCustomerBuilder
                     var adds = add.Street.DivideIntoEqualParts(maxLength);
                     if (adds.Count > 0)
                     {
-                        customerAddRq.BillAddress.Addr1.SetValue(adds[0]);
+                        request.BillAddress.Addr1.SetValue(adds[0]);
                     }
 
                     if (adds.Count > 1)
                     {
-                        customerAddRq.BillAddress.Addr2.SetValue(adds[1]);
+                        request.BillAddress.Addr2.SetValue(adds[1]);
                     }
 
                     if (adds.Count > 2)
                     {
-                        customerAddRq.BillAddress.Addr2.SetValue(adds[2]);
+                        request.BillAddress.Addr2.SetValue(adds[2]);
                     }
                 }
             }
 
-            maxLength = Convert.ToInt32(customerAddRq.BillAddress.City.GetMaxLength());
-            customerAddRq.BillAddress.City.SetValue(add.City?.Length <= maxLength ? add.City : "");
+            maxLength = Convert.ToInt32(request.BillAddress.City.GetMaxLength());
+            request.BillAddress.City.SetValue(add.City?.Length <= maxLength ? add.City : "");
 
-            maxLength = Convert.ToInt32(customerAddRq.BillAddress.Country.GetMaxLength());
-            customerAddRq.BillAddress.Country.SetValue(add.Country?.Length <= maxLength ? add.Country : "");
+            maxLength = Convert.ToInt32(request.BillAddress.Country.GetMaxLength());
+            request.BillAddress.Country.SetValue(add.Country?.Length <= maxLength ? add.Country : "");
 
-            maxLength = Convert.ToInt32(customerAddRq.BillAddress.PostalCode.GetMaxLength());
-            customerAddRq.BillAddress.PostalCode.SetValue(add.Postal?.Length <= maxLength ? add.Postal : "");
+            maxLength = Convert.ToInt32(request.BillAddress.PostalCode.GetMaxLength());
+            request.BillAddress.PostalCode.SetValue(add.Postal?.Length <= maxLength ? add.Postal : "");
 
-            maxLength = Convert.ToInt32(customerAddRq.BillAddress.State.GetMaxLength());
-            customerAddRq.BillAddress.State.SetValue(add.State?.Length <= maxLength ? add.State : "");
+            maxLength = Convert.ToInt32(request.BillAddress.State.GetMaxLength());
+            request.BillAddress.State.SetValue(add.State?.Length <= maxLength ? add.State : "");
 
-            maxLength = Convert.ToInt32(customerAddRq.BillAddress.Note.GetMaxLength());
-            customerAddRq.BillAddress.Note.SetValue(add.Type?.Length <= maxLength ? add.Type : "");
+            maxLength = Convert.ToInt32(request.BillAddress.Note.GetMaxLength());
+            request.BillAddress.Note.SetValue(add.Type?.Length <= maxLength ? add.Type : "");
         }
 
         if (person.PhoneNumbers != null && person.PhoneNumbers.Any())
@@ -121,35 +122,35 @@ public class PopPersonToQbCustomerBuilder
             var ph1 = person.PhoneNumbers[0].Number;
             if (ph1 != null)
             {
-                maxLength = Convert.ToInt32(customerAddRq.Phone.GetMaxLength());
+                maxLength = Convert.ToInt32(request.Phone.GetMaxLength());
                 if (ph1.Length <= maxLength)
                 {
-                    customerAddRq.Phone.SetValue(ph1);
+                    request.Phone.SetValue(ph1);
                 }
                 else
                 {
                     var phs = ph1.DivideIntoEqualParts(maxLength);
                     if (phs.Count > 0)
                     {
-                        customerAddRq.Phone.SetValue(phs[0]);
+                        request.Phone.SetValue(phs[0]);
                     }
 
                     if (phs.Count > 1)
                     {
-                        customerAddRq.AltPhone.SetValue(phs[1]);
+                        request.AltPhone.SetValue(phs[1]);
                     }
                 }
 
-                maxLength = Convert.ToInt32(customerAddRq.Contact.GetMaxLength());
+                maxLength = Convert.ToInt32(request.Contact.GetMaxLength());
                 if (ph1.Length <= maxLength)
                 {
-                    customerAddRq.Contact.SetValue(ph1);
+                    request.Contact.SetValue(ph1);
                 }
 
-                maxLength = Convert.ToInt32(customerAddRq.Mobile.GetMaxLength());
+                maxLength = Convert.ToInt32(request.Mobile.GetMaxLength());
                 if (ph1.Length <= maxLength)
                 {
-                    customerAddRq.Mobile.SetValue(ph1);
+                    request.Mobile.SetValue(ph1);
                 }
             }
 
@@ -158,16 +159,16 @@ public class PopPersonToQbCustomerBuilder
                 var ph2 = person.PhoneNumbers[1].Number;
                 if (ph2 != null)
                 {
-                    maxLength = Convert.ToInt32(customerAddRq.AltPhone.GetMaxLength());
+                    maxLength = Convert.ToInt32(request.AltPhone.GetMaxLength());
                     if (ph2.Length <= maxLength)
                     {
-                        customerAddRq.AltPhone.SetValue(ph2);
+                        request.AltPhone.SetValue(ph2);
                     }
 
-                    maxLength = Convert.ToInt32(customerAddRq.AltContact.GetMaxLength());
+                    maxLength = Convert.ToInt32(request.AltContact.GetMaxLength());
                     if (ph2.Length <= maxLength)
                     {
-                        customerAddRq.AltContact.SetValue(ph2);
+                        request.AltContact.SetValue(ph2);
                     }
                 }
             }
@@ -175,26 +176,31 @@ public class PopPersonToQbCustomerBuilder
 
         if (person.PopStudent?.LoaStartDate != null)
         {
-            customerAddRq.JobStartDate.SetValue(person.PopStudent.LoaStartDate.Value);
+            request.JobStartDate.SetValue(person.PopStudent.LoaStartDate.Value);
         }
 
         if (person.PopStudent?.LoaStartDate != null)
         {
-            customerAddRq.JobProjectedEndDate.SetValue(person.PopStudent.LoaStartDate.Value);
+            request.JobProjectedEndDate.SetValue(person.PopStudent.LoaStartDate.Value);
         }
 
         if (person.PopStudent?.ExitDate != null)
         {
-            customerAddRq.JobEndDate.SetValue(person.PopStudent.ExitDate.Value);
+            request.JobEndDate.SetValue(person.PopStudent.ExitDate.Value);
         }
+
+        request.IncludeRetElementList.Add("Name");
+        request.IncludeRetElementList.Add("Fax");
+        request.IncludeRetElementList.Add("ListId");
     }
 
 
-    public void BuildGetAllPersonsRequest(IMsgSetRequest request)
+    public void BuildGetAllQbCustomersRequest(IMsgSetRequest requestMsgSet)
     {
-        ICustomerQuery customerQuery = request.AppendCustomerQueryRq();
-        //customerQuery.ORCustomerListQuery.CustomerListFilter.ActiveStatus.SetValue(ENActiveStatus.asAll);
-        customerQuery.IncludeRetElementList.Add("Name");
-        customerQuery.IncludeRetElementList.Add("Fax");
+        requestMsgSet.ClearRequests();
+        var request = requestMsgSet.AppendCustomerQueryRq();
+        request.IncludeRetElementList.Add("Name");
+        request.IncludeRetElementList.Add("Fax");
+        request.IncludeRetElementList.Add("ListId");
     }
 }
