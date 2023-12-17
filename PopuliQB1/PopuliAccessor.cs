@@ -263,7 +263,7 @@ namespace Populi
 
             List<List<Person>> list = new List<List<Person>>();
             List<Person> retPersArr;
-            for (int j = 0; j < contPersons.pages - 1; j++)
+            for (int j = 0; j < 1; j++)
             {
                 lock (lockObject1)
                 {

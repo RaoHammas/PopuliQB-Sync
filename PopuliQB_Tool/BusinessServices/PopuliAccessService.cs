@@ -25,7 +25,7 @@ public class PopuliAccessService
         });
     }
 
-    public async Task<PopuliResponse<PopPerson>> GetAllPersonsAsync(int page=1)
+    public async Task<PopuliResponse<PopPerson>> GetAllPersonsAsync(int page = 1)
     {
         var request = new RestRequest($"{DevUrl}people/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
@@ -35,7 +35,8 @@ public class PopuliAccessService
 
         request.AddStringBody(body, DataFormat.Json);
 
-        var response = await _client.ExecuteAsync<PopuliResponse<PopPerson>>(request, Method.Get, CancellationToken.None);
+        var response =
+            await _client.ExecuteAsync<PopuliResponse<PopPerson>>(request, Method.Get, CancellationToken.None);
         if (response is { IsSuccessStatusCode: true, Content: not null })
         {
             if (response.Data != null)
@@ -46,6 +47,31 @@ public class PopuliAccessService
         }
 
         _logger.Error("Failed to fetch Persons. {@response}", response);
-        return new ();
+        return new();
+    }
+
+    public async Task<PopuliResponse<PopPerson>> GetAllInvoicesAsync(int page = 1)
+    {
+        var request = new RestRequest($"{DevUrl}people/");
+        request.AddHeader("Authorization", $"Bearer {AuthToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        var body = $@"{{""expand"": [""items"", ""payments"", ""credits""], ""page"": {page}}}";
+
+        request.AddStringBody(body, DataFormat.Json);
+
+        var response =
+            await _client.ExecuteAsync<PopuliResponse<PopPerson>>(request, Method.Get, CancellationToken.None);
+        if (response is { IsSuccessStatusCode: true, Content: not null })
+        {
+            if (response.Data != null)
+            {
+                AllPopuliPersons = response.Data.Data;
+                return response.Data;
+            }
+        }
+
+        _logger.Error("Failed to fetch Persons. {@response}", response);
+        return new();
     }
 }

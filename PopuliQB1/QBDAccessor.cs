@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
 using QBFC16Lib;
-using QBXMLRP2Lib;
 using Populi;
+using QBXMLRP2Lib;
 
 namespace PopuliQB1
 {
@@ -16,7 +16,7 @@ namespace PopuliQB1
         RequestProcessor2 qbXMLProc;
         private bool booSessionBegun;
         private bool closedConnection;
-
+        
         public QBDAccessor()
         {
             // Create the session manager object using QBFC

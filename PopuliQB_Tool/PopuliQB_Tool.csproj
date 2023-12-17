@@ -18,25 +18,27 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Libs\Interop.QBFC16Lib.dll" />
-    <None Remove="Libs\QBXMLRP2.dll" />
-  </ItemGroup>
-
-  <ItemGroup>
     <COMReference Include="QBXMLRP2Lib">
+      <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>0</VersionMinor>
       <VersionMajor>1</VersionMajor>
       <Guid>4351618f-9059-4a79-b638-dcb8b97b3262</Guid>
       <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="QBFC16Lib">
       <WrapperTool>tlbimp</WrapperTool>
+      <VersionMinor>0</VersionMinor>
+      <VersionMajor>1</VersionMajor>
+      <Guid>1d05360b-2536-4277-83fd-bdf639e20f9e</Guid>
+      <Lcid>0</Lcid>
       <Isolated>false</Isolated>
       <EmbedInteropTypes>true</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Libs\Interop.QBFC16Lib.dll" />
-    <Content Include="Libs\QBXMLRP2.dll" />
     <Content Include="Resources\icon.ico" />
   </ItemGroup>
 
@@ -47,12 +49,6 @@
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
     <PackageReference Include="NLog" Version="5.2.7" />
     <PackageReference Include="RestSharp" Version="110.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Interop.QBFC16Lib">
-      <HintPath>Libs\Interop.QBFC16Lib.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>
