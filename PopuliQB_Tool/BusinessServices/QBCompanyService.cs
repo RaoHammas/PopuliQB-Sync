@@ -1,6 +1,5 @@
 ﻿using NLog;
 using QBFC16Lib;
-using QBXMLRP2Lib;
 
 namespace PopuliQB_Tool.BusinessServices;
 
@@ -10,7 +9,7 @@ public class QBCompanyService
 
     private const string AppId = "PopuliToQbSync";
     private const string AppName = "PopuliToQbSync";
-
+    public static string CompanyName { get; set; } = "";
     public QBCompanyService()
     {
     }
@@ -23,17 +22,17 @@ public class QBCompanyService
             sessionManager.OpenConnection(AppId, AppName);
 
             sessionManager.BeginSession("", ENOpenMode.omDontCare);
-            var compName = sessionManager.GetCurrentCompanyFileName();
+            CompanyName = sessionManager.GetCurrentCompanyFileName();
             try
             {
-                compName = compName.Split("\\").Last().Split('.')[0];
+                CompanyName = CompanyName.Split("\\").Last().Split('.')[0];
             }
             catch (Exception)
             {
                 //ignore
             }
 
-            return compName;
+            return CompanyName;
         }
         catch (Exception ex)
         {

@@ -1,5 +1,6 @@
 ﻿using QBFC16Lib;
 using PopuliQB_Tool.BusinessObjects;
+using PopuliQB_Tool.BusinessServices;
 using PopuliQB_Tool.Helpers;
 
 namespace PopuliQB_Tool.BusinessObjectsBuilders;
@@ -24,7 +25,6 @@ public class PopPersonToQbCustomerBuilder
 
     public void BuildPersonAddRequest(IMsgSetRequest request, PopPerson person)
     {
-        var fullName = person.DisplayName;
         var customerAddRq = request.AppendCustomerAddRq();
 
         customerAddRq.Fax.SetValue(person.Id.ToString());
@@ -33,13 +33,13 @@ public class PopPersonToQbCustomerBuilder
         customerAddRq.Salutation.SetValue(person.Prefix?.Length <= maxLength ? person.Prefix : "");
 
         maxLength = Convert.ToInt32(customerAddRq.Name.GetMaxLength());
-        if (!string.IsNullOrEmpty(fullName) && fullName.Length <= maxLength)
+        if (!string.IsNullOrEmpty(person.DisplayName) && person.DisplayName.Length <= maxLength)
         {
-            customerAddRq.Name.SetValue(fullName);
+            customerAddRq.Name.SetValue(person.DisplayName);
         }
         else
         {
-            customerAddRq.Name.SetValue(fullName.DivideIntoEqualParts(maxLength)[0]);
+            customerAddRq.Name.SetValue(person.DisplayName?.DivideIntoEqualParts(maxLength)[0]);
         }
 
         if (!string.IsNullOrEmpty(person.FirstName))
@@ -57,12 +57,18 @@ public class PopPersonToQbCustomerBuilder
             }
         }
 
-        
+        if (!string.IsNullOrEmpty(person.Suffix))
+        {
+            maxLength = Convert.ToInt32(customerAddRq.Suffix.GetMaxLength());
+            if (person.Suffix.Length <= maxLength)
+            {
+                customerAddRq.JobTitle.SetValue(person.Suffix);
+            }
+        }
+
         customerAddRq.Email.SetValue(person.ReportData?.ContactPrimaryEmail ?? "");
-        customerAddRq.JobTitle.SetEmpty();
         customerAddRq.IsActive.SetValue(true);
-        customerAddRq.CompanyName.SetEmpty();
-        customerAddRq.JobTitle.SetEmpty();
+        customerAddRq.CompanyName.SetValue(QBCompanyService.CompanyName);
 
         if (person.Addresses!= null && person.Addresses.Any())
         {
