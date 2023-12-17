@@ -187,16 +187,19 @@ public class PopPerson
 
     
     [JsonPropertyName("addresses")]
-    public List<PopAddress> Addresses { get; set; }
+    public List<PopAddress>? Addresses { get; set; }
 
     
     [JsonPropertyName("phone_numbers")]
-    public List<PopPhoneNumber> PhoneNumbers { get; set; }
+    public List<PopPhoneNumber>? PhoneNumbers { get; set; }
     // [JsonPropertyName("email_addresses")] public List<PopEmailAddress> EmailAddresses { get; set; }
 
     
     [JsonPropertyName("student")]
-    public PopStudent PopStudent { get; set; }
+    public PopStudent? PopStudent { get; set; }
+
+    [JsonPropertyName("report_data")]
+    public ReportData? ReportData { get; set; }
 }
 
 public class PopStudent
@@ -341,7 +344,6 @@ public class PopAddress
     public int? ImportId { get; set; }
 }
 
-// Root myDeserializedClass = JsonSerializer.Deserialize<Root>(myJsonResponse);
 public class PopPhoneNumber
 {
     
@@ -476,3 +478,46 @@ public class PopEmailAddress
     [JsonPropertyName("added_by_id")]
     public int? AddedById { get; set; }
 }
+
+public class ReportData
+{
+    [JsonPropertyName("person_id")]
+    public int PersonId { get; set; }
+
+    [JsonPropertyName("active_roles")]
+    public object ActiveRoles { get; set; }
+
+    [JsonPropertyName("username")]
+    public string? Username { get; set; }
+
+    [JsonPropertyName("primary_address_street")]
+    public string? PrimaryAddressStreet { get; set; }
+
+    [JsonPropertyName("primary_address_city")]
+    public string? PrimaryAddressCity { get; set; }
+
+    [JsonPropertyName("primary_address_state")]
+    public string? PrimaryAddressState { get; set; }
+
+    [JsonPropertyName("primary_address_country")]
+    public string? PrimaryAddressCountry { get; set; }
+
+    [JsonPropertyName("is_alum")]
+    public int IsAlum { get; set; }
+
+    [JsonPropertyName("primary_org_title")]
+    public string? PrimaryOrgTitle { get; set; }
+
+    [JsonPropertyName("primary_org_name")]
+    public string? PrimaryOrgName { get; set; }
+
+    [JsonPropertyName("contact_primary_email")]
+    public string ContactPrimaryEmail { get; set; }
+
+    [JsonPropertyName("contact_primary_phone")]
+    public string? ContactPrimaryPhone { get; set; }
+
+    [JsonPropertyName("visible_student_id")]
+    public int? VisibleStudentId { get; set; }
+}
+

@@ -49,7 +49,7 @@ public class QbCustomerService
                 for (var index = 0; index < persons.Count; index++)
                 {
                     var person = persons[index];
-                    var personFullName = PopPersonToQbCustomerBuilder.GetFullName(person);
+                    var personFullName = person.DisplayName;
 
                     if (AllExistingCustomersList.FirstOrDefault(x => x.Id == person.Id) != null)
                     {

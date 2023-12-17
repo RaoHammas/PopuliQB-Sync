@@ -54,16 +54,20 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void Loaded()
+    private Task Loaded()
     {
-        ConnectToQb();
+        return ConnectToQb();
     }
 
-    private void ConnectToQb()
+    private async Task ConnectToQb()
     {
         try
         {
-            CompanyName = _qbCompanyService.GetCompanyName();
+            await Task.Run(() =>
+            {
+                CompanyName = _qbCompanyService.GetCompanyName();
+            });
+
             SetSyncStatusMessage(StatusMessageType.Success, $"Connected to QuickBooks {CompanyName}.");
         }
         catch (Exception ex)
@@ -79,6 +83,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         return _populiAccessService.GetAllPersonsAsync(page);
     }
 
+    [RelayCommand]
     private async Task StartPopuliStudentsSync()
     {
         try
