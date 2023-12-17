@@ -109,7 +109,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             TotalRecords = persons.Results ?? 0;
             SetSyncStatusMessage(StatusMessageType.Success, $"Total Persons found on Populi : {persons.Results}");
 
-            if (!persons.Data.Any())
+            if (persons.Data.Count == 0)
             {
                 SetSyncStatusMessage(StatusMessageType.Warn, $"Fetched Persons : 0");
                 return;
@@ -129,7 +129,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                 }
 
                 page++;
-                if (persons.Data.Any())
+                if (persons.Data.Count != 0)
                 {
                     SetSyncStatusMessage(StatusMessageType.Info, $"Adding next {persons.Data.Count} to QB.");
                     var resp = await _qbCustomerService.AddCustomersAsync(persons.Data);

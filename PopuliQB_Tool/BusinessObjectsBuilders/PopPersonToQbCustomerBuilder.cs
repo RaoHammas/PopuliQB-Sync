@@ -31,10 +31,10 @@ public class PopPersonToQbCustomerBuilder
         request.Fax.SetValue(person.Id.ToString());
 
         var maxLength = Convert.ToInt32(request.Salutation.GetMaxLength());
-        request.Salutation.SetValue(person.Prefix?.Length <= maxLength ? person.Prefix : "");
+        request.Salutation.SetValue(person.Prefix?.Length < maxLength ? person.Prefix : "");
 
         maxLength = Convert.ToInt32(request.Name.GetMaxLength());
-        if (!string.IsNullOrEmpty(person.DisplayName) && person.DisplayName.Length <= maxLength)
+        if (!string.IsNullOrEmpty(person.DisplayName) && person.DisplayName.Length < maxLength)
         {
             request.Name.SetValue(person.DisplayName);
         }
@@ -46,13 +46,13 @@ public class PopPersonToQbCustomerBuilder
         if (!string.IsNullOrEmpty(person.FirstName))
         {
             maxLength = Convert.ToInt32(request.FirstName.GetMaxLength());
-            request.FirstName.SetValue(person.FirstName?.Length <= maxLength ? person.FirstName : "");
+            request.FirstName.SetValue(person.FirstName?.Length < maxLength ? person.FirstName : "");
         }
 
         if (!string.IsNullOrEmpty(person.LastName))
         {
             maxLength = Convert.ToInt32(request.LastName.GetMaxLength());
-            if (person.LastName.Length <= maxLength)
+            if (person.LastName.Length < maxLength)
             {
                 request.LastName.SetValue(person.LastName);
             }
@@ -61,7 +61,7 @@ public class PopPersonToQbCustomerBuilder
         if (!string.IsNullOrEmpty(person.Suffix))
         {
             maxLength = Convert.ToInt32(request.Suffix.GetMaxLength());
-            if (person.Suffix.Length <= maxLength)
+            if (person.Suffix.Length < maxLength)
             {
                 request.JobTitle.SetValue(person.Suffix);
             }
@@ -75,7 +75,7 @@ public class PopPersonToQbCustomerBuilder
         {
             var add = person.Addresses[0];
             maxLength = Convert.ToInt32(request.BillAddress.Addr1.GetMaxLength());
-            if (add.Street?.Length <= maxLength)
+            if (add.Street?.Length < maxLength)
             {
                 request.BillAddress.Addr1.SetValue(add.Street);
             }
@@ -102,19 +102,19 @@ public class PopPersonToQbCustomerBuilder
             }
 
             maxLength = Convert.ToInt32(request.BillAddress.City.GetMaxLength());
-            request.BillAddress.City.SetValue(add.City?.Length <= maxLength ? add.City : "");
+            request.BillAddress.City.SetValue(add.City?.Length < maxLength ? add.City : "");
 
             maxLength = Convert.ToInt32(request.BillAddress.Country.GetMaxLength());
-            request.BillAddress.Country.SetValue(add.Country?.Length <= maxLength ? add.Country : "");
+            request.BillAddress.Country.SetValue(add.Country?.Length < maxLength ? add.Country : "");
 
             maxLength = Convert.ToInt32(request.BillAddress.PostalCode.GetMaxLength());
-            request.BillAddress.PostalCode.SetValue(add.Postal?.Length <= maxLength ? add.Postal : "");
+            request.BillAddress.PostalCode.SetValue(add.Postal?.Length < maxLength ? add.Postal : "");
 
             maxLength = Convert.ToInt32(request.BillAddress.State.GetMaxLength());
-            request.BillAddress.State.SetValue(add.State?.Length <= maxLength ? add.State : "");
+            request.BillAddress.State.SetValue(add.State?.Length < maxLength ? add.State : "");
 
             maxLength = Convert.ToInt32(request.BillAddress.Note.GetMaxLength());
-            request.BillAddress.Note.SetValue(add.Type?.Length <= maxLength ? add.Type : "");
+            request.BillAddress.Note.SetValue(add.Type?.Length < maxLength ? add.Type : "");
         }
 
         if (person.PhoneNumbers != null && person.PhoneNumbers.Any())
@@ -123,7 +123,7 @@ public class PopPersonToQbCustomerBuilder
             if (ph1 != null)
             {
                 maxLength = Convert.ToInt32(request.Phone.GetMaxLength());
-                if (ph1.Length <= maxLength)
+                if (ph1.Length < maxLength)
                 {
                     request.Phone.SetValue(ph1);
                 }
@@ -142,13 +142,13 @@ public class PopPersonToQbCustomerBuilder
                 }
 
                 maxLength = Convert.ToInt32(request.Contact.GetMaxLength());
-                if (ph1.Length <= maxLength)
+                if (ph1.Length < maxLength)
                 {
                     request.Contact.SetValue(ph1);
                 }
 
                 maxLength = Convert.ToInt32(request.Mobile.GetMaxLength());
-                if (ph1.Length <= maxLength)
+                if (ph1.Length < maxLength)
                 {
                     request.Mobile.SetValue(ph1);
                 }
@@ -160,13 +160,13 @@ public class PopPersonToQbCustomerBuilder
                 if (ph2 != null)
                 {
                     maxLength = Convert.ToInt32(request.AltPhone.GetMaxLength());
-                    if (ph2.Length <= maxLength)
+                    if (ph2.Length < maxLength)
                     {
                         request.AltPhone.SetValue(ph2);
                     }
 
                     maxLength = Convert.ToInt32(request.AltContact.GetMaxLength());
-                    if (ph2.Length <= maxLength)
+                    if (ph2.Length < maxLength)
                     {
                         request.AltContact.SetValue(ph2);
                     }
@@ -191,7 +191,7 @@ public class PopPersonToQbCustomerBuilder
 
         request.IncludeRetElementList.Add("Name");
         request.IncludeRetElementList.Add("Fax");
-        request.IncludeRetElementList.Add("ListId");
+        request.IncludeRetElementList.Add("ListID");
     }
 
 
@@ -201,6 +201,6 @@ public class PopPersonToQbCustomerBuilder
         var request = requestMsgSet.AppendCustomerQueryRq();
         request.IncludeRetElementList.Add("Name");
         request.IncludeRetElementList.Add("Fax");
-        request.IncludeRetElementList.Add("ListId");
+        request.IncludeRetElementList.Add("ListID");
     }
 }

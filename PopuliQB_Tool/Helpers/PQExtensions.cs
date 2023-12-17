@@ -1,4 +1,4 @@
-﻿using System.Xml;
+﻿using System.Text.RegularExpressions;
 
 namespace PopuliQB_Tool.Helpers;
 
@@ -11,7 +11,7 @@ public static class PQExtensions
         var length = input.Length;
 
         // Calculate the number of parts needed
-        var numParts = (int)Math.Ceiling((double)length / maxLength);
+        var numParts = (int)Math.Ceiling((double)length / --maxLength);
 
         // Calculate the length for each part
         var partLength = length / numParts;
@@ -28,17 +28,17 @@ public static class PQExtensions
         return dividedStrings;
     }
 
-    public static string GetXmlNodeValue(string xmlString, string nodePath)
+    public static string GetXmlNodeValue(string xmlString)
     {
-        var xmlDoc = new XmlDocument();
-        xmlDoc.LoadXml(xmlString);
+        var pattern = @"statusMessage\s*=\s*""([^""]*)""";
+        var match = Regex.Match(xmlString, pattern);
 
-        var statusMessageNode = xmlDoc.SelectSingleNode(nodePath);
-        if (statusMessageNode is { Value: not null })
+        if (match.Success)
         {
-            return statusMessageNode.Value;
+            return match.Groups[1].Value;
         }
         
         return "";
     }
+
 }

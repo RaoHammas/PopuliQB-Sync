@@ -33,29 +33,28 @@ public class PopInvoiceToQbInvoiceBuilder
             setCredit11155.CreditTxnID.SetValue("200000-1011023419");
         }*/
 
-        request.IsToBePrinted.SetValue(true);
-        request.IsToBeEmailed.SetValue(true);
+        request.IsToBePrinted.SetValue(false);
+        request.IsToBeEmailed.SetValue(false);
         request.Memo.SetValue($"Trans#{invoice.TransactionId}");
 
         if (invoice.Items != null)
         {
             foreach (var item in invoice.Items)
             {
+                
                 var invItem = request.ORInvoiceLineAddList.Append();
                 invItem.InvoiceLineAdd.ItemRef.FullName.SetValue(item.Name);
                 invItem.InvoiceLineAdd.Desc.SetValue(item.Description);
                 invItem.InvoiceLineAdd.Quantity.SetValue(1);
-                invItem.InvoiceLineAdd.ORRatePriceLevel.Rate.SetValue(15.65);
+                invItem.InvoiceLineAdd.ORRatePriceLevel.Rate.SetValue(item.Amount!.Value);
                 invItem.InvoiceLineAdd.Amount.SetValue(item.Amount!.Value);
-                invItem.InvoiceLineAdd.ORSerialLotNumber.SerialNumber.SetValue(item.Id.ToString());
-                //invItem.InvoiceLineAdd.ORSerialLotNumber.LotNumber.SetValue(item.Id.ToString());
                 invItem.InvoiceLineAdd.IsTaxable.SetValue(false);
                 invItem.InvoiceLineAdd.TaxAmount.SetValue(0);
             }
         }
 
 
-        request.IncludeRetElementList.Add("ListID");
+        request.IncludeRetElementList.Add("CustomerRef");
         request.IncludeRetElementList.Add("RefNumber");
         request.IncludeRetElementList.Add("PONumber");
         request.IncludeRetElementList.Add("FullName");
@@ -65,7 +64,7 @@ public class PopInvoiceToQbInvoiceBuilder
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendInvoiceQueryRq();
-        request.IncludeRetElementList.Add("ListID");
+        request.IncludeRetElementList.Add("CustomerRef");
         request.IncludeRetElementList.Add("RefNumber");
         request.IncludeRetElementList.Add("PONumber");
         request.IncludeRetElementList.Add("FullName");

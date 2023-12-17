@@ -182,7 +182,7 @@ public class PopStudent
 
     
     [JsonPropertyName("first_time")]
-    public int? FirstTime { get; set; }
+    public object? FirstTime { get; set; }
 
     
     [JsonPropertyName("last_academic_term_id")]
