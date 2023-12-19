@@ -32,8 +32,28 @@ public class PopuliAccessService
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
 
-        var body = $@"{{""expand"": [""addresses"", ""phone_numbers"", ""student""], ""page"": {page}}}";
-
+        // var body = $@"{{""expand"": [""addresses"", ""phone_numbers"", ""student""], ""page"": {page}}}"; //from name
+        string body = """
+                      {
+                        "expand": ["addresses", "phone_numbers", "student"],
+                          "filter":
+                          {
+                              "0": {
+                                  "logic": "ALL",
+                                  "fields": [
+                                      {
+                                          "name": "student_id",
+                                          "value": {
+                                              "type": "IS",
+                                              "text": "97113"
+                                          },
+                                          "positive": 1
+                                      }
+                                  ]
+                              }
+                          }
+                      }
+                      """;
         request.AddStringBody(body, DataFormat.Json);
 
         var response =
@@ -57,7 +77,29 @@ public class PopuliAccessService
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
 
-        var body = $@"{{""page"": {page}}}";
+        // var body = $@"{{""page"": {page}}}"; //from url
+        var body = """
+                   {
+                       "expand": ["payments", "credits"],
+                       "filter":
+                       {
+                       "0": {
+                               "logic": "ALL",
+                               "fields": [
+                               {
+                                   "name": "student",
+                                   "value": {
+                                       "display_text": "Andrea Peter",
+                                       "id": "9487" 
+                                   },
+                                   "positive": "1"
+                               }
+                               ]
+                           }
+                       }
+                   }
+
+                   """;
 
         request.AddStringBody(body, DataFormat.Json);
 

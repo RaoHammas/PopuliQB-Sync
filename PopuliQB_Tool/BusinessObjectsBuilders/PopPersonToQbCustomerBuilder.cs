@@ -7,21 +7,22 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopPersonToQbCustomerBuilder
 {
-    /*public static string GetFullName(PopPerson person)
+    public static string GetFullName(PopPerson person)
     {
         var fullName = "";
-        if (!string.IsNullOrEmpty(person.FirstName))
-        {
-            fullName += $"{person.FirstName}";
-        }
-
+        
         if (!string.IsNullOrEmpty(person.LastName))
         {
             fullName += $" {person.LastName}";
         }
 
+        if (!string.IsNullOrEmpty(person.FirstName))
+        {
+            fullName += $", {person.FirstName}";
+        }
+
         return fullName;
-    }*/
+    }
 
     public void BuildQbCustomerAddRequest(IMsgSetRequest requestMsgSet, PopPerson person)
     {
@@ -32,16 +33,17 @@ public class PopPersonToQbCustomerBuilder
 
         var maxLength = Convert.ToInt32(request.Salutation.GetMaxLength());
         request.Salutation.SetValue(person.Prefix?.Length < maxLength ? person.Prefix : "");
+        request.Name.SetValue(GetFullName(person));
 
         maxLength = Convert.ToInt32(request.Name.GetMaxLength());
-        if (!string.IsNullOrEmpty(person.DisplayName) && person.DisplayName.Length < maxLength)
+        /*if (!string.IsNullOrEmpty(person.DisplayName) && person.DisplayName.Length < maxLength)
         {
             request.Name.SetValue(person.DisplayName);
         }
         else
         {
             request.Name.SetValue(person.DisplayName?.DivideIntoEqualParts(maxLength)[0]);
-        }
+        }*/
 
         if (!string.IsNullOrEmpty(person.FirstName))
         {
@@ -69,7 +71,7 @@ public class PopPersonToQbCustomerBuilder
 
         request.Email.SetValue(person.ReportData?.ContactPrimaryEmail ?? "");
         request.IsActive.SetValue(true);
-        request.CompanyName.SetValue(QBCompanyService.CompanyName);
+        request.CompanyName.SetValue("Divine Mercy University");
 
         if (person.Addresses!= null && person.Addresses.Any())
         {

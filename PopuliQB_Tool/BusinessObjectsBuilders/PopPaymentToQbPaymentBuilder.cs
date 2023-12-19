@@ -3,18 +3,17 @@ using QBFC16Lib;
 
 namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
-public class PopInvoiceToQbInvoiceBuilder
+public class PopPaymentToQbPaymentBuilder
 {
     public void BuildInvoiceAddRequest(IMsgSetRequest requestMsgSet, PopInvoice invoice, string qbCustomerListId)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendInvoiceAddRq();
-        request.CustomerRef.ListID.SetValue(qbCustomerListId); 
-        //invoiceAddRq.CustomerRef.FullName.SetValue(invoice.ReportData?.DisplayName);
+        request.CustomerRef.ListID.SetValue(qbCustomerListId);
         request.PONumber.SetValue(invoice.Id.ToString());
         request.RefNumber.SetValue(invoice.Number.ToString());
-        request.ARAccountRef.FullName.SetValue("Tuition Receivable");
-        
+
+
         if (!string.IsNullOrEmpty(invoice.Status) && invoice.Status != "unpaid")
         {
             request.IsPending.SetValue(false);
@@ -25,10 +24,6 @@ public class PopInvoiceToQbInvoiceBuilder
             request.DueDate.SetValue(dueDate);
         }
 
-        if (Convert.ToDateTime(invoice.ReportData?.PostedDate) is var postedDate)
-        {
-            request.TxnDate.SetValue(postedDate);
-        }
         /*if (Convert.ToDouble(invoice.ReportData?.AmountPaid) is var paid)
         {
             var setCredit11155 = invoiceAddRq.SetCreditList.Append();

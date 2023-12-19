@@ -115,7 +115,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            while (page <= 3)
+            while (page <= 1)
             {
                 if (page != 1)
                 {

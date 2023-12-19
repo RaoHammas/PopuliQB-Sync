@@ -5,10 +5,6 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopInvoiceItemToQbInvoiceItemBuilder
 {
-    public PopInvoiceItemToQbInvoiceItemBuilder()
-    {
-    }
-
     public void BuildInvoiceItemAddRequest(IMsgSetRequest requestMsgSet, PopInvoiceItem invoiceItem)
     {
         requestMsgSet.ClearRequests();
