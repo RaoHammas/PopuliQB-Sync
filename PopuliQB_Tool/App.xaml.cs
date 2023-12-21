@@ -50,6 +50,7 @@ public partial class App : Application
 
         services.AddSingleton<QBInvoiceItemService>();
         services.AddSingleton<PopInvoiceItemToQbInvoiceItemBuilder>();
+        services.AddSingleton<PopCreditMemoToQbCreditMemoBuilder>();
 
 
         return services.BuildServiceProvider();

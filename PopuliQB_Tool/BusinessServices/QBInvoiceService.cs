@@ -12,6 +12,7 @@ public class QBInvoiceService
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly PopInvoiceToQbInvoiceBuilder _invoiceBuilder;
+    private readonly PopCreditMemoToQbCreditMemoBuilder _memoBuilder;
     private readonly QbCustomerService _customerService;
     private readonly QBInvoiceItemService _invoiceItemService;
 
@@ -20,12 +21,16 @@ public class QBInvoiceService
     public bool IsConnected { get; set; }
     public bool IsSessionOpen { get; set; }
     public List<QbInvoice> AllExistingInvoicesList { get; set; } = new();
+    public List<QbMemo> AllExistingMemosList { get; set; } = new();
 
     public QBInvoiceService(
         PopInvoiceToQbInvoiceBuilder invoiceBuilder,
-        QbCustomerService customerService, QBInvoiceItemService invoiceItemService)
+        PopCreditMemoToQbCreditMemoBuilder _memoBuilder,
+        QbCustomerService customerService, 
+        QBInvoiceItemService invoiceItemService)
     {
         _invoiceBuilder = invoiceBuilder;
+        this._memoBuilder = _memoBuilder;
         _customerService = customerService;
         _invoiceItemService = invoiceItemService;
     }
@@ -54,13 +59,11 @@ public class QBInvoiceService
                 for (var index = 0; index < invoices.Count; index++)
                 {
                     var invoice = invoices[index];
-                    // var personFullName = invoice.ReportData?.DisplayName;
-                    var existing = _customerService
-                        .AllExistingCustomersList[Random.Shared.Next(0, _customerService.AllExistingCustomersList.Count - 1)];
-
-                    var personFullName = existing.QbCustomerName;
-                    invoice.ReportData!.DisplayName = personFullName;
-                    invoice.ReportData!.PersonId = existing.PopPersonId;
+                    var personFullName = "";
+                    if (invoice.ReportData != null)
+                    {
+                         personFullName = PopPersonToQbCustomerBuilder.GetFullName(invoice.ReportData.Firstname ?? "", invoice.ReportData.Lastname ?? "");
+                    }
 
                     var existingCustomer =
                         _customerService.AllExistingCustomersList.FirstOrDefault(x =>
@@ -68,6 +71,7 @@ public class QBInvoiceService
 
                     if (existingCustomer != null)
                     {
+                        //Check if inv Items exist in QB itemsList otherwise add them
                         foreach (var invoiceItem in invoice.Items!)
                         {
                             var existedInvItem =
@@ -87,6 +91,44 @@ public class QBInvoiceService
                             OnSyncStatusChanged?.Invoke(this,
                                 new StatusMessageArgs(StatusMessageType.Success,
                                     $"{personFullName} | Invoice.Num = {invoice.Number}"));
+
+                            if (invoice.Credits != null && invoice.Credits.Any())
+                            {
+                                OnSyncStatusChanged?.Invoke(this,
+                                    new StatusMessageArgs(StatusMessageType.Info,
+                                        $"{personFullName} | Credit Memos Found: {invoice.Credits.Count}"));
+                                OnSyncStatusChanged?.Invoke(this,
+                                    new StatusMessageArgs(StatusMessageType.Info,
+                                        $"{personFullName} | Adding Memos."));
+
+                                for (var i = 0; i < invoice.Credits.Count; i++)
+                                {
+                                    var invoiceCredit = invoice.Credits[i];
+
+                                    //Check if credit Items exist in QB itemsList otherwise add them
+                                    foreach (var creditItem in invoiceCredit.Items!)
+                                    {
+                                        var existedInvItem =
+                                            _invoiceItemService.AllExistingInvoiceServiceItemsList.FirstOrDefault(x => x.QbItemName == creditItem.Name);
+                                        if (existedInvItem == null)
+                                        {
+                                            await _invoiceItemService.AddInvoiceServiceItemAsync(creditItem, sessionManager, requestMsgSet);
+                                            creditItem.Name = _invoiceItemService.AllExistingInvoiceServiceItemsList.Last().QbItemName;
+                                        }
+                                    }
+
+                                    _memoBuilder.BuildAddRequest(requestMsgSet, invoiceCredit, existingCustomer.QbListId!);
+                                    responseMsgSet = sessionManager.DoRequests(requestMsgSet);
+                                    var msg = responseMsgSet.ToXMLString();
+                                    if (ReadAddedMemo(responseMsgSet))
+                                    {
+                                        OnSyncStatusChanged?.Invoke(this,
+                                            new StatusMessageArgs(StatusMessageType.Success,
+                                                $"{personFullName} | Memo.Num = {invoiceCredit.Number}"));
+                                    }
+                                }
+
+                            }
                         }
                         else
                         {
@@ -136,52 +178,9 @@ public class QBInvoiceService
         }
     }
 
-    private bool ReadAddedInvoice(IMsgSetResponse? responseMsgSet)
-    {
-        if (responseMsgSet == null)
-        {
-            return false;
-        }
-
-        var responseList = responseMsgSet.ResponseList;
-        if (responseList == null)
-        {
-            return false;
-        }
-
-        //if we sent only one request, there is only one response, we'll walk the list for this sample
-        for (var i = 0; i < responseList.Count; i++)
-        {
-            var response = responseList.GetAt(i);
-            //check the status code of the response, 0=ok, >0 is warning
-            if (response.StatusCode >= 0)
-            {
-                //the request-specific response is in the details, make sure we have some
-                if (response.Detail != null)
-                {
-                    //make sure the response is the type we're expecting
-                    var responseType = (ENResponseType)response.Type.GetValue();
-                    if (responseType == ENResponseType.rtInvoiceAddRs)
-                    {
-                        //upcast to more specific type here, this is safe because we checked with response.Type check above
-                        var ret = (IInvoiceRet)response.Detail;
-                        if (ret != null)
-                        {
-                            ReadProperties(ret);
-                            return true;
-                        }
-
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
 
 
-    #region GET ALL INVOICES
+    #region INVOICES
 
     public async Task<List<QbInvoice>> GetAllExistingInvoicesAsync()
     {
@@ -238,7 +237,6 @@ public class QBInvoiceService
             }
         }
     }
-
     private void ReadFetchedInvoices(IMsgSetResponse? responseMsgSet)
     {
         if (responseMsgSet == null) return;
@@ -265,7 +263,7 @@ public class QBInvoiceService
 
                         for (var x = 0; x < retList.Count; x++)
                         { 
-                            ReadProperties(retList.GetAt(x));
+                            ReadPropertiesInvoice(retList.GetAt(x));
                         }
                     }
                 }
@@ -273,7 +271,50 @@ public class QBInvoiceService
         }
     }
 
-    private QbInvoice? ReadProperties(IInvoiceRet? ret)
+    private bool ReadAddedInvoice(IMsgSetResponse? responseMsgSet)
+    {
+        if (responseMsgSet == null)
+        {
+            return false;
+        }
+
+        var responseList = responseMsgSet.ResponseList;
+        if (responseList == null)
+        {
+            return false;
+        }
+
+        //if we sent only one request, there is only one response, we'll walk the list for this sample
+        for (var i = 0; i < responseList.Count; i++)
+        {
+            var response = responseList.GetAt(i);
+            //check the status code of the response, 0=ok, >0 is warning
+            if (response.StatusCode >= 0)
+            {
+                //the request-specific response is in the details, make sure we have some
+                if (response.Detail != null)
+                {
+                    //make sure the response is the type we're expecting
+                    var responseType = (ENResponseType)response.Type.GetValue();
+                    if (responseType == ENResponseType.rtInvoiceAddRs)
+                    {
+                        //upcast to more specific type here, this is safe because we checked with response.Type check above
+                        var ret = (IInvoiceRet)response.Detail;
+                        if (ret != null)
+                        {
+                            ReadPropertiesInvoice(ret);
+                            return true;
+                        }
+
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+    private QbInvoice? ReadPropertiesInvoice(IInvoiceRet? ret)
     {
         try
         {
@@ -297,4 +338,163 @@ public class QBInvoiceService
     }
 
     #endregion
+
+    #region MEMOS
+    
+    public async Task<List<QbInvoice>> GetAllExistingMemosAsync()
+    {
+        var sessionManager = new QBSessionManager();
+
+        try
+        {
+            AllExistingInvoicesList.Clear();
+
+            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            IsConnected = true;
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
+
+            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            IsSessionOpen = true;
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
+
+            await Task.Run(() =>
+            {
+                var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
+                requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
+
+                _memoBuilder.BuildGetAllRequest(requestMsgSet);
+                var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
+                //var xmResp = responseMsgSet.ToXMLString();
+                ReadFetchedMemos(responseMsgSet);
+            });
+
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
+
+            return AllExistingInvoicesList;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex);
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
+            return AllExistingInvoicesList;
+        }
+        finally
+        {
+            if (IsSessionOpen)
+            {
+                sessionManager.EndSession();
+                IsSessionOpen = false;
+                OnSyncStatusChanged?.Invoke(this,
+                    new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
+            }
+
+            if (IsConnected)
+            {
+                sessionManager.CloseConnection();
+                IsConnected = false;
+                OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
+            }
+        }
+    }
+    private void ReadFetchedMemos(IMsgSetResponse? responseMsgSet)
+    {
+        if (responseMsgSet == null) return;
+        var responseList = responseMsgSet.ResponseList;
+        if (responseList == null) return;
+
+        //if we sent only one request, there is only one response, we'll walk the list for this sample
+        for (var i = 0; i < responseList.Count; i++)
+        {
+            var response = responseList.GetAt(i);
+
+            //check the status code of the response, 0=ok, >0 is warning
+            if (response.StatusCode >= 0)
+            {
+                //the request-specific response is in the details, make sure we have some
+                if (response.Detail != null)
+                {
+                    //make sure the response is the type we're expecting
+                    var responseType = (ENResponseType)response.Type.GetValue();
+                    if (responseType == ENResponseType.rtCreditMemoQueryRs)
+                    {
+                        //upcast to more specific type here, this is safe because we checked with response.Type check above
+                        var retList = (ICreditMemoRetList)response.Detail;
+
+                        for (var x = 0; x < retList.Count; x++)
+                        { 
+                            ReadPropertiesMemo(retList.GetAt(x));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private bool ReadAddedMemo(IMsgSetResponse? responseMsgSet)
+    {
+        if (responseMsgSet == null)
+        {
+            return false;
+        }
+
+        var responseList = responseMsgSet.ResponseList;
+        if (responseList == null)
+        {
+            return false;
+        }
+
+        //if we sent only one request, there is only one response, we'll walk the list for this sample
+        for (var i = 0; i < responseList.Count; i++)
+        {
+            var response = responseList.GetAt(i);
+            //check the status code of the response, 0=ok, >0 is warning
+            if (response.StatusCode >= 0)
+            {
+                //the request-specific response is in the details, make sure we have some
+                if (response.Detail != null)
+                {
+                    //make sure the response is the type we're expecting
+                    var responseType = (ENResponseType)response.Type.GetValue();
+                    if (responseType == ENResponseType.rtCreditMemoAddRs)
+                    {
+                        //upcast to more specific type here, this is safe because we checked with response.Type check above
+                        var ret = (ICreditMemoRet)response.Detail;
+                        if (ret != null)
+                        {
+                            ReadPropertiesMemo(ret);
+                            return true;
+                        }
+
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+    private QbMemo? ReadPropertiesMemo(ICreditMemoRet? ret)
+    {
+        try
+        {
+            if (ret == null) return null;
+
+            var memo = new QbMemo();
+            memo.PopInvoiceId = Convert.ToInt32(ret.PONumber.GetValue()); //unique memo id from populi
+            memo.PopInvoiceNumber = Convert.ToInt32(ret.RefNumber.GetValue());
+            memo.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
+            memo.QbCustomerName = ret.CustomerRef.FullName.GetValue();
+
+            AllExistingMemosList.Add(memo);
+            return memo;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex);
+        }
+
+        return null;
+    }
+    #endregion
+
 }

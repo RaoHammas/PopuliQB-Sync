@@ -10,7 +10,6 @@ public class PopInvoiceToQbInvoiceBuilder
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendInvoiceAddRq();
         request.CustomerRef.ListID.SetValue(qbCustomerListId); 
-        //invoiceAddRq.CustomerRef.FullName.SetValue(invoice.ReportData?.DisplayName);
         request.PONumber.SetValue(invoice.Id.ToString());
         request.RefNumber.SetValue(invoice.Number.ToString());
         request.ARAccountRef.FullName.SetValue("Tuition Receivable");

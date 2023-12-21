@@ -26,7 +26,7 @@ public class PopuliAccessService
         });
     }
 
-    public async Task<PopuliResponse<PopPerson>> GetAllPersonsAsync(int page = 1)
+    public async Task<PopResponse<PopPerson>> GetAllPersonsAsync(int page = 1)
     {
         var request = new RestRequest($"{ProdUrl}people/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
@@ -57,12 +57,12 @@ public class PopuliAccessService
         request.AddStringBody(body, DataFormat.Json);
 
         var response =
-            await _client.ExecuteAsync<PopuliResponse<PopPerson>>(request, Method.Get, CancellationToken.None);
+            await _client.ExecuteAsync<PopResponse<PopPerson>>(request, Method.Get, CancellationToken.None);
         if (response is { IsSuccessStatusCode: true, Content: not null })
         {
             if (response.Data != null)
             {
-                AllPopuliPersons = response.Data.Data;
+                AllPopuliPersons.AddRange(response.Data.Data);
                 return response.Data;
             }
         }
@@ -71,7 +71,7 @@ public class PopuliAccessService
         return new();
     }
 
-    public async Task<PopuliResponse<PopInvoice>> GetAllInvoicesAsync(int page = 1)
+    public async Task<PopResponse<PopInvoice>> GetAllInvoicesAsync(int page = 1)
     {
         var request = new RestRequest($"{ProdUrl}invoices/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
@@ -104,12 +104,12 @@ public class PopuliAccessService
         request.AddStringBody(body, DataFormat.Json);
 
         var response =
-            await _client.ExecuteAsync<PopuliResponse<PopInvoice>>(request, Method.Get, CancellationToken.None);
+            await _client.ExecuteAsync<PopResponse<PopInvoice>>(request, Method.Get, CancellationToken.None);
         if (response is { IsSuccessStatusCode: true, Content: not null })
         {
             if (response.Data != null)
             {
-                AllPopuliInvoices = response.Data.Data;
+                AllPopuliInvoices.AddRange(response.Data.Data);
                 return response.Data;
             }
         }

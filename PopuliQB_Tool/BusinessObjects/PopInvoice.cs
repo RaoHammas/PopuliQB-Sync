@@ -34,6 +34,8 @@ public class PopInvoice
     [JsonPropertyName("academic_term_id")] public int? AcademicTermId { get; set; }
 
     [JsonPropertyName("items")] public List<PopInvoiceItem>? Items { get; set; }
+    [JsonPropertyName("credits")] public List<PopCredit>? Credits { get; set; }
+
 }
 
 public class PopInvoiceItem
@@ -111,4 +113,33 @@ public class PopInvoiceReportData
     [JsonPropertyName("on_payment_plan")] public object? OnPaymentPlan { get; set; }
 
     [JsonPropertyName("on_plan_total")] public object? OnPlanTotal { get; set; }
+}
+
+public class PopCredit
+{
+    [JsonPropertyName("object")] public string? Object { get; set; }
+
+    [JsonPropertyName("id")] public int? Id { get; set; }
+
+    [JsonPropertyName("actor_type")] public string? ActorType { get; set; }
+
+    [JsonPropertyName("actor_id")] public int? ActorId { get; set; }
+
+    [JsonPropertyName("number")] public int? Number { get; set; }
+
+    [JsonPropertyName("description")] public string? Description { get; set; }
+
+    [JsonPropertyName("transaction_id")] public int? TransactionId { get; set; }
+
+    [JsonPropertyName("amount")] public double? Amount { get; set; }
+
+    [JsonPropertyName("due_on")] public DateTime? DueOn { get; set; }
+
+    [JsonPropertyName("status")] public string? Status { get; set; }
+
+    [JsonPropertyName("posted_on")] public DateTime? PostedOn { get; set; }
+
+    [JsonPropertyName("academic_term_id")] public object? AcademicTermId { get; set; }
+
+    [JsonPropertyName("items")] public List<PopInvoiceItem>? Items { get; set; }
 }

@@ -2,7 +2,7 @@
 
 namespace PopuliQB_Tool.BusinessObjects;
 
-public class PopuliResponse<T>
+public class PopResponse<T>
 {
     
     [JsonPropertyName("object?")]

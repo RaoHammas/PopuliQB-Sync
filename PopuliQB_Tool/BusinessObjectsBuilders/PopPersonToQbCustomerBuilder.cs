@@ -1,24 +1,23 @@
 ﻿using QBFC16Lib;
 using PopuliQB_Tool.BusinessObjects;
-using PopuliQB_Tool.BusinessServices;
 using PopuliQB_Tool.Helpers;
 
 namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopPersonToQbCustomerBuilder
 {
-    public static string GetFullName(PopPerson person)
+    public static string GetFullName(string firstName, string lastName)
     {
         var fullName = "";
         
-        if (!string.IsNullOrEmpty(person.LastName))
+        if (!string.IsNullOrEmpty(lastName))
         {
-            fullName += $" {person.LastName}";
+            fullName += $" {lastName}";
         }
 
-        if (!string.IsNullOrEmpty(person.FirstName))
+        if (!string.IsNullOrEmpty(firstName))
         {
-            fullName += $", {person.FirstName}";
+            fullName += $", {firstName}";
         }
 
         return fullName;
@@ -33,7 +32,7 @@ public class PopPersonToQbCustomerBuilder
 
         var maxLength = Convert.ToInt32(request.Salutation.GetMaxLength());
         request.Salutation.SetValue(person.Prefix?.Length < maxLength ? person.Prefix : "");
-        request.Name.SetValue(GetFullName(person));
+        request.Name.SetValue(GetFullName(person.FirstName, person.LastName));
 
         maxLength = Convert.ToInt32(request.Name.GetMaxLength());
         /*if (!string.IsNullOrEmpty(person.DisplayName) && person.DisplayName.Length < maxLength)
