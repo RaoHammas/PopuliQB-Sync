@@ -172,13 +172,17 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             var qbMemos = await _qbInvoiceService.GetAllExistingMemosAsync();
             SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Credit Memos from QB : {qbMemos.Count}");
 
+            SetSyncStatusMessage(StatusMessageType.Info, "Fetching Payments from QB.");
+            var qbPayments = await _qbInvoiceService.GetAllExistingPaymentsAsync();
+            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Payments from QB : {qbPayments.Count}");
+
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from Populi.");
             var page = 1;
             var popInvoices = await GetNextBatchOfInvoicesAndCreditsAndPaymentsFromPopuli(page);
             TotalRecords = popInvoices.Results ?? 0;
             SetSyncStatusMessage(StatusMessageType.Success, $"Total Invoices found on Populi : {popInvoices.Results}");
 
-            if (popInvoices.Data.Count == 0)
+            if (popInvoices.Data == null || popInvoices.Data.Count == 0)
             {
                 SetSyncStatusMessage(StatusMessageType.Warn, $"Fetched Invoices : 0");
                 return;

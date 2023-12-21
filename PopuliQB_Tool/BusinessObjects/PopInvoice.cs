@@ -35,6 +35,7 @@ public class PopInvoice
 
     [JsonPropertyName("items")] public List<PopInvoiceItem>? Items { get; set; }
     [JsonPropertyName("credits")] public List<PopCredit>? Credits { get; set; }
+    [JsonPropertyName("payments")] public List<PopPayment>? Payments { get; set; }
 
 }
 

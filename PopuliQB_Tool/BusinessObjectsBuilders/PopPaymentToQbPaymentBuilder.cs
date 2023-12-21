@@ -5,66 +5,42 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopPaymentToQbPaymentBuilder
 {
-    public void BuildInvoiceAddRequest(IMsgSetRequest requestMsgSet, PopInvoice invoice, string qbCustomerListId)
+
+    public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopPayment payment, string qbCustomerListId)
     {
         requestMsgSet.ClearRequests();
-        var request = requestMsgSet.AppendInvoiceAddRq();
+        var request = requestMsgSet.AppendReceivePaymentAddRq();
         request.CustomerRef.ListID.SetValue(qbCustomerListId);
-        request.PONumber.SetValue(invoice.Id.ToString());
-        request.RefNumber.SetValue(invoice.Number.ToString());
+        request.RefNumber.SetValue(payment.Number.ToString());
+        request.ARAccountRef.FullName.SetValue("Tuition Receivable");
+        request.DepositToAccountRef.FullName.SetValue("Cash and Equivalents:Truist Main Deposit (9155)");
+        request.TotalAmount.SetValue(payment.Amount ?? 0);
+        request.ORApplyPayment.IsAutoApply.SetValue(true);
 
-
-        if (!string.IsNullOrEmpty(invoice.Status) && invoice.Status != "unpaid")
-        {
-            request.IsPending.SetValue(false);
-        }
-
-        if (Convert.ToDateTime(invoice.ReportData?.InvoiceDueDate) is var dueDate)
+        /*if (Convert.ToDateTime(payment.DueOn) is var dueDate)
         {
             request.DueDate.SetValue(dueDate);
         }
 
-        /*if (Convert.ToDouble(invoice.ReportData?.AmountPaid) is var paid)
+        if (Convert.ToDateTime(payment.PostedOn) is var postedDate)
         {
-            var setCredit11155 = invoiceAddRq.SetCreditList.Append();
-            invoiceAddRq.LinkToTxnIDList.Add("200000-1011023419");
-            setCredit11155.AppliedAmount.SetValue(paid);
-            setCredit11155.CreditTxnID.SetValue("200000-1011023419");
+            request.TxnDate.SetValue(postedDate);
         }*/
 
-        request.IsToBePrinted.SetValue(false);
-        request.IsToBeEmailed.SetValue(false);
-        request.Memo.SetValue($"Trans#{invoice.TransactionId}");
-
-        if (invoice.Items != null)
-        {
-            foreach (var item in invoice.Items)
-            {
-                var invItem = request.ORInvoiceLineAddList.Append();
-                invItem.InvoiceLineAdd.ItemRef.FullName.SetValue(item.Name);
-                invItem.InvoiceLineAdd.Desc.SetValue(item.Description);
-                invItem.InvoiceLineAdd.Quantity.SetValue(1);
-                invItem.InvoiceLineAdd.ORRatePriceLevel.Rate.SetValue(item.Amount!.Value);
-                invItem.InvoiceLineAdd.Amount.SetValue(item.Amount!.Value);
-                invItem.InvoiceLineAdd.IsTaxable.SetValue(false);
-                invItem.InvoiceLineAdd.TaxAmount.SetValue(0);
-            }
-        }
-
+        request.Memo.SetValue($"PaidType# {payment.PaidByType} Trans#{payment.TransactionId} Receipt#{payment.ReceiptNumber} Id#{payment.Id.ToString()}");
+        
 
         request.IncludeRetElementList.Add("CustomerRef");
         request.IncludeRetElementList.Add("RefNumber");
-        request.IncludeRetElementList.Add("PONumber");
         request.IncludeRetElementList.Add("FullName");
     }
 
-    public void BuildGetAllInvoicesRequest(IMsgSetRequest requestMsgSet)
+    public void BuildGetAllRequest(IMsgSetRequest requestMsgSet)
     {
         requestMsgSet.ClearRequests();
-        var request = requestMsgSet.AppendInvoiceQueryRq();
+        var request = requestMsgSet.AppendReceivePaymentQueryRq();
         request.IncludeRetElementList.Add("CustomerRef");
         request.IncludeRetElementList.Add("RefNumber");
-        request.IncludeRetElementList.Add("PONumber");
         request.IncludeRetElementList.Add("FullName");
     }
 }

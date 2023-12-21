@@ -14,7 +14,7 @@ public class PopPayment
 
     [JsonPropertyName("number")] public int? Number { get; set; }
 
-    [JsonPropertyName("amount")] public int? Amount { get; set; }
+    [JsonPropertyName("amount")] public double? Amount { get; set; }
 
     [JsonPropertyName("online_payment_id")]
     public object? OnlinePaymentId { get; set; }
@@ -41,7 +41,7 @@ public class PopPayment
     [JsonPropertyName("exchange_rate")] public object? ExchangeRate { get; set; }
 
     [JsonPropertyName("home_currency_amount")]
-    public int? HomeCurrencyAmount { get; set; }
+    public object? HomeCurrencyAmount { get; set; }
 
     [JsonPropertyName("recurring_money_transfer_id")]
     public object? RecurringMoneyTransferId { get; set; }
@@ -49,10 +49,10 @@ public class PopPayment
     [JsonPropertyName("aid_disbursement_id")]
     public object? AidDisbursementId { get; set; }
 
-    [JsonPropertyName("treat_as_aid")] public bool TreatAsAid { get; set; }
+    [JsonPropertyName("treat_as_aid")] public bool? TreatAsAid { get; set; }
 
     [JsonPropertyName("organization_name")]
     public object? OrganizationName { get; set; }
 
-    [JsonPropertyName("method")] public string? Method { get; set; }
+    [JsonPropertyName("method")] public object? Method { get; set; }
 }

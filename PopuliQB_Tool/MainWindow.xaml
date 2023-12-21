@@ -86,13 +86,7 @@
                     Margin="10,0,0,0"
                     Padding="10"
                     Command="{Binding StartPopuliInvoicesSyncCommand}"
-                    Content="Sync Populi Invoices &amp; Memos To QB" />
-
-                <Button
-                    Height="40"
-                    Margin="10,0,0,0"
-                    Padding="10"
-                    Content="Sync Populi Payments To QB" />
+                    Content="Sync Populi Invoices, Memos &amp; Payments To QB" />
             </StackPanel>
 
             <Grid Grid.Row="2">
