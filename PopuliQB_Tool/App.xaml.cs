@@ -46,7 +46,10 @@ public partial class App : Application
         services.AddSingleton<PopPersonToQbCustomerBuilder>();
         
         services.AddSingleton<QBInvoiceService>();
-        services.AddSingleton<PopInvoiceToQbInvoiceBuilder>();
+        services.AddSingleton<PopInvoiceToQbInvoiceBuilder>();        
+        
+        services.AddSingleton<QbAccountsService>();
+        services.AddSingleton<PopAccountsToQbAccountsBuilder>();
 
         services.AddSingleton<QBInvoiceItemService>();
         services.AddSingleton<PopInvoiceItemToQbInvoiceItemBuilder>();

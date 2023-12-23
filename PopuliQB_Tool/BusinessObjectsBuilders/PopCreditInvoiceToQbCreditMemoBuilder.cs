@@ -12,7 +12,7 @@ public class PopCreditMemoToQbCreditMemoBuilder
         request.CustomerRef.ListID.SetValue(qbCustomerListId);
         request.PONumber.SetValue(memo.Id.ToString());
         request.RefNumber.SetValue(memo.Number.ToString());
-        request.ARAccountRef.FullName.SetValue("Tuition Receivable");
+        request.ARAccountRef.ListID.SetValue(QbSettings.Instance.ARForCreditMemos.ListId);
         
         if (!string.IsNullOrEmpty(memo.Status) && memo.Status != "unpaid")
         {

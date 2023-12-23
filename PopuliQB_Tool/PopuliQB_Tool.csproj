@@ -18,6 +18,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="QB- Item List.xlsx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <COMReference Include="QBXMLRP2Lib">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>0</VersionMinor>
@@ -39,6 +43,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="QB- Item List.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\icon.ico" />
   </ItemGroup>
 
@@ -47,6 +54,7 @@
     <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+    <PackageReference Include="MiniExcel" Version="1.31.2" />
     <PackageReference Include="NLog" Version="5.2.7" />
     <PackageReference Include="RestSharp" Version="110.2.0" />
   </ItemGroup>

@@ -2,6 +2,8 @@
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MiniExcelLibs;
+using MiniExcelLibs.OpenXml;
 using NLog;
 using PopuliQB_Tool.BusinessObjects;
 using PopuliQB_Tool.BusinessServices;
@@ -20,6 +22,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly PopuliAccessService _populiAccessService;
     private readonly QbCustomerService _qbCustomerService;
     private readonly QBInvoiceService _qbInvoiceService;
+    [ObservableProperty] private QbAccountsService _qbAccountsService;
+
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
     [ObservableProperty] private ObservableCollection<StatusMessage> _statisticsMessages = new();
 
@@ -33,7 +37,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         QBCompanyService qbCompanyService,
         PopuliAccessService populiAccessService,
         QbCustomerService qbCustomerService,
-        QBInvoiceService qbInvoiceService
+        QBInvoiceService qbInvoiceService,
+        QbAccountsService qbAccountsService
     )
     {
         _messageBoxService = messageBoxService;
@@ -41,16 +46,25 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _populiAccessService = populiAccessService;
         _qbCustomerService = qbCustomerService;
         _qbInvoiceService = qbInvoiceService;
+        _qbAccountsService = qbAccountsService;
 
         _qbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
         _qbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
 
         _qbInvoiceService.OnSyncStatusChanged += SyncStatusChanged;
         _qbInvoiceService.OnSyncProgressChanged += SyncProgressChanged;
+
+        _qbAccountsService.OnSyncStatusChanged += SyncStatusChanged;
+        _qbAccountsService.OnSyncProgressChanged += SyncProgressChanged;
     }
 
     private void SyncProgressChanged(object? sender, ProgressArgs e)
     {
+        if (e.Total != null)
+        {
+            TotalRecords = e.Total.Value;
+        }
+
         ProgressCount++;
     }
 
@@ -98,7 +112,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         try
         {
             TotalRecords = 0;
-            ProgressCount = -1;
+            ProgressCount = 0;
 
             SetSyncStatusMessage(StatusMessageType.Success, $"Populi to QBD Sync. Version: {VersionHelper.Version}");
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
@@ -159,7 +173,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         try
         {
             TotalRecords = 0;
-            ProgressCount = -1;
+            ProgressCount = 0;
 
             SetSyncStatusMessage(StatusMessageType.Success, $"Populi to QBD Sync. Version: {VersionHelper.Version}");
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
@@ -167,7 +181,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from QB.");
             var qbInvoices = await _qbInvoiceService.GetAllExistingInvoicesAsync();
             SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Invoices from QB : {qbInvoices.Count}");
-            
+
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Credit Memos from QB.");
             var qbMemos = await _qbInvoiceService.GetAllExistingMemosAsync();
             SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Credit Memos from QB : {qbMemos.Count}");
@@ -219,6 +233,55 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
             _logger.Error(ex);
         }
+    }
+
+
+    [RelayCommand]
+    private async Task StartExcelToQbItemsSync()
+    {
+        SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
+        SetSyncStatusMessage(StatusMessageType.Info, "Starting Reading Accounts From QB.");
+
+        var accounts = await _qbAccountsService.GetAllExistingAccountsAsync();
+        SetSyncStatusMessage(StatusMessageType.Success, $"Found accounts in QB {accounts.Count}");
+
+        SetSyncStatusMessage(StatusMessageType.Info, "Starting Reading Items From Excel.");
+        await Task.Run(async () =>
+        {
+            var path = "QB- Item List.xlsx";
+            var sheetNames = MiniExcel.GetSheetNames(path);
+            foreach (var sheetName in sheetNames)
+            {
+                var items = MiniExcel.Query<PopExcelItem>(path, sheetName: sheetName, excelType:ExcelType.XLSX).ToList();
+                
+                TotalRecords = items.Count;
+                ProgressCount = 0;
+                SetSyncStatusMessage(StatusMessageType.Info, $"Starting Reading Items From {sheetName}.");
+
+                foreach (var item in items)
+                {
+                    var acc = accounts.FirstOrDefault(x => x.FullName == item.Account.Trim()
+                                                           || x.Number == item.AccNumberOnly.Trim()
+                                                           || x.Title.Contains(item.AccTitleOnly.Trim()));
+                    if (acc == null)
+                    {
+                        SetSyncStatusMessage(StatusMessageType.Error, $"{item.Account} does not exist in QB.");
+                        ProgressCount++;
+                        continue;
+                    }
+
+                    SetSyncStatusMessage(StatusMessageType.Info, $"{item.Account}.");
+                    item.QbAccListId = acc.ListId;
+                    ProgressCount++;
+                    await Task.Delay(50);
+                }
+
+                SetSyncStatusMessage(StatusMessageType.Info, $"Done Reading Items From {sheetName} - {items.Count}.");
+            }
+
+        });
+
+        SetSyncStatusMessage(StatusMessageType.Success, $"Items List Sync Completed.");
     }
 
     private void SetSyncStatusMessage(StatusMessageType type, string message)

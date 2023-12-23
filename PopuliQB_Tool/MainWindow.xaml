@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:businessObjects="clr-namespace:PopuliQB_Tool.BusinessObjects"
     xmlns:controls="clr-namespace:PopuliQB_Tool.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:PopuliQB_Tool"
@@ -77,6 +78,12 @@
                 </StackPanel.Style>
                 <Button
                     Height="40"
+                    Margin="0,0,10,0"
+                    Padding="10"
+                    Command="{Binding StartExcelToQbItemsSyncCommand}"
+                    Content="Sync Accounts &amp; Items List" />
+                <Button
+                    Height="40"
                     Margin="0,0,0,0"
                     Padding="10"
                     Command="{Binding StartPopuliStudentsSyncCommand}"
@@ -133,45 +140,56 @@
                                 Text="Sync Status" />
                         </DataTemplate>
                     </GroupBox.HeaderTemplate>
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl Background="White" ItemsSource="{Binding SyncStatusMessages}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Margin="5" Orientation="Vertical" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type models:StatusMessage}">
-                                    <TextBlock Margin="0,0,0,2" TextWrapping="Wrap">
-                                        <Run Text="[" />
-                                        <Run Text="{Binding MessageType}" />
-                                        <Run Text="] " />
-                                        <Run Text="{Binding Message}" />
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding MessageType}" Value="Warn">
-                                                        <Setter Property="Foreground" Value="DarkOrange" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding MessageType}" Value="Error">
-                                                        <Setter Property="Foreground" Value="Red" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding MessageType}" Value="Info">
-                                                        <Setter Property="Foreground" Value="Blue" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding MessageType}" Value="Success">
-                                                        <Setter Property="Foreground" Value="DarkGreen" />
-                                                    </DataTrigger>
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        Background="White"
+                        CanUserAddRows="False"
+                        CanUserDeleteRows="False"
+                        CanUserResizeRows="False"
+                        CanUserSortColumns="True"
+                        HorizontalGridLinesBrush="LightGray"
+                        HorizontalScrollBarVisibility="Auto"
+                        ItemsSource="{Binding SyncStatusMessages}"
+                        VerticalGridLinesBrush="LightGray">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn
+                                Header="Status"
+                                IsReadOnly="True"
+                                SortMemberPath="MessageType">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="3" CornerRadius="5">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding MessageType}" Value="Warn">
+                                                            <Setter Property="Background" Value="DarkOrange" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding MessageType}" Value="Error">
+                                                            <Setter Property="Background" Value="Red" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding MessageType}" Value="Info">
+                                                            <Setter Property="Background" Value="Blue" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding MessageType}" Value="Success">
+                                                            <Setter Property="Background" Value="DarkGreen" />
+                                                        </DataTrigger>
 
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Foreground="White"
+                                                Text="{Binding MessageType}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Binding="{Binding Message}" Header="Message" />
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </GroupBox>
 
 
@@ -189,6 +207,51 @@
                                 Text="Settings" />
                         </DataTemplate>
                     </GroupBox.HeaderTemplate>
+
+                    <StackPanel Margin="5" Orientation="Vertical">
+                        <ComboBox
+                            Margin="0,15,0,0"
+                            HorizontalAlignment="Stretch"
+                            materialDesign:HintAssist.FloatingScale="1"
+                            materialDesign:HintAssist.Hint="Acc Rec. for Invoice"
+                            DisplayMemberPath="Title"
+                            IsEditable="True"
+                            ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
+                            SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ARForInvoice}"
+                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+
+                        <ComboBox
+                            Margin="0,15,0,0"
+                            HorizontalAlignment="Stretch"
+                            materialDesign:HintAssist.FloatingScale="1"
+                            materialDesign:HintAssist.Hint="Acc Rec. for Credit Memos"
+                            DisplayMemberPath="Title"
+                            IsEditable="True"
+                            ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
+                            SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ARForCreditMemos}"
+                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+                        <ComboBox
+                            Margin="0,15,0,0"
+                            HorizontalAlignment="Stretch"
+                            materialDesign:HintAssist.FloatingScale="1"
+                            materialDesign:HintAssist.Hint="Acc Rec. for Payments"
+                            DisplayMemberPath="Title"
+                            IsEditable="True"
+                            ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
+                            SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ARForPayments}"
+                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+                        <ComboBox
+                            Margin="0,15,0,0"
+                            HorizontalAlignment="Stretch"
+                            materialDesign:HintAssist.FloatingScale="1"
+                            materialDesign:HintAssist.Hint="Acc Deposit for Payments"
+                            DisplayMemberPath="Title"
+                            IsEditable="True"
+                            ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
+                            SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ADForPayments}"
+                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+                    </StackPanel>
+
 
                 </GroupBox>
             </Grid>

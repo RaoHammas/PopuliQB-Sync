@@ -20,9 +20,30 @@ public class PopInvoiceItemToQbInvoiceItemBuilder
         }
 
         request.IsActive.SetValue(true);
-        request.ORSalesPurchase.SalesOrPurchase.Desc.SetValue(invoiceItem.Description);
+        request.ORSalesPurchase.SalesOrPurchase.Desc.SetValue(invoiceItem.Description ?? "");
         request.ORSalesPurchase.SalesOrPurchase.AccountRef.FullName.SetValue("Allowance for Tuition Rec (New)");
         request.ORSalesPurchase.SalesOrPurchase.ORPrice.Price.SetValue(invoiceItem.Amount ?? 0);
+
+        request.IncludeRetElementList.Add("ListID");
+        request.IncludeRetElementList.Add("Name");
+    }
+    
+    public void BuildExcelItemAddRequest(IMsgSetRequest requestMsgSet, PopExcelItem item)
+    {
+        requestMsgSet.ClearRequests();
+        var request = requestMsgSet.AppendItemServiceAddRq();
+        var maxLength = Convert.ToInt32(request.Name.GetMaxLength());
+        if (item.Name.Length > maxLength)
+        {
+            request.Name.SetValue(item.Name[..maxLength]);
+        }
+        else
+        {
+            request.Name.SetValue(item.Name);
+        }
+
+        request.IsActive.SetValue(true);
+        request.ORSalesPurchase.SalesOrPurchase.AccountRef.ListID.SetValue(item.QbAccListId);
 
         request.IncludeRetElementList.Add("ListID");
         request.IncludeRetElementList.Add("Name");

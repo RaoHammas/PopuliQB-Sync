@@ -16,10 +16,12 @@ public class StatusMessageArgs : System.EventArgs
 
 public class ProgressArgs : System.EventArgs
 {
-    public ProgressArgs(int progressValue)
+    public ProgressArgs(int progressValue, int? total = null)
     {
         ProgressValue = progressValue;
+        Total = total;
     }
 
     public int ProgressValue { get; set; }
+    public int? Total { get; set; }
 }

@@ -12,7 +12,7 @@ public class PopInvoiceToQbInvoiceBuilder
         request.CustomerRef.ListID.SetValue(qbCustomerListId); 
         request.PONumber.SetValue(invoice.Id.ToString());
         request.RefNumber.SetValue(invoice.Number.ToString());
-        request.ARAccountRef.FullName.SetValue("Tuition Receivable");
+        request.ARAccountRef.ListID.SetValue(QbSettings.Instance.ARForInvoice.ListId);
         
         if (!string.IsNullOrEmpty(invoice.Status) && invoice.Status != "unpaid")
         {

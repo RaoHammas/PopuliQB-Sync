@@ -12,8 +12,8 @@ public class PopPaymentToQbPaymentBuilder
         var request = requestMsgSet.AppendReceivePaymentAddRq();
         request.CustomerRef.ListID.SetValue(qbCustomerListId);
         request.RefNumber.SetValue(payment.Number.ToString());
-        request.ARAccountRef.FullName.SetValue("Tuition Receivable");
-        request.DepositToAccountRef.FullName.SetValue("Cash and Equivalents:Truist Main Deposit (9155)");
+        request.ARAccountRef.ListID.SetValue(QbSettings.Instance.ARForPayments.ListId);
+        request.DepositToAccountRef.ListID.SetValue(QbSettings.Instance.ADForPayments.ListId);
         request.TotalAmount.SetValue(payment.Amount ?? 0);
         request.ORApplyPayment.IsAutoApply.SetValue(true);
 
