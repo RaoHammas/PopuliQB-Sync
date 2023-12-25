@@ -12,13 +12,19 @@ public class QbItemService
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly PopItemToQbItemBuilder _builder;
+    private readonly QbAccountsService _qbAccountsService;
     public List<QbItem> AllExistingItemsList { get; set; } = new();
 
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
-    public QbItemService(PopItemToQbItemBuilder builder)
+
+    public QbItemService(
+        PopItemToQbItemBuilder builder,
+        QbAccountsService qbAccountsService
+    )
     {
         _builder = builder;
+        _qbAccountsService = qbAccountsService;
     }
 
     public async Task AddItemAsync(PopItem item)
@@ -47,7 +53,7 @@ public class QbItemService
                 if (!ReadAddedItem(responseMsgSet))
                 {
                     var xmResp = responseMsgSet.ToXMLString();
-                    var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                    var msg = PqExtensions.GetXmlNodeValue(xmResp);
                     _logger.Error(msg);
                     OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
                 }
@@ -83,7 +89,7 @@ public class QbItemService
         }
     }
 
-    public async Task AddExcelItemAsync(PopExcelItem item)
+    public async Task AddExcelItemsAsync(List<PopExcelItem> excelItems)
     {
         var sessionManager = new QBSessionManager();
         var isConnected = false;
@@ -103,32 +109,72 @@ public class QbItemService
             {
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
-                _builder.BuildExcelItemAddRequest(requestMsgSet, item);
 
-                var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-                if (!ReadAddedItem(responseMsgSet))
+                foreach (var excelItem in excelItems)
                 {
-                    var xmResp = responseMsgSet.ToXMLString();
-                    var msg = PQExtensions.GetXmlNodeValue(xmResp);
-                    _logger.Error(msg);
+                    var qbItem = AllExistingItemsList.FirstOrDefault(x =>
+                        (x.QbItemName == null ? "" : x.QbItemName.Trim()) == excelItem.Name.Trim());
 
-                    OnSyncStatusChanged?.Invoke(this,
-                        new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
-                }
-                else
-                {
-                    OnSyncStatusChanged?.Invoke(this,
-                        new StatusMessageArgs(StatusMessageType.Success, $"Added item {item.Name} to QB."));
+                    if (qbItem == null)
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Error, $"{excelItem.Name} does not exist in QB."));
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Info, $"Adding {excelItem.Name} to QB."));
+
+                        var acc = _qbAccountsService.AllExistingAccountsList.FirstOrDefault(x =>
+                            x.FullName == excelItem.Account.Trim()
+                            || x.Number == excelItem.AccNumberOnly.Trim()
+                            || x.Title.Contains(excelItem.AccTitleOnly.Trim()));
+
+                        if (acc == null)
+                        {
+                            OnSyncStatusChanged?.Invoke(this,
+                                new StatusMessageArgs(StatusMessageType.Error,
+                                    $"{excelItem.Account} does not exist in QB."));
+                            OnSyncStatusChanged?.Invoke(this,
+                                new StatusMessageArgs(StatusMessageType.Error,
+                                    $"Failed to add {excelItem.Name} to QB."));
+                        }
+                        else
+                        {
+                            excelItem.QbAccListId = acc.ListId;
+                            _builder.BuildExcelItemAddRequest(requestMsgSet, excelItem);
+
+                            var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
+                            if (!ReadAddedItem(responseMsgSet))
+                            {
+                                var xmResp = responseMsgSet.ToXMLString();
+                                var msg = PqExtensions.GetXmlNodeValue(xmResp);
+                                _logger.Error(msg);
+
+                                OnSyncStatusChanged?.Invoke(this,
+                                    new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                            }
+                            else
+                            {
+                                OnSyncStatusChanged?.Invoke(this,
+                                    new StatusMessageArgs(StatusMessageType.Success,
+                                        $"Added item {excelItem.Name} to QB."));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Warn, $"{excelItem.Name} already exists in QB."));
+                    }
+
+                    OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                 }
             });
 
-            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, $"Completed."));
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-            throw;
         }
         finally
         {
@@ -215,13 +261,15 @@ public class QbItemService
                 if (!ReadFetchedItem(responseMsgSet))
                 {
                     var xmResp = responseMsgSet.ToXMLString();
-                    var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                    var msg = PqExtensions.GetXmlNodeValue(xmResp);
                     _logger.Error(msg);
                     OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
                 }
             });
 
-            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, $"Found items in QB {AllExistingItemsList.Count}"));
+            OnSyncStatusChanged?.Invoke(this,
+                new StatusMessageArgs(StatusMessageType.Success,
+                    $"Completed: Found items in QB {AllExistingItemsList.Count}"));
         }
         catch (Exception ex)
         {

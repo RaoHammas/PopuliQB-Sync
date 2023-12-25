@@ -49,12 +49,12 @@ public class QbAccountsService
                 if (!ReadFetchedAccounts(responseMsgSet))
                 {
                     var xmResp = responseMsgSet.ToXMLString();
-                    var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                    var msg = PqExtensions.GetXmlNodeValue(xmResp);
                     OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
                 }
             });
 
-            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, $"Found accounts in QB {AllExistingAccountsList.Count}"));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, $"Completed: Found accounts in QB {AllExistingAccountsList.Count}"));
         }
         catch (Exception ex)
         {
@@ -127,11 +127,10 @@ public class QbAccountsService
 
             acc.Title = ret.Name.GetValue();
             acc.ListId = ret.ListID.GetValue();
-            
+
             AllExistingAccountsList.Add(acc);
 
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, $"Found: {acc.Title}"));
-            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
             return acc;
         }
         catch (Exception ex)
@@ -139,7 +138,10 @@ public class QbAccountsService
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{ex.Message}"));
         }
-
+        finally
+        {
+            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
+        }
         return null;
     }
 }

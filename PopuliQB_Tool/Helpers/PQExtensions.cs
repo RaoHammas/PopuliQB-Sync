@@ -2,7 +2,7 @@
 
 namespace PopuliQB_Tool.Helpers;
 
-public static class PQExtensions
+public static class PqExtensions
 {
     public static List<string> DivideIntoEqualParts(this string input, int maxLength)
     {

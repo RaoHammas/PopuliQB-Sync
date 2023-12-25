@@ -67,7 +67,7 @@ public class QbCustomerService
                     else
                     {
                         var xmResp = responseMsgSet.ToXMLString();
-                        var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                        var msg = PqExtensions.GetXmlNodeValue(xmResp);
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Error, $"{person.DisplayName} | Id = {person.Id} | {msg}"));
                     }

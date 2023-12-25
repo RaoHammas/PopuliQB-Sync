@@ -103,7 +103,7 @@ public class QBInvoiceService
                                         if (!ReadAddedMemo(responseMsgSet))
                                         {
                                             var xmResp = responseMsgSet.ToXMLString();
-                                            var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                                            var msg = PqExtensions.GetXmlNodeValue(xmResp);
                                             OnSyncStatusChanged?.Invoke(this,
                                                 new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
                                         }
@@ -148,7 +148,7 @@ public class QBInvoiceService
                                         if (!ReadAddedPayments(responseMsgSet))
                                         {
                                             var xmResp = responseMsgSet.ToXMLString();
-                                            var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                                            var msg = PqExtensions.GetXmlNodeValue(xmResp);
                                             OnSyncStatusChanged?.Invoke(this,
                                                 new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
                                         }
@@ -171,7 +171,7 @@ public class QBInvoiceService
                         else
                         {
                             var xmResp = responseMsgSet.ToXMLString();
-                            var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                            var msg = PqExtensions.GetXmlNodeValue(xmResp);
                             OnSyncStatusChanged?.Invoke(this,
                                 new StatusMessageArgs(StatusMessageType.Error,
                                     $"{personFullName} | Invoice.Num = {invoice.Number} | {msg}"));
@@ -244,7 +244,7 @@ public class QBInvoiceService
                 if (!ReadFetchedInvoices(responseMsgSet))
                 {
                     var xmResp = responseMsgSet.ToXMLString();
-                    var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                    var msg = PqExtensions.GetXmlNodeValue(xmResp);
                     _logger.Error(msg);
 
                     OnSyncStatusChanged?.Invoke(this,
@@ -252,7 +252,7 @@ public class QBInvoiceService
                 }
             });
 
-            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, $"Completed: Found Invoices in QB {AllExistingInvoicesList.Count}"));
         }
         catch (Exception ex)
         {
@@ -407,7 +407,7 @@ public class QBInvoiceService
                 if (!ReadFetchedMemos(responseMsgSet))
                 {
                     var xmResp = responseMsgSet.ToXMLString();
-                    var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                    var msg = PqExtensions.GetXmlNodeValue(xmResp);
                     _logger.Error(msg);
 
                     OnSyncStatusChanged?.Invoke(this,
@@ -415,7 +415,7 @@ public class QBInvoiceService
                 }
             });
 
-            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, $"Completed: Found Memos in QB {AllExistingMemosList.Count}"));
         }
         catch (Exception ex)
         {
@@ -573,7 +573,7 @@ public class QBInvoiceService
                 if (!ReadFetchedPayments(responseMsgSet))
                 {
                     var xmResp = responseMsgSet.ToXMLString();
-                    var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                    var msg = PqExtensions.GetXmlNodeValue(xmResp);
                     _logger.Error(msg);
 
                     OnSyncStatusChanged?.Invoke(this,
@@ -581,7 +581,7 @@ public class QBInvoiceService
                 }
             });
 
-            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, $"Completed: Found Payments in QB {AllExistingPaymentsList.Count}"));
         }
         catch (Exception ex)
         {

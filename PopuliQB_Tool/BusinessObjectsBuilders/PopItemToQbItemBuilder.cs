@@ -1,4 +1,5 @@
 ﻿using PopuliQB_Tool.BusinessObjects;
+using PopuliQB_Tool.Helpers;
 using QBFC16Lib;
 
 namespace PopuliQB_Tool.BusinessObjectsBuilders;
@@ -35,7 +36,9 @@ public class PopItemToQbItemBuilder
         var maxLength = Convert.ToInt32(request.Name.GetMaxLength());
         if (item.Name.Length > maxLength)
         {
-            request.Name.SetValue(item.Name[..maxLength]);
+            var name = item.Name.Substring(0, maxLength);
+            var l = name.Length;
+            request.Name.SetValue(name);
         }
         else
         {
