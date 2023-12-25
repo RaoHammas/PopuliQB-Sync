@@ -16,29 +16,27 @@ public class QbAccountsService
 
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
-
-    public bool IsConnected { get; set; }
-    public bool IsSessionOpen { get; set; }
-
     public QbAccountsService(PopAccountsToQbAccountsBuilder builder)
     {
         _builder = builder;
     }
 
 
-    public async Task<List<QbAccount>> GetAllExistingAccountsAsync()
+    public async Task SyncAllExistingAccountsAsync()
     {
         AllExistingAccountsList.Clear();
         var sessionManager = new QBSessionManager();
+        var isConnected = false;
+        var isSessionOpen = false;
 
         try
         {
             sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
-            IsConnected = true;
+            isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
             sessionManager.BeginSession("", ENOpenMode.omDontCare);
-            IsSessionOpen = true;
+            isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
             await Task.Run(() =>
@@ -56,29 +54,25 @@ public class QbAccountsService
                 }
             });
 
-            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
-            return AllExistingAccountsList;
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, $"Found accounts in QB {AllExistingAccountsList.Count}"));
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-            throw;
         }
         finally
         {
-            if (IsSessionOpen)
+            if (isSessionOpen)
             {
                 sessionManager.EndSession();
-                IsSessionOpen = false;
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
             }
 
-            if (IsConnected)
+            if (isConnected)
             {
                 sessionManager.CloseConnection();
-                IsConnected = false;
                 OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
             }
         }
@@ -117,7 +111,6 @@ public class QbAccountsService
 
         return false;
     }
-
 
     private QbAccount? ReadPropertiesAccount(IAccountRet? ret)
     {

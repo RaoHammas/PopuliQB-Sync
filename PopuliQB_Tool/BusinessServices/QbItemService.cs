@@ -188,7 +188,7 @@ public class QbItemService
 
     #region GET ALL ITEMS
 
-    public async Task<List<QbItem>> GetAllExistingItemsAsync()
+    public async Task SyncAllExistingItemsAsync()
     {
         var sessionManager = new QBSessionManager();
         var isConnected = false;
@@ -217,18 +217,16 @@ public class QbItemService
                     var xmResp = responseMsgSet.ToXMLString();
                     var msg = PQExtensions.GetXmlNodeValue(xmResp);
                     _logger.Error(msg);
+                    OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
                 }
             });
 
-
-            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
-            return AllExistingItemsList;
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, $"Found items in QB {AllExistingItemsList.Count}"));
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-            return AllExistingItemsList;
         }
         finally
         {

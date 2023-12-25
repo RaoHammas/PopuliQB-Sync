@@ -58,7 +58,7 @@ public class QBInvoiceService
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-                await _itemService.GetAllExistingItemsAsync(sessionManager, requestMsgSet);
+                await _itemService.SyncAllExistingItemsAsync(sessionManager, requestMsgSet);
 
                 for (var index = 0; index < invoices.Count; index++)
                 {

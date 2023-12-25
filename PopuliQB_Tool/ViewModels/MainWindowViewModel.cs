@@ -247,12 +247,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         await Task.Run(async () =>
         {
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Reading Accounts From QB.");
-            var accounts = await QbAccountsService.GetAllExistingAccountsAsync();
-            SetSyncStatusMessage(StatusMessageType.Success, $"Found accounts in QB {accounts.Count}");
+            await QbAccountsService.SyncAllExistingAccountsAsync();
 
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Reading Items From QB.");
-            var existingItems = await _qbItemService.GetAllExistingItemsAsync();
-            SetSyncStatusMessage(StatusMessageType.Success, $"Found items in QB {existingItems.Count}");
+            await _qbItemService.SyncAllExistingItemsAsync();
 
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Reading Items From Excel.");
             const string path = "QB- Item List.xlsx";
