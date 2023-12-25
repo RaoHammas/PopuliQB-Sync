@@ -3,26 +3,26 @@ using QBFC16Lib;
 
 namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
-public class PopInvoiceItemToQbInvoiceItemBuilder
+public class PopItemToQbItemBuilder
 {
-    public void BuildInvoiceItemAddRequest(IMsgSetRequest requestMsgSet, PopInvoiceItem invoiceItem)
+    public void BuildItemAddRequest(IMsgSetRequest requestMsgSet, PopItem item)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendItemServiceAddRq();
         var maxLength = Convert.ToInt32(request.Name.GetMaxLength());
-        if (invoiceItem.Name != null && invoiceItem.Name.Length > maxLength)
+        if (item.Name != null && item.Name.Length > maxLength)
         {
-            request.Name.SetValue(invoiceItem.Name[..maxLength]);
+            request.Name.SetValue(item.Name[..maxLength]);
         }
         else
         {
-            request.Name.SetValue(invoiceItem.Name);
+            request.Name.SetValue(item.Name);
         }
 
         request.IsActive.SetValue(true);
-        request.ORSalesPurchase.SalesOrPurchase.Desc.SetValue(invoiceItem.Description ?? "");
+        request.ORSalesPurchase.SalesOrPurchase.Desc.SetValue(item.Description ?? "");
         request.ORSalesPurchase.SalesOrPurchase.AccountRef.FullName.SetValue("Allowance for Tuition Rec (New)");
-        request.ORSalesPurchase.SalesOrPurchase.ORPrice.Price.SetValue(invoiceItem.Amount ?? 0);
+        request.ORSalesPurchase.SalesOrPurchase.ORPrice.Price.SetValue(item.Amount ?? 0);
 
         request.IncludeRetElementList.Add("ListID");
         request.IncludeRetElementList.Add("Name");
@@ -49,7 +49,7 @@ public class PopInvoiceItemToQbInvoiceItemBuilder
         request.IncludeRetElementList.Add("Name");
     }
 
-    public void BuildGetAllInvoiceItemsRequest(IMsgSetRequest requestMsgSet)
+    public void BuildGetAllQbItemsRequest(IMsgSetRequest requestMsgSet)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendItemServiceQueryRq();

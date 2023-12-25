@@ -1,12 +1,9 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using PopuliQB_Tool.BusinessObjectsBuilders;
 using PopuliQB_Tool.BusinessServices;
 using PopuliQB_Tool.Services;
 using PopuliQB_Tool.ViewModels;
-using QBFC16Lib;
 
 namespace PopuliQB_Tool;
 
@@ -51,8 +48,8 @@ public partial class App : Application
         services.AddSingleton<QbAccountsService>();
         services.AddSingleton<PopAccountsToQbAccountsBuilder>();
 
-        services.AddSingleton<QBInvoiceItemService>();
-        services.AddSingleton<PopInvoiceItemToQbInvoiceItemBuilder>();
+        services.AddSingleton<QbItemService>();
+        services.AddSingleton<PopItemToQbItemBuilder>();
         services.AddSingleton<PopCreditMemoToQbCreditMemoBuilder>();
         services.AddSingleton<PopPaymentToQbPaymentBuilder>();
 

@@ -33,13 +33,13 @@ public class PopInvoice
 
     [JsonPropertyName("academic_term_id")] public int? AcademicTermId { get; set; }
 
-    [JsonPropertyName("items")] public List<PopInvoiceItem>? Items { get; set; }
+    [JsonPropertyName("items")] public List<PopItem>? Items { get; set; }
     [JsonPropertyName("credits")] public List<PopCredit>? Credits { get; set; }
     [JsonPropertyName("payments")] public List<PopPayment>? Payments { get; set; }
 
 }
 
-public class PopInvoiceItem
+public class PopItem
 {
     [JsonPropertyName("object")] public string? Object { get; set; }
 
@@ -142,5 +142,5 @@ public class PopCredit
 
     [JsonPropertyName("academic_term_id")] public object? AcademicTermId { get; set; }
 
-    [JsonPropertyName("items")] public List<PopInvoiceItem>? Items { get; set; }
+    [JsonPropertyName("items")] public List<PopItem>? Items { get; set; }
 }

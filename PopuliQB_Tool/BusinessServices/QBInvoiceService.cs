@@ -15,7 +15,7 @@ public class QBInvoiceService
     private readonly PopCreditMemoToQbCreditMemoBuilder _memoBuilder;
     private readonly PopPaymentToQbPaymentBuilder _paymentBuilder;
     private readonly QbCustomerService _customerService;
-    private readonly QBInvoiceItemService _invoiceItemService;
+    private readonly QbItemService _itemService;
 
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
@@ -30,13 +30,13 @@ public class QBInvoiceService
         PopCreditMemoToQbCreditMemoBuilder memoBuilder,
         PopPaymentToQbPaymentBuilder paymentBuilder,
         QbCustomerService customerService,
-        QBInvoiceItemService invoiceItemService)
+        QbItemService itemService)
     {
         _invoiceBuilder = invoiceBuilder;
         _memoBuilder = memoBuilder;
         _paymentBuilder = paymentBuilder;
         _customerService = customerService;
-        _invoiceItemService = invoiceItemService;
+        _itemService = itemService;
     }
 
     public async Task<bool> AddInvoicesAsync(List<PopInvoice> invoices)
@@ -58,7 +58,7 @@ public class QBInvoiceService
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-                await _invoiceItemService.GetAllExistingInvoiceServiceItemsAsync(sessionManager, requestMsgSet);
+                await _itemService.GetAllExistingItemsAsync(sessionManager, requestMsgSet);
 
                 for (var index = 0; index < invoices.Count; index++)
                 {
@@ -80,13 +80,13 @@ public class QBInvoiceService
                         foreach (var invoiceItem in invoice.Items!)
                         {
                             var existedInvItem =
-                                _invoiceItemService.AllExistingInvoiceServiceItemsList.FirstOrDefault(x =>
+                                _itemService.AllExistingItemsList.FirstOrDefault(x =>
                                     x.QbItemName == invoiceItem.Name);
                             if (existedInvItem == null)
                             {
-                                await _invoiceItemService.AddInvoiceServiceItemAsync(invoiceItem, sessionManager,
+                                await _itemService.AddItemAsync(invoiceItem, sessionManager,
                                     requestMsgSet);
-                                invoiceItem.Name = _invoiceItemService.AllExistingInvoiceServiceItemsList.Last()
+                                invoiceItem.Name = _itemService.AllExistingItemsList.Last()
                                     .QbItemName;
                             }
                         }
@@ -119,14 +119,14 @@ public class QBInvoiceService
                                         foreach (var creditItem in invoiceCredit.Items!)
                                         {
                                             var existedInvItem =
-                                                _invoiceItemService.AllExistingInvoiceServiceItemsList.FirstOrDefault(
+                                                _itemService.AllExistingItemsList.FirstOrDefault(
                                                     x =>
                                                         x.QbItemName == creditItem.Name);
                                             if (existedInvItem == null)
                                             {
-                                                await _invoiceItemService.AddInvoiceServiceItemAsync(creditItem,
+                                                await _itemService.AddItemAsync(creditItem,
                                                     sessionManager, requestMsgSet);
-                                                creditItem.Name = _invoiceItemService.AllExistingInvoiceServiceItemsList
+                                                creditItem.Name = _itemService.AllExistingItemsList
                                                     .Last().QbItemName;
                                             }
                                         }

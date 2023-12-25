@@ -23,6 +23,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly QbCustomerService _qbCustomerService;
     private readonly QBInvoiceService _qbInvoiceService;
     [ObservableProperty] private QbAccountsService _qbAccountsService;
+    private readonly QbItemService _qbItemService;
 
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
     [ObservableProperty] private ObservableCollection<StatusMessage> _statisticsMessages = new();
@@ -38,7 +39,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         PopuliAccessService populiAccessService,
         QbCustomerService qbCustomerService,
         QBInvoiceService qbInvoiceService,
-        QbAccountsService qbAccountsService
+        QbAccountsService qbAccountsService,
+        QbItemService qbItemService
     )
     {
         _messageBoxService = messageBoxService;
@@ -47,6 +49,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _qbCustomerService = qbCustomerService;
         _qbInvoiceService = qbInvoiceService;
         _qbAccountsService = qbAccountsService;
+        _qbItemService = qbItemService;
 
         _qbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
         _qbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
@@ -240,44 +243,62 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private async Task StartExcelToQbItemsSync()
     {
         SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
-        SetSyncStatusMessage(StatusMessageType.Info, "Starting Reading Accounts From QB.");
 
-        var accounts = await _qbAccountsService.GetAllExistingAccountsAsync();
-        SetSyncStatusMessage(StatusMessageType.Success, $"Found accounts in QB {accounts.Count}");
-
-        SetSyncStatusMessage(StatusMessageType.Info, "Starting Reading Items From Excel.");
         await Task.Run(async () =>
         {
-            var path = "QB- Item List.xlsx";
+            SetSyncStatusMessage(StatusMessageType.Info, "Starting Reading Accounts From QB.");
+            var accounts = await QbAccountsService.GetAllExistingAccountsAsync();
+            SetSyncStatusMessage(StatusMessageType.Success, $"Found accounts in QB {accounts.Count}");
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Starting Reading Items From QB.");
+            var existingItems = await _qbItemService.GetAllExistingItemsAsync();
+            SetSyncStatusMessage(StatusMessageType.Success, $"Found items in QB {existingItems.Count}");
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Starting Reading Items From Excel.");
+            const string path = "QB- Item List.xlsx";
             var sheetNames = MiniExcel.GetSheetNames(path);
+            List<PopExcelItem> excelItems = new();
             foreach (var sheetName in sheetNames)
             {
-                var items = MiniExcel.Query<PopExcelItem>(path, sheetName: sheetName, excelType:ExcelType.XLSX).ToList();
-                
-                TotalRecords = items.Count;
-                ProgressCount = 0;
-                SetSyncStatusMessage(StatusMessageType.Info, $"Starting Reading Items From {sheetName}.");
+                excelItems.AddRange(MiniExcel.Query<PopExcelItem>(path, sheetName: sheetName, excelType: ExcelType.XLSX)
+                    .ToList());
+            }
 
-                foreach (var item in items)
+            TotalRecords = excelItems.Count;
+            ProgressCount = 0;
+            SetSyncStatusMessage(StatusMessageType.Info, $"Starting reading items from excel.");
+
+            foreach (var excelItem in excelItems)
+            {
+                var qbItem = existingItems.FirstOrDefault(x =>
+                    (x.QbItemName == null ? "" : x.QbItemName.Trim()) == excelItem.Name.Trim());
+                if (qbItem == null)
                 {
-                    var acc = accounts.FirstOrDefault(x => x.FullName == item.Account.Trim()
-                                                           || x.Number == item.AccNumberOnly.Trim()
-                                                           || x.Title.Contains(item.AccTitleOnly.Trim()));
+                    SetSyncStatusMessage(StatusMessageType.Error, $"{excelItem.Name} does not exist in QB.");
+                    SetSyncStatusMessage(StatusMessageType.Info, $"Adding {excelItem.Name} to QB.");
+
+                    var acc = accounts.FirstOrDefault(x => x.FullName == excelItem.Account.Trim()
+                                                           || x.Number == excelItem.AccNumberOnly.Trim()
+                                                           || x.Title.Contains(excelItem.AccTitleOnly.Trim()));
                     if (acc == null)
                     {
-                        SetSyncStatusMessage(StatusMessageType.Error, $"{item.Account} does not exist in QB.");
+                        SetSyncStatusMessage(StatusMessageType.Error, $"{excelItem.Account} does not exist in QB.");
                         ProgressCount++;
                         continue;
                     }
 
-                    SetSyncStatusMessage(StatusMessageType.Info, $"{item.Account}.");
-                    item.QbAccListId = acc.ListId;
-                    ProgressCount++;
-                    await Task.Delay(50);
+                    await _qbItemService.AddExcelItemAsync(excelItem);
+                }
+                else
+                {
+                    SetSyncStatusMessage(StatusMessageType.Warn, $"{excelItem.Name} already exist in QB.");
                 }
 
-                SetSyncStatusMessage(StatusMessageType.Info, $"Done Reading Items From {sheetName} - {items.Count}.");
+                ProgressCount++;
+                await Task.Delay(50);
             }
+
+            SetSyncStatusMessage(StatusMessageType.Info, $"Done reading items from excel - {excelItems.Count}.");
 
         });
 
