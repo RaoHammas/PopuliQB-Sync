@@ -182,15 +182,15 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from QB.");
-            var qbInvoices = await _qbInvoiceService.GetAllExistingInvoicesAsync();
+            var qbInvoices = await _qbInvoiceService.SyncAllExistingInvoicesAsync();
             SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Invoices from QB : {qbInvoices.Count}");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Credit Memos from QB.");
-            var qbMemos = await _qbInvoiceService.GetAllExistingMemosAsync();
+            var qbMemos = await _qbInvoiceService.SyncAllExistingMemosAsync();
             SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Credit Memos from QB : {qbMemos.Count}");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Payments from QB.");
-            var qbPayments = await _qbInvoiceService.GetAllExistingPaymentsAsync();
+            var qbPayments = await _qbInvoiceService.SyncAllExistingPaymentsAsync();
             SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Payments from QB : {qbPayments.Count}");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from Populi.");
@@ -268,19 +268,20 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
             foreach (var excelItem in excelItems)
             {
-                var qbItem = existingItems.FirstOrDefault(x =>
+                var qbItem = _qbItemService.AllExistingItemsList.FirstOrDefault(x =>
                     (x.QbItemName == null ? "" : x.QbItemName.Trim()) == excelItem.Name.Trim());
                 if (qbItem == null)
                 {
                     SetSyncStatusMessage(StatusMessageType.Error, $"{excelItem.Name} does not exist in QB.");
                     SetSyncStatusMessage(StatusMessageType.Info, $"Adding {excelItem.Name} to QB.");
 
-                    var acc = accounts.FirstOrDefault(x => x.FullName == excelItem.Account.Trim()
+                    var acc = QbAccountsService.AllExistingAccountsList.FirstOrDefault(x => x.FullName == excelItem.Account.Trim()
                                                            || x.Number == excelItem.AccNumberOnly.Trim()
                                                            || x.Title.Contains(excelItem.AccTitleOnly.Trim()));
                     if (acc == null)
                     {
                         SetSyncStatusMessage(StatusMessageType.Error, $"{excelItem.Account} does not exist in QB.");
+                        SetSyncStatusMessage(StatusMessageType.Error, $"Failed to add {excelItem.Name} to QB.");
                         ProgressCount++;
                         continue;
                     }

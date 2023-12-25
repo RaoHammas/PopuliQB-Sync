@@ -137,6 +137,7 @@ public class QbAccountsService
         catch (Exception ex)
         {
             _logger.Error(ex);
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{ex.Message}"));
         }
 
         return null;

@@ -19,8 +19,6 @@ public class QBInvoiceService
 
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
-    public bool IsConnected { get; set; }
-    public bool IsSessionOpen { get; set; }
     public List<QbInvoice> AllExistingInvoicesList { get; set; } = new();
     public List<QbMemo> AllExistingMemosList { get; set; } = new();
     public List<QbPayment> AllExistingPaymentsList { get; set; } = new();
@@ -39,26 +37,25 @@ public class QBInvoiceService
         _itemService = itemService;
     }
 
-    public async Task<bool> AddInvoicesAsync(List<PopInvoice> invoices)
+    public async Task AddInvoicesAsync(List<PopInvoice> invoices)
     {
         var sessionManager = new QBSessionManager();
-
+        var isConnected = false;
+        var isSessionOpen = false;
         try
         {
             sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
-            IsConnected = true;
+            isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
             sessionManager.BeginSession("", ENOpenMode.omDontCare);
-            IsSessionOpen = true;
+            isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
-            await Task.Run(async () =>
+            await Task.Run(() =>
             {
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
-
-                await _itemService.SyncAllExistingItemsAsync(sessionManager, requestMsgSet);
 
                 for (var index = 0; index < invoices.Count; index++)
                 {
@@ -76,21 +73,6 @@ public class QBInvoiceService
 
                     if (existingCustomer != null)
                     {
-                        //Check if inv Items exist in QB itemsList otherwise add them
-                        foreach (var invoiceItem in invoice.Items!)
-                        {
-                            var existedInvItem =
-                                _itemService.AllExistingItemsList.FirstOrDefault(x =>
-                                    x.QbItemName == invoiceItem.Name);
-                            if (existedInvItem == null)
-                            {
-                                await _itemService.AddItemAsync(invoiceItem, sessionManager,
-                                    requestMsgSet);
-                                invoiceItem.Name = _itemService.AllExistingItemsList.Last()
-                                    .QbItemName;
-                            }
-                        }
-
                         _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, existingCustomer.QbListId!);
                         var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
                         if (ReadAddedInvoice(responseMsgSet))
@@ -115,27 +97,17 @@ public class QBInvoiceService
                                     {
                                         var invoiceCredit = invoice.Credits[i];
 
-                                        //Check if credit Items exist in QB itemsList otherwise add them
-                                        foreach (var creditItem in invoiceCredit.Items!)
-                                        {
-                                            var existedInvItem =
-                                                _itemService.AllExistingItemsList.FirstOrDefault(
-                                                    x =>
-                                                        x.QbItemName == creditItem.Name);
-                                            if (existedInvItem == null)
-                                            {
-                                                await _itemService.AddItemAsync(creditItem,
-                                                    sessionManager, requestMsgSet);
-                                                creditItem.Name = _itemService.AllExistingItemsList
-                                                    .Last().QbItemName;
-                                            }
-                                        }
-
                                         _memoBuilder.BuildAddRequest(requestMsgSet, invoiceCredit,
                                             existingCustomer.QbListId!);
                                         responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-                                        var msg = responseMsgSet.ToXMLString();
-                                        if (ReadAddedMemo(responseMsgSet))
+                                        if (!ReadAddedMemo(responseMsgSet))
+                                        {
+                                            var xmResp = responseMsgSet.ToXMLString();
+                                            var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                                            OnSyncStatusChanged?.Invoke(this,
+                                                new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                                        }
+                                        else
                                         {
                                             OnSyncStatusChanged?.Invoke(this,
                                                 new StatusMessageArgs(StatusMessageType.Success,
@@ -173,8 +145,14 @@ public class QBInvoiceService
                                             existingCustomer.QbListId!);
 
                                         responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-                                        var msg = responseMsgSet.ToXMLString();
-                                        if (ReadAddedPayments(responseMsgSet))
+                                        if (!ReadAddedPayments(responseMsgSet))
+                                        {
+                                            var xmResp = responseMsgSet.ToXMLString();
+                                            var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                                            OnSyncStatusChanged?.Invoke(this,
+                                                new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                                        }
+                                        else
                                         {
                                             OnSyncStatusChanged?.Invoke(this,
                                                 new StatusMessageArgs(StatusMessageType.Success,
@@ -206,33 +184,29 @@ public class QBInvoiceService
                                 $"{personFullName} | Id = {invoice.ReportData?.PersonId} Customer not found."));
                     }
 
-                    OnSyncProgressChanged?.Invoke(this, new ProgressArgs(index));
+                    OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                 }
             });
 
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
-            return true;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-            throw;
         }
         finally
         {
-            if (IsSessionOpen)
+            if (isSessionOpen)
             {
                 sessionManager.EndSession();
-                IsSessionOpen = false;
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
             }
 
-            if (IsConnected)
+            if (isConnected)
             {
                 sessionManager.CloseConnection();
-                IsConnected = false;
                 OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
             }
         }
@@ -241,20 +215,22 @@ public class QBInvoiceService
 
     #region INVOICES
 
-    public async Task<List<QbInvoice>> GetAllExistingInvoicesAsync()
+    public async Task SyncAllExistingInvoicesAsync()
     {
         var sessionManager = new QBSessionManager();
+        var isConnected = false;
+        var isSessionOpen = false;
 
         try
         {
             AllExistingInvoicesList.Clear();
 
             sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
-            IsConnected = true;
+            isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
             sessionManager.BeginSession("", ENOpenMode.omDontCare);
-            IsSessionOpen = true;
+            isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
             await Task.Run(() =>
@@ -264,71 +240,73 @@ public class QBInvoiceService
 
                 _invoiceBuilder.BuildGetAllInvoicesRequest(requestMsgSet);
                 var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-                //var xmResp = responseMsgSet.ToXMLString();
-                ReadFetchedInvoices(responseMsgSet);
+
+                if (!ReadFetchedInvoices(responseMsgSet))
+                {
+                    var xmResp = responseMsgSet.ToXMLString();
+                    var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                    _logger.Error(msg);
+
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                }
             });
 
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
-
-            return AllExistingInvoicesList;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-            return AllExistingInvoicesList;
         }
         finally
         {
-            if (IsSessionOpen)
+            if (isSessionOpen)
             {
                 sessionManager.EndSession();
-                IsSessionOpen = false;
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
             }
 
-            if (IsConnected)
+            if (isConnected)
             {
                 sessionManager.CloseConnection();
-                IsConnected = false;
                 OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
             }
         }
     }
 
-    private void ReadFetchedInvoices(IMsgSetResponse? responseMsgSet)
+    private bool ReadFetchedInvoices(IMsgSetResponse? responseMsgSet)
     {
-        if (responseMsgSet == null) return;
+        if (responseMsgSet == null) return false;
         var responseList = responseMsgSet.ResponseList;
-        if (responseList == null) return;
+        if (responseList == null) return false;
 
-        //if we sent only one request, there is only one response, we'll walk the list for this sample
         for (var i = 0; i < responseList.Count; i++)
         {
             var response = responseList.GetAt(i);
 
-            //check the status code of the response, 0=ok, >0 is warning
             if (response.StatusCode >= 0)
             {
-                //the request-specific response is in the details, make sure we have some
                 if (response.Detail != null)
                 {
-                    //make sure the response is the type we're expecting
                     var responseType = (ENResponseType)response.Type.GetValue();
                     if (responseType == ENResponseType.rtInvoiceQueryRs)
                     {
-                        //upcast to more specific type here, this is safe because we checked with response.Type check above
                         var retList = (IInvoiceRetList)response.Detail;
-
+                        OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, retList.Count));
                         for (var x = 0; x < retList.Count; x++)
                         {
                             ReadPropertiesInvoice(retList.GetAt(x));
                         }
+
+                        return true;
                     }
                 }
             }
         }
+
+        return false;
     }
 
     private bool ReadAddedInvoice(IMsgSetResponse? responseMsgSet)
@@ -344,21 +322,16 @@ public class QBInvoiceService
             return false;
         }
 
-        //if we sent only one request, there is only one response, we'll walk the list for this sample
         for (var i = 0; i < responseList.Count; i++)
         {
             var response = responseList.GetAt(i);
-            //check the status code of the response, 0=ok, >0 is warning
             if (response.StatusCode >= 0)
             {
-                //the request-specific response is in the details, make sure we have some
                 if (response.Detail != null)
                 {
-                    //make sure the response is the type we're expecting
                     var responseType = (ENResponseType)response.Type.GetValue();
                     if (responseType == ENResponseType.rtInvoiceAddRs)
                     {
-                        //upcast to more specific type here, this is safe because we checked with response.Type check above
                         var ret = (IInvoiceRet)response.Detail;
                         if (ret != null)
                         {
@@ -381,18 +354,23 @@ public class QBInvoiceService
         {
             if (ret == null) return null;
 
-            var customer = new QbInvoice();
-            customer.PopInvoiceId = Convert.ToInt32(ret.PONumber.GetValue()); //unique inv id from populi
-            customer.PopInvoiceNumber = Convert.ToInt32(ret.RefNumber.GetValue());
-            customer.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
-            customer.QbCustomerName = ret.CustomerRef.FullName.GetValue();
+            var invoice = new QbInvoice();
+            invoice.PopInvoiceId = Convert.ToInt32(ret.PONumber.GetValue()); //unique inv id from populi
+            invoice.PopInvoiceNumber = Convert.ToInt32(ret.RefNumber.GetValue());
+            invoice.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
+            invoice.QbCustomerName = ret.CustomerRef.FullName.GetValue();
 
-            AllExistingInvoicesList.Add(customer);
-            return customer;
+            AllExistingInvoicesList.Add(invoice);
+
+            OnSyncStatusChanged?.Invoke(this,
+                new StatusMessageArgs(StatusMessageType.Info, $"Found: {invoice.PopInvoiceNumber}"));
+            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
+            return invoice;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{ex.Message}"));
         }
 
         return null;
@@ -402,20 +380,21 @@ public class QBInvoiceService
 
     #region MEMOS
 
-    public async Task<List<QbInvoice>> GetAllExistingMemosAsync()
+    public async Task SyncAllExistingMemosAsync()
     {
         var sessionManager = new QBSessionManager();
-
+        var isConnected = false;
+        var isSessionOpen = false;
         try
         {
-            AllExistingInvoicesList.Clear();
+            AllExistingMemosList.Clear();
 
             sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
-            IsConnected = true;
+            isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
             sessionManager.BeginSession("", ENOpenMode.omDontCare);
-            IsSessionOpen = true;
+            isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
             await Task.Run(() =>
@@ -425,71 +404,73 @@ public class QBInvoiceService
 
                 _memoBuilder.BuildGetAllRequest(requestMsgSet);
                 var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-                //var xmResp = responseMsgSet.ToXMLString();
-                ReadFetchedMemos(responseMsgSet);
+                if (!ReadFetchedMemos(responseMsgSet))
+                {
+                    var xmResp = responseMsgSet.ToXMLString();
+                    var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                    _logger.Error(msg);
+
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                }
             });
 
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
-
-            return AllExistingInvoicesList;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-            return AllExistingInvoicesList;
         }
         finally
         {
-            if (IsSessionOpen)
+            if (isSessionOpen)
             {
                 sessionManager.EndSession();
-                IsSessionOpen = false;
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
             }
 
-            if (IsConnected)
+            if (isConnected)
             {
                 sessionManager.CloseConnection();
-                IsConnected = false;
                 OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
             }
         }
     }
 
-    private void ReadFetchedMemos(IMsgSetResponse? responseMsgSet)
+    private bool ReadFetchedMemos(IMsgSetResponse? responseMsgSet)
     {
-        if (responseMsgSet == null) return;
+        if (responseMsgSet == null) return false;
         var responseList = responseMsgSet.ResponseList;
-        if (responseList == null) return;
+        if (responseList == null) return false;
 
-        //if we sent only one request, there is only one response, we'll walk the list for this sample
         for (var i = 0; i < responseList.Count; i++)
         {
             var response = responseList.GetAt(i);
 
-            //check the status code of the response, 0=ok, >0 is warning
             if (response.StatusCode >= 0)
             {
-                //the request-specific response is in the details, make sure we have some
                 if (response.Detail != null)
                 {
-                    //make sure the response is the type we're expecting
                     var responseType = (ENResponseType)response.Type.GetValue();
                     if (responseType == ENResponseType.rtCreditMemoQueryRs)
                     {
-                        //upcast to more specific type here, this is safe because we checked with response.Type check above
                         var retList = (ICreditMemoRetList)response.Detail;
+                        OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, retList.Count));
 
                         for (var x = 0; x < retList.Count; x++)
                         {
                             ReadPropertiesMemo(retList.GetAt(x));
                         }
+
+                        return true;
                     }
                 }
             }
         }
+
+        return false;
     }
 
     private bool ReadAddedMemo(IMsgSetResponse? responseMsgSet)
@@ -505,21 +486,17 @@ public class QBInvoiceService
             return false;
         }
 
-        //if we sent only one request, there is only one response, we'll walk the list for this sample
         for (var i = 0; i < responseList.Count; i++)
         {
             var response = responseList.GetAt(i);
-            //check the status code of the response, 0=ok, >0 is warning
+
             if (response.StatusCode >= 0)
             {
-                //the request-specific response is in the details, make sure we have some
                 if (response.Detail != null)
                 {
-                    //make sure the response is the type we're expecting
                     var responseType = (ENResponseType)response.Type.GetValue();
                     if (responseType == ENResponseType.rtCreditMemoAddRs)
                     {
-                        //upcast to more specific type here, this is safe because we checked with response.Type check above
                         var ret = (ICreditMemoRet)response.Detail;
                         if (ret != null)
                         {
@@ -549,11 +526,15 @@ public class QBInvoiceService
             memo.QbCustomerName = ret.CustomerRef.FullName.GetValue();
 
             AllExistingMemosList.Add(memo);
+            OnSyncStatusChanged?.Invoke(this,
+                new StatusMessageArgs(StatusMessageType.Info, $"Found: {memo.PopInvoiceNumber}"));
+            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
             return memo;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{ex.Message}"));
         }
 
         return null;
@@ -562,22 +543,24 @@ public class QBInvoiceService
     #endregion
 
 
-    #region Payments
+    #region PAYMENTS
 
-    public async Task<List<QbInvoice>> GetAllExistingPaymentsAsync()
+    public async Task SyncAllExistingPaymentsAsync()
     {
         var sessionManager = new QBSessionManager();
+        var isConnected = false;
+        var isSessionOpen = false;
 
         try
         {
             AllExistingPaymentsList.Clear();
 
             sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
-            IsConnected = true;
+            isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
             sessionManager.BeginSession("", ENOpenMode.omDontCare);
-            IsSessionOpen = true;
+            isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
             await Task.Run(() =>
@@ -587,71 +570,73 @@ public class QBInvoiceService
 
                 _paymentBuilder.BuildGetAllRequest(requestMsgSet);
                 var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-                var xmResp = responseMsgSet.ToXMLString();
-                ReadFetchedPayments(responseMsgSet);
+                if (!ReadFetchedPayments(responseMsgSet))
+                {
+                    var xmResp = responseMsgSet.ToXMLString();
+                    var msg = PQExtensions.GetXmlNodeValue(xmResp);
+                    _logger.Error(msg);
+
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                }
             });
 
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
-
-            return AllExistingInvoicesList;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-            return AllExistingInvoicesList;
         }
         finally
         {
-            if (IsSessionOpen)
+            if (isSessionOpen)
             {
                 sessionManager.EndSession();
-                IsSessionOpen = false;
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
             }
 
-            if (IsConnected)
+            if (isConnected)
             {
                 sessionManager.CloseConnection();
-                IsConnected = false;
                 OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
             }
         }
     }
 
-    private void ReadFetchedPayments(IMsgSetResponse? responseMsgSet)
+    private bool ReadFetchedPayments(IMsgSetResponse? responseMsgSet)
     {
-        if (responseMsgSet == null) return;
+        if (responseMsgSet == null) return false;
         var responseList = responseMsgSet.ResponseList;
-        if (responseList == null) return;
+        if (responseList == null) return false;
 
-        //if we sent only one request, there is only one response, we'll walk the list for this sample
         for (var i = 0; i < responseList.Count; i++)
         {
             var response = responseList.GetAt(i);
 
-            //check the status code of the response, 0=ok, >0 is warning
             if (response.StatusCode >= 0)
             {
-                //the request-specific response is in the details, make sure we have some
                 if (response.Detail != null)
                 {
-                    //make sure the response is the type we're expecting
                     var responseType = (ENResponseType)response.Type.GetValue();
                     if (responseType == ENResponseType.rtReceivePaymentQueryRs)
                     {
-                        //upcast to more specific type here, this is safe because we checked with response.Type check above
                         var retList = (IReceivePaymentRetList)response.Detail;
+                        OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, retList.Count));
 
                         for (var x = 0; x < retList.Count; x++)
                         {
                             ReadPropertiesPayments(retList.GetAt(x));
                         }
+
+                        return true;
                     }
                 }
             }
         }
+
+        return false;
     }
 
     private bool ReadAddedPayments(IMsgSetResponse? responseMsgSet)
@@ -667,21 +652,16 @@ public class QBInvoiceService
             return false;
         }
 
-        //if we sent only one request, there is only one response, we'll walk the list for this sample
         for (var i = 0; i < responseList.Count; i++)
         {
             var response = responseList.GetAt(i);
-            //check the status code of the response, 0=ok, >0 is warning
             if (response.StatusCode >= 0)
             {
-                //the request-specific response is in the details, make sure we have some
                 if (response.Detail != null)
                 {
-                    //make sure the response is the type we're expecting
                     var responseType = (ENResponseType)response.Type.GetValue();
                     if (responseType == ENResponseType.rtReceivePaymentAddRs)
                     {
-                        //upcast to more specific type here, this is safe because we checked with response.Type check above
                         var ret = (IReceivePaymentRet)response.Detail;
                         if (ret != null)
                         {
@@ -710,11 +690,15 @@ public class QBInvoiceService
             payment.QbCustomerName = ret.CustomerRef.FullName.GetValue();
 
             AllExistingPaymentsList.Add(payment);
+            OnSyncStatusChanged?.Invoke(this,
+                new StatusMessageArgs(StatusMessageType.Info, $"Found: {payment.PopPaymentNumber}"));
+            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
             return payment;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{ex.Message}"));
         }
 
         return null;
