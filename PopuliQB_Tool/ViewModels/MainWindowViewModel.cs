@@ -182,16 +182,16 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from QB.");
-            var qbInvoices = await _qbInvoiceService.SyncAllExistingInvoicesAsync();
-            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Invoices from QB : {qbInvoices.Count}");
+            await _qbInvoiceService.SyncAllExistingInvoicesAsync();
+            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Invoices from QB : {_qbInvoiceService.AllExistingInvoicesList.Count}");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Credit Memos from QB.");
-            var qbMemos = await _qbInvoiceService.SyncAllExistingMemosAsync();
-            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Credit Memos from QB : {qbMemos.Count}");
+            await _qbInvoiceService.SyncAllExistingMemosAsync();
+            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Credit Memos from QB : {_qbInvoiceService.AllExistingMemosList.Count}");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Payments from QB.");
-            var qbPayments = await _qbInvoiceService.SyncAllExistingPaymentsAsync();
-            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Payments from QB : {qbPayments.Count}");
+            await _qbInvoiceService.SyncAllExistingPaymentsAsync();
+            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Payments from QB : {_qbInvoiceService.AllExistingPaymentsList.Count}");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from Populi.");
             var page = 1;
@@ -215,14 +215,14 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
                     popInvoices = await GetNextBatchOfInvoicesAndCreditsAndPaymentsFromPopuli(page);
                     SetSyncStatusMessage(StatusMessageType.Success,
-                        $"Fetched {popInvoices.Data.Count} Invoices from Populi.");
+                        $"Fetched {popInvoices.Data!.Count} Invoices from Populi.");
                 }
 
                 page++;
                 if (popInvoices.Data.Count != 0)
                 {
                     SetSyncStatusMessage(StatusMessageType.Info, $"Adding {popInvoices.Count} Invoices to QB.");
-                    var resp = await _qbInvoiceService.AddInvoicesAsync(popInvoices.Data);
+                    await _qbInvoiceService.AddInvoicesAsync(popInvoices.Data);
                 }
                 else
                 {

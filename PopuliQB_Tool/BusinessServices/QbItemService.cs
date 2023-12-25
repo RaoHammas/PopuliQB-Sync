@@ -264,7 +264,6 @@ public class QbItemService
                     {
                         var retList = (IItemServiceRetList)response.Detail;
                         OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, retList.Count));
-
                         for (var x = 0; x < retList.Count; x++)
                         {
                             ReadPropertiesItem(retList.GetAt(x));
@@ -300,6 +299,7 @@ public class QbItemService
         catch (Exception ex)
         {
             _logger.Error(ex);
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{ex.Message}"));
         }
 
         return null;
