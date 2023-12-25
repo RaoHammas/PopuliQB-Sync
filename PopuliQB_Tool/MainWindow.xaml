@@ -12,8 +12,8 @@
     xmlns:models="clr-namespace:PopuliQB_Tool.Models"
     xmlns:viewModels="clr-namespace:PopuliQB_Tool.ViewModels"
     Title="Populi to QuickBooks Sync"
-    Width="800"
-    Height="450"
+    Width="1200"
+    Height="620"
     d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel,
                                      IsDesignTimeCreatable=False}"
     ResizeMode="CanResize"
