@@ -56,6 +56,8 @@ public class PopItem
     [JsonPropertyName("amount")] public double? Amount { get; set; }
 
     [JsonPropertyName("description")] public string? Description { get; set; }
+    
+    public string? ItemQbListId { get; set; }
 }
 
 public class PopInvoiceReportData

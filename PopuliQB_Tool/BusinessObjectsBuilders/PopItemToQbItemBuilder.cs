@@ -47,7 +47,7 @@ public class PopItemToQbItemBuilder
 
         request.IsActive.SetValue(true);
         request.ORSalesPurchase.SalesOrPurchase.AccountRef.ListID.SetValue(item.QbAccListId);
-
+        
         request.IncludeRetElementList.Add("ListID");
         request.IncludeRetElementList.Add("Name");
     }

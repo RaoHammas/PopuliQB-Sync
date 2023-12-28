@@ -6,13 +6,13 @@ public static class PqExtensions
 {
     public static string RemoveInvalidUnicodeCharacters(this string input)
     {
-        // Define a regular expression pattern to match valid characters
-        var pattern = @"[^\p{L}\p{N}\s]";
+        // Remove specific characters
+        string cleanedString = Regex.Replace(input, @"[?*$#@!]", string.Empty);
 
-        // Use Regex to replace invalid characters with an empty string
-        var result = Regex.Replace(input, pattern, string.Empty);
+        // Replace multiple spaces with a single space
+        cleanedString = Regex.Replace(cleanedString, @"\s+", " ");
 
-        return result;
+        return cleanedString;
     }
 
     public static List<string> DivideIntoEqualParts(this string input, int maxLength)

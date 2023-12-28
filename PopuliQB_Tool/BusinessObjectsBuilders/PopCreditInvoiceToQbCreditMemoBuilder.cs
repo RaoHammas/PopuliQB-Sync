@@ -5,14 +5,15 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopCreditMemoToQbCreditMemoBuilder
 {
-    public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopCredit memo, string qbCustomerListId)
+    public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopCredit memo, string qbCustomerListId, string arListId)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendCreditMemoAddRq();
         request.CustomerRef.ListID.SetValue(qbCustomerListId);
         request.PONumber.SetValue(memo.Id.ToString());
         request.RefNumber.SetValue(memo.Number.ToString());
-        request.ARAccountRef.ListID.SetValue(QbSettings.Instance.ARForCreditMemos.ListId);
+
+        request.ARAccountRef.ListID.SetValue(arListId);
         
         if (!string.IsNullOrEmpty(memo.Status) && memo.Status != "unpaid")
         {
@@ -43,7 +44,7 @@ public class PopCreditMemoToQbCreditMemoBuilder
                 }
 
                 var invItem = request.ORCreditMemoLineAddList.Append();
-                invItem.CreditMemoLineAdd.ItemRef.FullName.SetValue(item.Name);
+                invItem.CreditMemoLineAdd.ItemRef.ListID.SetValue(item.ItemQbListId);
                 invItem.CreditMemoLineAdd.Desc.SetValue(item.Description);
                 invItem.CreditMemoLineAdd.Quantity.SetValue(1);
                 invItem.CreditMemoLineAdd.ORRatePriceLevel.Rate.SetValue(item.Amount!.Value);

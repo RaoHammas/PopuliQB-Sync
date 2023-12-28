@@ -120,7 +120,7 @@ public class PopuliAccessService
         return new();
     }
 
-    public async Task<PopResponse<PopInvoice>> GetTransactionDetailsAsync(int transactionId, int page = 1)
+    public async Task<PopTransaction?> GetTransactionWithLedgerAsync(int transactionId)
     {
         var request = new RestRequest($"{ProdUrl}/transactions/{transactionId}");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
@@ -130,24 +130,22 @@ public class PopuliAccessService
                    {
                        "expand": ["ledger_entries"]
                    }
-
                    """;
 
         request.AddStringBody(body, DataFormat.Json);
 
         var response =
-            await _client.ExecuteAsync<PopResponse<PopInvoice>>(request, Method.Get, CancellationToken.None);
+            await _client.ExecuteAsync<PopTransaction>(request, Method.Get, CancellationToken.None);
         if (response is { IsSuccessStatusCode: true, Content: not null })
         {
             if (response.Data != null)
             {
-                AllPopuliInvoices.AddRange(response.Data.Data!);
                 return response.Data;
             }
         }
 
-        _logger.Error("Failed to fetch Transection. {@response}", response);
-        return new();
+        _logger.Error("Failed to fetch Transaction. {@response}", response);
+        return null;
     }
 
     public async Task SyncAllAccountsAsync(int page = 1)

@@ -298,12 +298,11 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             {
                 if (item.Name.Length > 31) //31 is max length for Item name field in QB
                 {
-                    var name = item.Name.Substring(0, 31);
-                    item.Name = name;
-                    SetSyncStatusMessage(StatusMessageType.Warn, $"Item {item.Name} trimmed to first 31 characters. Max limit of item name in QB is 31.");
-                }
+                    var name = item.Name.Substring(0, 31).Trim();
+                    SetSyncStatusMessage(StatusMessageType.Warn, $"{item.Name} : trimmed to 31 chars. New name is: {name}");
 
-                item.Name = item.Name.RemoveInvalidUnicodeCharacters();
+                    item.Name = name.RemoveInvalidUnicodeCharacters();
+                }
             }
 
             TotalRecords = excelItems.Count;

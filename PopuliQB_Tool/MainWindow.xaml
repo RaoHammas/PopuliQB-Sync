@@ -226,7 +226,7 @@
                             SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ARForInvoice}"
                             Style="{StaticResource MaterialDesignOutlinedComboBox}" />
 
-                        <ComboBox
+                        <!--<ComboBox
                             Margin="0,15,0,0"
                             HorizontalAlignment="Stretch"
                             materialDesign:HintAssist.FloatingScale="1"
@@ -255,7 +255,7 @@
                             IsEditable="True"
                             ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
                             SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ADForPayments}"
-                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />
+                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />-->
                     </StackPanel>
 
 

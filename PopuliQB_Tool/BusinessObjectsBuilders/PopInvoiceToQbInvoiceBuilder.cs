@@ -39,13 +39,14 @@ public class PopInvoiceToQbInvoiceBuilder
         request.IsToBePrinted.SetValue(false);
         request.IsToBeEmailed.SetValue(false);
         request.Memo.SetValue($"Trans#{invoice.TransactionId}");
-
+        
         if (invoice.Items != null)
         {
             foreach (var item in invoice.Items)
             {
                 var invItem = request.ORInvoiceLineAddList.Append();
-                invItem.InvoiceLineAdd.ItemRef.FullName.SetValue(item.Name);
+
+                invItem.InvoiceLineAdd.ItemRef.ListID.SetValue(item.ItemQbListId);
                 invItem.InvoiceLineAdd.Desc.SetValue(item.Description);
                 invItem.InvoiceLineAdd.Quantity.SetValue(1);
                 invItem.InvoiceLineAdd.ORRatePriceLevel.Rate.SetValue(item.Amount!.Value);

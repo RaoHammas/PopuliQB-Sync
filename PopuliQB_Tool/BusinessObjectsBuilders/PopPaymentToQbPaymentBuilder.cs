@@ -5,18 +5,20 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopPaymentToQbPaymentBuilder
 {
-
-    public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopPayment payment, string qbCustomerListId)
+    public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopPayment payment, string qbCustomerListId,
+        string arListId, string adListId)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendReceivePaymentAddRq();
         request.CustomerRef.ListID.SetValue(qbCustomerListId);
         request.RefNumber.SetValue(payment.Number.ToString());
-        request.ARAccountRef.ListID.SetValue(QbSettings.Instance.ARForPayments.ListId);
-        request.DepositToAccountRef.ListID.SetValue(QbSettings.Instance.ADForPayments.ListId);
+        
+        request.ARAccountRef.ListID.SetValue(arListId);
+        request.DepositToAccountRef.ListID.SetValue(adListId);
+        
         request.TotalAmount.SetValue(payment.Amount ?? 0);
         request.ORApplyPayment.IsAutoApply.SetValue(true);
-
+        
         /*if (Convert.ToDateTime(payment.DueOn) is var dueDate)
         {
             request.DueDate.SetValue(dueDate);
@@ -27,8 +29,9 @@ public class PopPaymentToQbPaymentBuilder
             request.TxnDate.SetValue(postedDate);
         }*/
 
-        request.Memo.SetValue($"PaidType# {payment.PaidByType} Trans#{payment.TransactionId} Receipt#{payment.ReceiptNumber} Id#{payment.Id.ToString()}");
-        
+        request.Memo.SetValue(
+            $"PaidType# {payment.PaidByType} Trans#{payment.TransactionId} Receipt#{payment.ReceiptNumber} Id#{payment.Id.ToString()}");
+
 
         request.IncludeRetElementList.Add("CustomerRef");
         request.IncludeRetElementList.Add("RefNumber");

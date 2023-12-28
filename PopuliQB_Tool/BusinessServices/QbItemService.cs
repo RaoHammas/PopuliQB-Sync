@@ -112,12 +112,8 @@ public class QbItemService
 
                 foreach (var excelItem in excelItems)
                 {
-                    if (excelItem.Name.ToLower().Contains("Continuous Enrollment Fe".ToLower()))
-                    {
-                     
-                    }
                     var qbItem = AllExistingItemsList.FirstOrDefault(x =>
-                        (x.QbItemName == null ? "" : x.QbItemName.Trim()) == excelItem.Name.Trim());
+                        (x.QbItemName == null ? "" : x.QbItemName.ToLower().Trim()) == excelItem.Name.ToLower().Trim());
 
                     if (qbItem == null)
                     {
@@ -139,6 +135,8 @@ public class QbItemService
                             OnSyncStatusChanged?.Invoke(this,
                                 new StatusMessageArgs(StatusMessageType.Error,
                                     $"Failed to add {excelItem.Name} to QB."));
+
+                            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                         }
                         else
                         {
@@ -167,9 +165,9 @@ public class QbItemService
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn, $"{excelItem.Name} already exists in QB."));
+                        OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                     }
 
-                    OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                 }
             });
 
