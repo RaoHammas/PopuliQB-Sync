@@ -37,8 +37,8 @@ public class PopItemToQbItemBuilder
         if (item.Name.Length > maxLength)
         {
             var name = item.Name.Substring(0, maxLength);
-            var l = name.Length;
             request.Name.SetValue(name);
+            item.Name = name;
         }
         else
         {

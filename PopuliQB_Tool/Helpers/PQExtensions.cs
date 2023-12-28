@@ -4,6 +4,17 @@ namespace PopuliQB_Tool.Helpers;
 
 public static class PqExtensions
 {
+    public static string RemoveInvalidUnicodeCharacters(this string input)
+    {
+        // Define a regular expression pattern to match valid characters
+        var pattern = @"[^\p{L}\p{N}\s]";
+
+        // Use Regex to replace invalid characters with an empty string
+        var result = Regex.Replace(input, pattern, string.Empty);
+
+        return result;
+    }
+
     public static List<string> DivideIntoEqualParts(this string input, int maxLength)
     {
         var dividedStrings = new List<string>();

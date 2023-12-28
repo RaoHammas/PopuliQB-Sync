@@ -26,7 +26,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly QbItemService _qbItemService;
 
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
-    [ObservableProperty] private ObservableCollection<StatusMessage> _statisticsMessages = new();
 
     [ObservableProperty] private int _totalRecords = 0;
     [ObservableProperty] private int _progressCount = 0;
@@ -106,21 +105,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
-    private Task<PopResponse<PopPerson>> GetNextBatchOfPersonsFromPopuli(int page)
-    {
-        return _populiAccessService.GetAllPersonsAsync(page);
-    }
-
-    private Task<PopResponse<PopInvoice>> GetNextBatchOfInvoicesAndCreditsAndPaymentsFromPopuli(int page)
-    {
-        return _populiAccessService.GetAllInvoicesAsync(page);
-    }
-
     [RelayCommand]
     private async Task StartPopuliStudentsSync()
     {
         try
         {
+            SyncStatusMessages.Clear();
             TotalRecords = 0;
             ProgressCount = 0;
 
@@ -134,7 +124,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from Populi.");
             var page = 1;
-            var persons = await GetNextBatchOfPersonsFromPopuli(page);
+            var persons = await _populiAccessService.GetAllPersonsAsync(page);
             TotalRecords = persons.Results ?? 0;
             SetSyncStatusMessage(StatusMessageType.Success, $"Total Persons found on Populi : {persons.Results}");
 
@@ -152,7 +142,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                     SetSyncStatusMessage(StatusMessageType.Info,
                         $"Fetching next {persons.ResultsPerPage} from Populi.");
 
-                    persons = await GetNextBatchOfPersonsFromPopuli(page);
+                    persons = await _populiAccessService.GetAllPersonsAsync(page);
                     SetSyncStatusMessage(StatusMessageType.Success,
                         $"Fetched {persons.Data.Count} Persons from Populi.");
                 }
@@ -182,6 +172,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         try
         {
+            SyncStatusMessages.Clear();
+
             TotalRecords = 0;
             ProgressCount = 0;
 
@@ -199,7 +191,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from Populi.");
             var page = 1;
-            var popInvoices = await GetNextBatchOfInvoicesAndCreditsAndPaymentsFromPopuli(page);
+            var popInvoices = await _populiAccessService.GetAllInvoicesAsync(page);
             TotalRecords = popInvoices.Results ?? 0;
             SetSyncStatusMessage(StatusMessageType.Success, $"Total Invoices found on Populi : {popInvoices.Results}");
 
@@ -217,7 +209,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                     SetSyncStatusMessage(StatusMessageType.Info,
                         $"Fetching next {popInvoices.ResultsPerPage} from Populi.");
 
-                    popInvoices = await GetNextBatchOfInvoicesAndCreditsAndPaymentsFromPopuli(page);
+                    popInvoices = await  _populiAccessService.GetAllInvoicesAsync(page);
                     SetSyncStatusMessage(StatusMessageType.Success,
                         $"Fetched {popInvoices.Data!.Count} Invoices from Populi.");
                 }
@@ -242,16 +234,51 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
-
     [RelayCommand]
-    private async Task StartExcelToQbItemsSync()
+    private async Task StartPopuliToQbAccountsSync()
     {
+        SyncStatusMessages.Clear();
         SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
-
         await Task.Run(async () =>
         {
             SetSyncStatusMessage(StatusMessageType.Info, "Synching Accounts From QB.");
             await QbAccountsService.SyncAllExistingAccountsAsync();
+
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Fetching Accounts From Populi.");
+            await _populiAccessService.SyncAllAccountsAsync();
+            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched accounts: {_populiAccessService.AllPopuliAccounts.Count}.");
+
+            foreach (var account in _populiAccessService.AllPopuliAccounts)
+            {
+                var qbAcc = QbAccountsService.AllExistingAccountsList
+                    .FirstOrDefault(x =>
+                        x.Number == account.AccountNumber
+                        || x.Title.Trim().ToLower() == account.Name!.Trim().ToLower());
+                if (qbAcc != null)
+                {
+                    account.QbAccountListId = qbAcc.ListId;
+                }
+                else
+                {
+                    SetSyncStatusMessage(StatusMessageType.Error, $"Populi Account [ {account.AccountNumber} | {account.Name} ] doesn't exist in QB.");
+                }
+            }
+
+        });
+
+        SetSyncStatusMessage(StatusMessageType.Success, $"Accounts List Sync Completed.");
+    }
+
+    [RelayCommand]
+    private async Task StartExcelToQbItemsSync()
+    {
+        SyncStatusMessages.Clear();
+        SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
+
+        await Task.Run(async () =>
+        {
+
 
             SetSyncStatusMessage(StatusMessageType.Info, "Synching Items From QB.");
             await _qbItemService.SyncAllExistingItemsAsync();
@@ -264,6 +291,19 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             {
                 excelItems.AddRange(MiniExcel.Query<PopExcelItem>(path, sheetName: sheetName, excelType: ExcelType.XLSX)
                     .ToList());
+            }
+
+            //Refine data
+            foreach (var item in excelItems)
+            {
+                if (item.Name.Length > 31) //31 is max length for Item name field in QB
+                {
+                    var name = item.Name.Substring(0, 31);
+                    item.Name = name;
+                    SetSyncStatusMessage(StatusMessageType.Warn, $"Item {item.Name} trimmed to first 31 characters. Max limit of item name in QB is 31.");
+                }
+
+                item.Name = item.Name.RemoveInvalidUnicodeCharacters();
             }
 
             TotalRecords = excelItems.Count;
@@ -281,18 +321,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         Application.Current.Dispatcher.Invoke(() =>
         {
             SyncStatusMessages.Insert(0, new StatusMessage
-            {
-                Message = message,
-                MessageType = type
-            });
-        });
-    }
-
-    private void SetStatisticsMessage(StatusMessageType type, string message)
-    {
-        Application.Current.Dispatcher.Invoke(() =>
-        {
-            StatisticsMessages.Insert(0, new StatusMessage
             {
                 Message = message,
                 MessageType = type

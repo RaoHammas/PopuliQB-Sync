@@ -112,6 +112,10 @@ public class QbItemService
 
                 foreach (var excelItem in excelItems)
                 {
+                    if (excelItem.Name.ToLower().Contains("Continuous Enrollment Fe".ToLower()))
+                    {
+                     
+                    }
                     var qbItem = AllExistingItemsList.FirstOrDefault(x =>
                         (x.QbItemName == null ? "" : x.QbItemName.Trim()) == excelItem.Name.Trim());
 
