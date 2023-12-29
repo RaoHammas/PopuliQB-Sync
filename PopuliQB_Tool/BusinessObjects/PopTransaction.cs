@@ -27,7 +27,7 @@ public class PopLedgerEntry
 
     [JsonPropertyName("fund_id")] public object? FundId { get; set; }
 
-    [JsonPropertyName("is_deposit")] public bool? IsDeposit { get; set; }
+    [JsonPropertyName("is_deposit")] public object? IsDeposit { get; set; }
 }
 
 public class PopTransaction

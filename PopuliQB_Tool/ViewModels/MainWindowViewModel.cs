@@ -1,5 +1,7 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MiniExcelLibs;
@@ -26,10 +28,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly QbItemService _qbItemService;
 
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
+    [ObservableProperty] private ICollectionView _filteredLogs;
 
     [ObservableProperty] private int _totalRecords = 0;
     [ObservableProperty] private int _progressCount = 0;
     [ObservableProperty] private string? _companyName = "";
+    [ObservableProperty] private string? _title = "Populi to QuickBooks Sync";
     [ObservableProperty] private DateTime _startTransDate = DateTime.Now;
 
     public MainWindowViewModel(
@@ -61,6 +65,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         _qbItemService.OnSyncStatusChanged += SyncStatusChanged;
         _qbItemService.OnSyncProgressChanged += SyncProgressChanged;
+
+        FilteredLogs = CollectionViewSource.GetDefaultView(SyncStatusMessages);
+        FilteredLogs.Filter = null;
     }
 
     private void SyncProgressChanged(object? sender, ProgressArgs e)
@@ -93,7 +100,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         try
         {
             await Task.Run(() => { CompanyName = _qbCompanyService.GetCompanyName(); });
-
+            Title += $" [ Connected to {CompanyName} ]";
             SetSyncStatusMessage(StatusMessageType.Success, $"Connected to QuickBooks {CompanyName}.");
         }
         catch (Exception ex)
@@ -315,6 +322,26 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         SetSyncStatusMessage(StatusMessageType.Success, $"Items List Sync Completed.");
     }
 
+
+    [RelayCommand]
+    private void ClearLogs()
+    {
+        SyncStatusMessages.Clear();
+    }
+
+    [RelayCommand]
+    private void SetSelectedLogType(StatusMessageType type)
+    {
+        if (type == StatusMessageType.All)
+        {
+            FilteredLogs.Filter = null; // Show all items
+        }
+        else
+        {
+            FilteredLogs.Filter = item => ((StatusMessage)item).MessageType == type;
+        }
+    }
+
     private void SetSyncStatusMessage(StatusMessageType type, string message)
     {
         Application.Current.Dispatcher.Invoke(() =>
@@ -326,7 +353,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             });
         });
     }
-
     public void Dispose()
     {
         // TODO release managed resources here

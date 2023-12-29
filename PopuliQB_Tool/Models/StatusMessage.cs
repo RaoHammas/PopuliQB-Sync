@@ -14,4 +14,5 @@ public enum StatusMessageType
     Success,
     Info,
     Warn,
+    All,
 }

@@ -160,14 +160,9 @@ public class QBInvoiceService
                                             continue;
                                         }
 
-                                        var arAccId = trans.LedgerEntries.First(x => x.Debit > 0).AccountId;
-                                        //var adAccId = trans.LedgerEntries.First(x => x.Credit > 0).AccountId;
-
+                                        var arAccId = trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
                                         var arQbAccListId = _populiAccessService.AllPopuliAccounts
                                             .First(x => x.Id == arAccId).QbAccountListId;
-                                        /*var adQbAccListId = _populiAccessService.AllPopuliAccounts
-                                            .First(x => x.Id == adAccId).QbAccountListId;*/
-
 
                                         _memoBuilder.BuildAddRequest(requestMsgSet, invoiceCredit,
                                             existingCustomer.QbListId!, arQbAccListId!);
@@ -224,16 +219,16 @@ public class QBInvoiceService
                                             continue;
                                         }
 
-                                        var arAccId = trans.LedgerEntries.First(x => x.Debit > 0).AccountId;
-                                        var adAccId = trans.LedgerEntries.First(x => x.Credit > 0).AccountId;
+                                        var arAccId = trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
+                                        //var adAccId = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
 
                                         var arQbAccListId = _populiAccessService.AllPopuliAccounts
                                             .First(x => x.Id == arAccId).QbAccountListId;
-                                        var adQbAccListId = _populiAccessService.AllPopuliAccounts
-                                            .First(x => x.Id == adAccId).QbAccountListId;
+                                        /*var adQbAccListId = _populiAccessService.AllPopuliAccounts
+                                            .First(x => x.Id == adAccId).QbAccountListId;*/
 
                                         _paymentBuilder.BuildAddRequest(requestMsgSet, invoicePayment,
-                                            existingCustomer.QbListId!, arQbAccListId!, adQbAccListId!);
+                                            existingCustomer.QbListId!, arQbAccListId!, QbSettings.Instance.ADForPayments.ListId);
 
                                         responseMsgSet = sessionManager.DoRequests(requestMsgSet);
                                         if (!ReadAddedPayments(responseMsgSet))
