@@ -34,32 +34,33 @@ public class PopuliAccessService
 
     public async Task<PopResponse<PopPerson>> GetAllPersonsAsync(int page = 1)
     {
+
         var request = new RestRequest($"{ProdUrl}/people/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
 
         // var body = $@"{{""expand"": [""addresses"", ""phone_numbers"", ""student""], ""page"": {page}}}"; //from name
-        string body = """
-                      {
-                        "expand": ["addresses", "phone_numbers", "student"],
-                          "filter":
-                          {
-                              "0": {
-                                  "logic": "ALL",
-                                  "fields": [
-                                      {
-                                          "name": "student_id",
-                                          "value": {
-                                              "type": "IS",
-                                              "text": "97113"
-                                          },
-                                          "positive": 1
-                                      }
-                                  ]
-                              }
-                          }
-                      }
-                      """;
+        var body = """
+                   {
+                     "expand": ["addresses", "phone_numbers", "student"],
+                       "filter":
+                       {
+                           "0": {
+                               "logic": "ALL",
+                               "fields": [
+                                   {
+                                       "name": "student_id",
+                                       "value": {
+                                           "type": "IS",
+                                           "text": "97113"
+                                       },
+                                       "positive": 1
+                                   }
+                               ]
+                           }
+                       }
+                   }
+                   """;
         request.AddStringBody(body, DataFormat.Json);
 
         var response =
@@ -126,8 +127,8 @@ public class PopuliAccessService
                     End = QbSettings.Instance.AddedTo.Date.ToString("yyyy-MM-dd"),
                 }
             });
-        }        
-        
+        }
+
         if (QbSettings.Instance.ApplyInvoiceNumFilter)
         {
             filter.FilterItems[0].Fields.Add(new PopFilterField
@@ -141,8 +142,8 @@ public class PopuliAccessService
                     End = QbSettings.Instance.InvoiceNumTo,
                 }
             });
-        }     
-        
+        }
+
         if (QbSettings.Instance.ApplyStudentFilter)
         {
             filter.FilterItems[0].Fields.Add(new PopFilterField

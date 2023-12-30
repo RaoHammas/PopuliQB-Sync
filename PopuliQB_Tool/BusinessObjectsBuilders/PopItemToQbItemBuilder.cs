@@ -31,17 +31,12 @@ public class PopItemToQbItemBuilder
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendItemServiceAddRq();
         var maxLength = Convert.ToInt32(request.Name.GetMaxLength());
-        if (item.Name.Length > maxLength)
+        if (item.Name!.Length > maxLength) //31 is max length for Item name field in QB
         {
-            var name = item.Name.Substring(0, maxLength);
-            request.Name.SetValue(name);
-            item.Name = name;
+            var name = item.Name.Substring(0, 31).Trim();
+            item.Name = name.RemoveInvalidUnicodeCharacters();
         }
-        else
-        {
-            request.Name.SetValue(item.Name);
-        }
-
+        request.Name.SetValue(item.Name);
         request.IsActive.SetValue(true);
         request.ORSalesPurchase.SalesOrPurchase.AccountRef.ListID.SetValue(item.QbAccListId);
         

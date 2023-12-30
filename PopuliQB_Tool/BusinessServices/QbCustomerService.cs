@@ -45,35 +45,37 @@ public class QbCustomerService
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-                for (var index = 0; index < persons.Count; index++)
+                foreach (var person in persons)
                 {
-                    var person = persons[index];
-
                     if (AllExistingCustomersList.FirstOrDefault(x => x.PopPersonId == person.Id) != null)
                     {
                         OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Warn, $"{person.DisplayName} | Id = {person.Id} already exists."));
+                            new StatusMessageArgs(StatusMessageType.Warn,
+                                $"{person.DisplayName} | Id = {person.Id} already exists."));
                         continue;
                     }
 
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Info,
+                            $"Adding student: {person.DisplayName} | Id = {person.Id}"));
                     _customerBuilder.BuildQbCustomerAddRequest(requestMsgSet, person);
-
                     var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
                     if (ReadAddedCustomer(responseMsgSet))
                     {
                         OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Success, $"{person.DisplayName} | Id = {person.Id}"));
+                            new StatusMessageArgs(StatusMessageType.Success,
+                                $"Added student: {person.DisplayName} | Id = {person.Id}"));
                     }
                     else
                     {
                         var xmResp = responseMsgSet.ToXMLString();
                         var msg = PqExtensions.GetXmlNodeValue(xmResp);
                         OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Error, $"{person.DisplayName} | Id = {person.Id} | {msg}"));
+                            new StatusMessageArgs(StatusMessageType.Error,
+                                $"Failed to Add: {person.DisplayName} | Id = {person.Id} | {msg}"));
                     }
 
-                    OnSyncProgressChanged?.Invoke(this, new ProgressArgs(index));
-
+                    OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                 }
             });
 
@@ -111,6 +113,7 @@ public class QbCustomerService
         {
             return false;
         }
+
         var responseList = responseMsgSet.ResponseList;
         if (responseList == null)
         {
@@ -152,7 +155,7 @@ public class QbCustomerService
 
     #region GET ALL CUSTOMERS
 
-    public async Task<List<QBCustomer>> GetAllExistingCustomersAsync()
+    public async Task SyncAllExistingCustomersAsync()
     {
         var sessionManager = new QBSessionManager();
 
@@ -175,19 +178,22 @@ public class QbCustomerService
 
                 _customerBuilder.BuildGetAllQbCustomersRequest(requestMsgSet);
                 var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-
-                ReadFetchedCustomers(responseMsgSet);
+                if (!ReadFetchedCustomers(responseMsgSet))
+                {
+                    var xmResp = responseMsgSet.ToXMLString();
+                    var msg = PqExtensions.GetXmlNodeValue(xmResp);
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Error,
+                            $"Error reading customer | {msg}"));
+                }
             });
 
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
-
-            return AllExistingCustomersList;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-            return AllExistingCustomersList;
         }
         finally
         {
@@ -208,38 +214,38 @@ public class QbCustomerService
         }
     }
 
-    private void ReadFetchedCustomers(IMsgSetResponse? responseMsgSet)
+    private bool ReadFetchedCustomers(IMsgSetResponse? responseMsgSet)
     {
-        if (responseMsgSet == null) return;
-        var responseList = responseMsgSet.ResponseList;
-        if (responseList == null) return;
+        var responseList = responseMsgSet?.ResponseList;
+        if (responseList == null) return false;
 
-        //if we sent only one request, there is only one response, we'll walk the list for this sample
         for (var i = 0; i < responseList.Count; i++)
         {
             var response = responseList.GetAt(i);
 
-            //check the status code of the response, 0=ok, >0 is warning
             if (response.StatusCode >= 0)
             {
-                //the request-specific response is in the details, make sure we have some
                 if (response.Detail != null)
                 {
-                    //make sure the response is the type we're expecting
                     var responseType = (ENResponseType)response.Type.GetValue();
                     if (responseType == ENResponseType.rtCustomerQueryRs)
                     {
-                        //upcast to more specific type here, this is safe because we checked with response.Type check above
-                        var customerRet = (ICustomerRetList)response.Detail;
+                        var retList = (ICustomerRetList)response.Detail;
+                        OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, retList.Count));
 
-                        for (var x = 0; x < customerRet.Count; x++)
+                        for (var x = 0; x < retList.Count; x++)
                         {
-                            ReadCustomerProperties(customerRet.GetAt(x));
+                            ReadCustomerProperties(retList.GetAt(x));
+                            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                         }
+
+                        return true;
                     }
                 }
             }
         }
+
+        return false;
     }
 
     private QBCustomer? ReadCustomerProperties(ICustomerRet? customerRet)
@@ -252,7 +258,8 @@ public class QbCustomerService
             customer.QbListId = customerRet.ListID.GetValue();
             customer.PopPersonId = Convert.ToInt32(customerRet.Fax.GetValue());
             customer.QbCustomerName = customerRet.Name.GetValue();
-
+            OnSyncStatusChanged?.Invoke(this,
+                new StatusMessageArgs(StatusMessageType.Info, $"Found Customer: {customer.QbCustomerName}"));
             AllExistingCustomersList.Add(customer);
         }
         catch (Exception ex)

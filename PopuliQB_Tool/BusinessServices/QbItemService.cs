@@ -112,6 +112,12 @@ public class QbItemService
 
                 foreach (var excelItem in excelItems)
                 {
+                    if (excelItem.Name.Length > 31) //31 is max length for Item name field in QB
+                    {
+                        var name = excelItem.Name.Substring(0, 31).Trim();
+                        excelItem.Name = name.RemoveInvalidUnicodeCharacters();
+                    }
+
                     var qbItem = AllExistingItemsList.FirstOrDefault(x =>
                         (x.QbItemName == null ? "" : x.QbItemName.ToLower().Trim()) == excelItem.Name.ToLower().Trim());
 
@@ -135,8 +141,6 @@ public class QbItemService
                             OnSyncStatusChanged?.Invoke(this,
                                 new StatusMessageArgs(StatusMessageType.Error,
                                     $"Failed to add {excelItem.Name} to QB."));
-
-                            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                         }
                         else
                         {
@@ -159,15 +163,16 @@ public class QbItemService
                                     new StatusMessageArgs(StatusMessageType.Success,
                                         $"Added item {excelItem.Name} to QB."));
                             }
+
                         }
                     }
                     else
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn, $"{excelItem.Name} already exists in QB."));
-                        OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                     }
 
+                    OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                 }
             });
 
@@ -197,12 +202,7 @@ public class QbItemService
 
     private bool ReadAddedItem(IMsgSetResponse? responseMsgSet)
     {
-        if (responseMsgSet == null)
-        {
-            return false;
-        }
-
-        var responseList = responseMsgSet.ResponseList;
+        var responseList = responseMsgSet?.ResponseList;
         if (responseList == null)
         {
             return false;
@@ -317,6 +317,7 @@ public class QbItemService
                         for (var x = 0; x < retList.Count; x++)
                         {
                             ReadPropertiesItem(retList.GetAt(x));
+                            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                         }
 
                         return true;
@@ -343,7 +344,6 @@ public class QbItemService
             AllExistingItemsList.Add(item);
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Info, $"Found: {item.QbItemName}"));
-            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
             return item;
         }
         catch (Exception ex)
