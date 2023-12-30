@@ -18,16 +18,6 @@ public class PopPaymentToQbPaymentBuilder
         
         request.TotalAmount.SetValue(payment.Amount ?? 0);
         request.ORApplyPayment.IsAutoApply.SetValue(true);
-        
-        /*if (Convert.ToDateTime(payment.DueOn) is var dueDate)
-        {
-            request.DueDate.SetValue(dueDate);
-        }
-
-        if (Convert.ToDateTime(payment.PostedOn) is var postedDate)
-        {
-            request.TxnDate.SetValue(postedDate);
-        }*/
 
         request.Memo.SetValue(
             $"PaidType# {payment.PaidByType} Trans#{payment.TransactionId} Receipt#{payment.ReceiptNumber} Id#{payment.Id.ToString()}");

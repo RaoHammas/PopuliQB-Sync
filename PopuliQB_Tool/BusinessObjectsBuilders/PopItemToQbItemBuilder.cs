@@ -11,15 +11,12 @@ public class PopItemToQbItemBuilder
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendItemServiceAddRq();
         var maxLength = Convert.ToInt32(request.Name.GetMaxLength());
-        if (item.Name != null && item.Name.Length > maxLength)
+        if (item.Name!.Length > maxLength) //31 is max length for Item name field in QB
         {
-            request.Name.SetValue(item.Name[..maxLength]);
+            var name = item.Name.Substring(0, 31).Trim();
+            item.Name = name.RemoveInvalidUnicodeCharacters();
         }
-        else
-        {
-            request.Name.SetValue(item.Name);
-        }
-
+        
         request.IsActive.SetValue(true);
         request.ORSalesPurchase.SalesOrPurchase.Desc.SetValue(item.Description ?? "");
         request.ORSalesPurchase.SalesOrPurchase.AccountRef.FullName.SetValue("Allowance for Tuition Rec (New)");

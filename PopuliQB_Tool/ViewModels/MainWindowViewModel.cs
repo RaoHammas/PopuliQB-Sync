@@ -268,7 +268,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                 }
                 else
                 {
-                    SetSyncStatusMessage(StatusMessageType.Error, $"Populi Account [ {account.AccountNumber} | {account.Name} ] doesn't exist in QB.");
+                    SetSyncStatusMessage(StatusMessageType.Error, $"Populi Acc No: {account.AccountNumber}  Name: {account.Name} doesn't exist in QB.");
                 }
             }
 
