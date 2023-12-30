@@ -1,7 +1,11 @@
-﻿using NLog;
+﻿using System.Dynamic;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using NLog;
 using PopuliQB_Tool.BusinessObjects;
 using RestSharp;
 using System.Windows.Controls;
+using PopuliQB_Tool.PopuliFilters;
 
 namespace PopuliQB_Tool.BusinessServices;
 
@@ -80,29 +84,80 @@ public class PopuliAccessService
         request.AddHeader("Content-Type", "application/json");
 
         // var body = $@"{{""page"": {page}}}"; //from url
-        var body = """
-                   {
-                       "expand": ["payments", "credits"],
-                       "filter":
-                       {
-                       "0": {
-                               "logic": "ALL",
-                               "fields": [
-                               {
-                                   "name": "student",
-                                   "value": {
-                                       "display_text": "Andrea Peter",
-                                       "id": "9487"
-                                   },
-                                   "positive": "1"
-                               }
-                               ]
-                           }
-                       }
-                   }
 
-                   """;
+        var filter = new PopFilter
+        {
+            Expand = new[] { "payments", "credits" },
+            FilterItems = new List<PopFilterItem>
+            {
+                new()
+                {
+                    Logic = "ALL",
+                    Fields = new List<PopFilterField>(),
+                }
+            }
+        };
 
+        if (QbSettings.Instance.ApplyPostedDateFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterField
+            {
+                Name = "posted_date",
+                Positive = "1",
+                Value = new PopFilterValueRange
+                {
+                    Type = "RANGE",
+                    Start = QbSettings.Instance.PostedFrom.Date.ToString("yyyy-MM-dd"),
+                    End = QbSettings.Instance.PostedTo.Date.ToString("yyyy-MM-dd"),
+                }
+            });
+        }
+
+        if (QbSettings.Instance.ApplyAddedDateFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterField
+            {
+                Name = "added_time",
+                Positive = "1",
+                Value = new PopFilterValueRange
+                {
+                    Type = "RANGE",
+                    Start = QbSettings.Instance.AddedFrom.Date.ToString("yyyy-MM-dd"),
+                    End = QbSettings.Instance.AddedTo.Date.ToString("yyyy-MM-dd"),
+                }
+            });
+        }        
+        
+        if (QbSettings.Instance.ApplyInvoiceNumFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterField
+            {
+                Name = "invoice_number",
+                Positive = "1",
+                Value = new PopFilterValueRange
+                {
+                    Type = "RANGE",
+                    Start = QbSettings.Instance.InvoiceNumFrom,
+                    End = QbSettings.Instance.InvoiceNumTo,
+                }
+            });
+        }     
+        
+        if (QbSettings.Instance.ApplyStudentFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterField
+            {
+                Name = "student",
+                Positive = "1",
+                Value = new PopFilterValue()
+                {
+                    DisplayText = QbSettings.Instance.Student.DisplayName!,
+                    Id = QbSettings.Instance.Student.Id!.Value.ToString()
+                }
+            });
+        }
+
+        var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 
         var response =

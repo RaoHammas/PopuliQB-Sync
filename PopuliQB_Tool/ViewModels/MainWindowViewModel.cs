@@ -21,8 +21,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly MessageBoxService _messageBoxService;
     private readonly QBCompanyService _qbCompanyService;
-    private readonly PopuliAccessService _populiAccessService;
-    private readonly QbCustomerService _qbCustomerService;
+    [ObservableProperty] private PopuliAccessService _populiAccessService;
+    [ObservableProperty] private QbCustomerService _qbCustomerService;
     private readonly QBInvoiceService _qbInvoiceService;
     [ObservableProperty] private QbAccountsService _qbAccountsService;
     private readonly QbItemService _qbItemService;
@@ -48,20 +48,20 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         _messageBoxService = messageBoxService;
         _qbCompanyService = qbCompanyService;
-        _populiAccessService = populiAccessService;
-        _qbCustomerService = qbCustomerService;
+        PopuliAccessService = populiAccessService;
+        QbCustomerService = qbCustomerService;
         _qbInvoiceService = qbInvoiceService;
-        _qbAccountsService = qbAccountsService;
+        QbAccountsService = qbAccountsService;
         _qbItemService = qbItemService;
 
-        _qbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
-        _qbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
+        QbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
+        QbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
 
         _qbInvoiceService.OnSyncStatusChanged += SyncStatusChanged;
         _qbInvoiceService.OnSyncProgressChanged += SyncProgressChanged;
 
-        _qbAccountsService.OnSyncStatusChanged += SyncStatusChanged;
-        _qbAccountsService.OnSyncProgressChanged += SyncProgressChanged;
+        QbAccountsService.OnSyncStatusChanged += SyncStatusChanged;
+        QbAccountsService.OnSyncProgressChanged += SyncProgressChanged;
 
         _qbItemService.OnSyncStatusChanged += SyncStatusChanged;
         _qbItemService.OnSyncProgressChanged += SyncProgressChanged;
@@ -126,12 +126,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from QB.");
 
-            var qbCustomers = await _qbCustomerService.GetAllExistingCustomersAsync();
+            var qbCustomers = await QbCustomerService.GetAllExistingCustomersAsync();
             SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Persons from QB : {qbCustomers.Count}");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from Populi.");
             var page = 1;
-            var persons = await _populiAccessService.GetAllPersonsAsync(page);
+            var persons = await PopuliAccessService.GetAllPersonsAsync(page);
             TotalRecords = persons.Results ?? 0;
             SetSyncStatusMessage(StatusMessageType.Success, $"Total Persons found on Populi : {persons.Results}");
 
@@ -149,7 +149,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                     SetSyncStatusMessage(StatusMessageType.Info,
                         $"Fetching next {persons.ResultsPerPage} from Populi.");
 
-                    persons = await _populiAccessService.GetAllPersonsAsync(page);
+                    persons = await PopuliAccessService.GetAllPersonsAsync(page);
                     SetSyncStatusMessage(StatusMessageType.Success,
                         $"Fetched {persons.Data.Count} Persons from Populi.");
                 }
@@ -158,7 +158,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                 if (persons.Data.Count != 0)
                 {
                     SetSyncStatusMessage(StatusMessageType.Info, $"Adding next {persons.Data.Count} to QB.");
-                    var resp = await _qbCustomerService.AddCustomersAsync(persons.Data);
+                    var resp = await QbCustomerService.AddCustomersAsync(persons.Data);
                 }
                 else
                 {
@@ -198,7 +198,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from Populi.");
             var page = 1;
-            var popInvoices = await _populiAccessService.GetAllInvoicesAsync(page);
+            var popInvoices = await PopuliAccessService.GetAllInvoicesAsync(page);
             TotalRecords = popInvoices.Results ?? 0;
             SetSyncStatusMessage(StatusMessageType.Success, $"Total Invoices found on Populi : {popInvoices.Results}");
 
@@ -216,7 +216,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                     SetSyncStatusMessage(StatusMessageType.Info,
                         $"Fetching next {popInvoices.ResultsPerPage} from Populi.");
 
-                    popInvoices = await  _populiAccessService.GetAllInvoicesAsync(page);
+                    popInvoices = await  PopuliAccessService.GetAllInvoicesAsync(page);
                     SetSyncStatusMessage(StatusMessageType.Success,
                         $"Fetched {popInvoices.Data!.Count} Invoices from Populi.");
                 }
@@ -253,10 +253,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Accounts From Populi.");
-            await _populiAccessService.SyncAllAccountsAsync();
-            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched accounts: {_populiAccessService.AllPopuliAccounts.Count}.");
+            await PopuliAccessService.SyncAllAccountsAsync();
+            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched accounts: {PopuliAccessService.AllPopuliAccounts.Count}.");
 
-            foreach (var account in _populiAccessService.AllPopuliAccounts)
+            foreach (var account in PopuliAccessService.AllPopuliAccounts)
             {
                 var qbAcc = QbAccountsService.AllExistingAccountsList
                     .FirstOrDefault(x =>
@@ -356,7 +356,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         // TODO release managed resources here
-        _qbCustomerService.OnSyncStatusChanged -= SyncStatusChanged;
-        _qbCustomerService.OnSyncProgressChanged -= SyncProgressChanged;
+        QbCustomerService.OnSyncStatusChanged -= SyncStatusChanged;
+        QbCustomerService.OnSyncProgressChanged -= SyncProgressChanged;
     }
 }

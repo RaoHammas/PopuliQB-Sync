@@ -25,4 +25,7 @@ public sealed class QbSettings
     public string InvoiceNumFrom { get; set; } = "";
     public string InvoiceNumTo { get; set; } = "";
     public bool ApplyInvoiceNumFilter { get; set; }
+
+    public PopPerson Student { get; set; }
+    public bool ApplyStudentFilter { get; set; }
 }
