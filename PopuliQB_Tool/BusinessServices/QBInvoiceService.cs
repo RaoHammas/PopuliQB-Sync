@@ -112,7 +112,23 @@ public class QBInvoiceService
                                 }
                             }
 
-                            _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, existingCustomer.QbListId!);
+                            var trans = await _populiAccessService.GetTransactionWithLedgerAsync(
+                                invoice.TransactionId!.Value);
+
+                            if (trans == null)
+                            {
+                                OnSyncStatusChanged?.Invoke(this,
+                                    new StatusMessageArgs(StatusMessageType.Error,
+                                        $"Transaction not found for Invoice Number# {invoice.Number}"));
+                                continue;
+                            }
+
+                            var arAccId = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
+                            var arQbAccListId = _populiAccessService.AllPopuliAccounts
+                                .First(x => x.Id == arAccId).QbAccountListId;
+
+                            _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, existingCustomer.QbListId!,
+                                arQbAccListId!);
                             responseMsgSet = sessionManager.DoRequests(requestMsgSet);
                             if (!ReadAddedInvoice(responseMsgSet))
                             {
@@ -130,91 +146,12 @@ public class QBInvoiceService
                             }
                         }
 
-                        //Add Credit Memos-------------
-                        if (invoice.Credits != null && invoice.Credits.Any())
-                        {
-                            OnSyncStatusChanged?.Invoke(this,
-                                new StatusMessageArgs(StatusMessageType.Info,
-                                    $"{personFullName} | Credit Memos Found: {invoice.Credits.Count}"));
-                            OnSyncStatusChanged?.Invoke(this,
-                                new StatusMessageArgs(StatusMessageType.Info,
-                                    $"{personFullName} | Adding Memos."));
 
-                            foreach (var memo in invoice.Credits)
-                            {
-                                var existingMemo =
-                                    AllExistingMemosList.FirstOrDefault(x => x.PopMemoNumber == memo.Number);
-                                if (existingMemo != null)
-                                {
-                                    OnSyncStatusChanged?.Invoke(this,
-                                        new StatusMessageArgs(StatusMessageType.Warn,
-                                            $"Skipped Memo: Memo.Num: {existingMemo.PopMemoNumber} already exists for: {existingMemo.QbCustomerName}"));
-
-                                    continue;
-                                }
-
-                                if (memo.Items != null)
-                                {
-                                    foreach (var invoiceCredItem in memo.Items)
-                                    {
-                                        if (invoiceCredItem.Name!.Length >
-                                            31) //31 is max length for Item name field in QB
-                                        {
-                                            var name = invoiceCredItem.Name.Substring(0, 31).Trim();
-                                            invoiceCredItem.Name = name.RemoveInvalidUnicodeCharacters();
-                                        }
-
-                                        var existingItem = _itemService.AllExistingItemsList.FirstOrDefault(x =>
-                                            x.QbItemName!.ToLower().Trim() ==
-                                            invoiceCredItem.Name.ToLower().Trim());
-                                        if (existingItem == null)
-                                        {
-                                            OnSyncStatusChanged?.Invoke(this,
-                                                new StatusMessageArgs(StatusMessageType.Error,
-                                                    $"{personFullName} | CreditMemo.Num = {memo.Number} | Memo Item {invoiceCredItem.Name} doesn't exist in QB."));
-
-                                            return;
-                                        }
-
-                                        invoiceCredItem.ItemQbListId = existingItem!.QbListId;
-                                    }
-                                }
-
-                                var trans = await _populiAccessService.GetTransactionWithLedgerAsync(
-                                    memo.TransactionId!.Value);
-
-                                if (trans == null)
-                                {
-                                    OnSyncStatusChanged?.Invoke(this,
-                                        new StatusMessageArgs(StatusMessageType.Error,
-                                            $"Transaction not found for Credit Invoice Number# {memo.Number}"));
-                                    continue;
-                                }
-
-                                var arAccId = trans.LedgerEntries.First(x => x.Direction == "credit")
-                                    .AccountId!;
-                                var arQbAccListId = _populiAccessService.AllPopuliAccounts
-                                    .First(x => x.Id == arAccId).QbAccountListId;
-
-                                _memoBuilder.BuildAddRequest(requestMsgSet, memo,
-                                    existingCustomer.QbListId!, arQbAccListId!);
-
-                                responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-                                if (!ReadAddedMemo(responseMsgSet))
-                                {
-                                    var xmResp = responseMsgSet.ToXMLString();
-                                    var msg = PqExtensions.GetXmlNodeValue(xmResp);
-                                    OnSyncStatusChanged?.Invoke(this,
-                                        new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
-                                }
-                                else
-                                {
-                                    OnSyncStatusChanged?.Invoke(this,
-                                        new StatusMessageArgs(StatusMessageType.Success,
-                                            $"{personFullName} | Memo.Num = {memo.Number}"));
-                                }
-                            }
-                        }
+                        //SetUp Student AID Awards
+                        var studentAwards =
+                            await _populiAccessService.FetchAllAStudentAwardsAsync(invoice.ReportData!.PersonId!.Value,
+                                invoice.ReportData!.DisplayName!);
+                        var allCredits = new List<PopCredit>();
 
                         //Add Payments-----------------
                         if (invoice.Payments != null && invoice.Payments.Any())
@@ -229,6 +166,52 @@ public class QBInvoiceService
 
                             foreach (var payment in invoice.Payments)
                             {
+                                if (QbSettings.Instance.ApplyAidPaymentsAreCreditMemoFilter &&
+                                    payment is { PaidByType: "aid_provider", AidTypeId: not null })
+                                {
+                                    var transAid = await _populiAccessService.GetTransactionWithLedgerAsync(
+                                        payment.TransactionId!.Value);
+
+                                    if (transAid == null)
+                                    {
+                                        OnSyncStatusChanged?.Invoke(this,
+                                            new StatusMessageArgs(StatusMessageType.Error,
+                                                $"Transaction not found for Payment Number# {payment.Number}"));
+                                        continue;
+                                    }
+
+                                    var aid = studentAwards.First(
+                                        x => x.AidTypeId == payment.AidTypeId.Value);
+                                    var item = new PopCredit
+                                    {
+                                        Id = payment.Id,
+                                        Number = payment.Number,
+                                        TransactionId = payment.TransactionId,
+                                        PostedOn = transAid.PostedOn,
+                                        Object = "credit",
+                                        ActorType = "person",
+                                        ActorId = invoice.ReportData.PersonId!,
+                                        Amount = payment.Amount,
+                                        Items = new List<PopItem>(),
+                                    };
+
+                                    item.Items.Add(new PopItem
+                                    {
+                                        Name = aid.ReportData!.AidName,
+                                        Id = aid.Id,
+                                        ItemType = "aid_provider",
+                                        Amount = payment.Amount,
+                                        Description = "",
+                                        InvoiceId = invoice.Id,
+                                        ItemId = aid.AidTypeId,
+                                        Object = "invoice_item",
+                                    });
+
+                                    allCredits.Add(item);
+                                    continue;
+                                }
+
+
                                 var existingPay =
                                     AllExistingPaymentsList.FirstOrDefault(
                                         x => x.PopPaymentNumber == payment.Number);
@@ -278,6 +261,119 @@ public class QBInvoiceService
                                     OnSyncStatusChanged?.Invoke(this,
                                         new StatusMessageArgs(StatusMessageType.Success,
                                             $"{personFullName} | Payment.Num = {payment.Number}"));
+                                }
+                            }
+                        }
+
+
+                        if (invoice.Credits != null && invoice.Credits.Any())
+                        {
+                            allCredits.AddRange(invoice.Credits);
+                        }
+                        //Add Credit Memos-------------
+                        if (allCredits.Any())
+                        {
+                            OnSyncStatusChanged?.Invoke(this,
+                                new StatusMessageArgs(StatusMessageType.Info,
+                                    $"{personFullName} | Credit Memos Found: {allCredits.Count}"));
+                            OnSyncStatusChanged?.Invoke(this,
+                                new StatusMessageArgs(StatusMessageType.Info,
+                                    $"{personFullName} | Adding Memos."));
+
+                            foreach (var memo in allCredits.ToList())
+                            {
+                                var existingMemo =
+                                    AllExistingMemosList.FirstOrDefault(x => x.PopMemoNumber == memo.Number);
+                                if (existingMemo != null)
+                                {
+                                    OnSyncStatusChanged?.Invoke(this,
+                                        new StatusMessageArgs(StatusMessageType.Warn,
+                                            $"Skipped Memo: Memo.Num: {existingMemo.PopMemoNumber} already exists for: {existingMemo.QbCustomerName}"));
+
+                                    continue;
+                                }
+
+                                if (memo.Items != null)
+                                {
+                                    if (QbSettings.Instance.ApplyIgnoreStartingBalanceFilter)
+                                    {
+                                        var sbItems = memo.Items.Where(x => x.Name == "Starting Balance").ToList();
+                                        foreach (var sbItem in sbItems)
+                                        {
+                                            memo.Items.Remove(sbItem);
+
+                                            OnSyncStatusChanged?.Invoke(this,
+                                                new StatusMessageArgs(StatusMessageType.Warn,
+                                                    $"{personFullName} | Memo.Num = {invoice.Number} | Memo Item {sbItem.Name} skipped."));
+                                        }
+                                    }
+
+                                    if (!memo.Items.Any())
+                                    {
+                                        
+                                        OnSyncStatusChanged?.Invoke(this,
+                                            new StatusMessageArgs(StatusMessageType.Warn,
+                                                $"{personFullName} | Memo.Num = {invoice.Number} skipped. It has no items."));
+                                        continue;
+                                    }
+
+                                    foreach (var invoiceCredItem in memo.Items)
+                                    {
+                                        if (invoiceCredItem.Name!.Length >
+                                            31) //31 is max length for Item name field in QB
+                                        {
+                                            var name = invoiceCredItem.Name.Substring(0, 31).Trim();
+                                            invoiceCredItem.Name = name.RemoveInvalidUnicodeCharacters();
+                                        }
+
+                                        var existingItem = _itemService.AllExistingItemsList.FirstOrDefault(x =>
+                                            x.QbItemName!.ToLower().Trim() ==
+                                            invoiceCredItem.Name.ToLower().Trim());
+                                        if (existingItem == null)
+                                        {
+                                            OnSyncStatusChanged?.Invoke(this,
+                                                new StatusMessageArgs(StatusMessageType.Error,
+                                                    $"{personFullName} | CreditMemo.Num = {memo.Number} | Memo Item {invoiceCredItem.Name} doesn't exist in QB."));
+
+                                            continue;
+                                        }
+
+                                        invoiceCredItem.ItemQbListId = existingItem!.QbListId;
+                                    }
+                                }
+
+                                var trans = await _populiAccessService.GetTransactionWithLedgerAsync(
+                                    memo.TransactionId!.Value);
+
+                                if (trans == null)
+                                {
+                                    OnSyncStatusChanged?.Invoke(this,
+                                        new StatusMessageArgs(StatusMessageType.Error,
+                                            $"Transaction not found for Credit Invoice Number# {memo.Number}"));
+                                    continue;
+                                }
+
+                                var arAccId = trans.LedgerEntries.First(x => x.Direction == "credit")
+                                    .AccountId!;
+                                var arQbAccListId = _populiAccessService.AllPopuliAccounts
+                                    .First(x => x.Id == arAccId).QbAccountListId;
+
+                                _memoBuilder.BuildAddRequest(requestMsgSet, memo,
+                                    existingCustomer.QbListId!, arQbAccListId!);
+
+                                responseMsgSet = sessionManager.DoRequests(requestMsgSet);
+                                if (!ReadAddedMemo(responseMsgSet))
+                                {
+                                    var xmResp = responseMsgSet.ToXMLString();
+                                    var msg = PqExtensions.GetXmlNodeValue(xmResp);
+                                    OnSyncStatusChanged?.Invoke(this,
+                                        new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                                }
+                                else
+                                {
+                                    OnSyncStatusChanged?.Invoke(this,
+                                        new StatusMessageArgs(StatusMessageType.Success,
+                                            $"{personFullName} | Memo.Num = {memo.Number}"));
                                 }
                             }
                         }

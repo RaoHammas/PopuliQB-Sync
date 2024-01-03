@@ -5,14 +5,15 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopInvoiceToQbInvoiceBuilder
 {
-    public void BuildInvoiceAddRequest(IMsgSetRequest requestMsgSet, PopInvoice invoice, string qbCustomerListId)
+    public void BuildInvoiceAddRequest(IMsgSetRequest requestMsgSet, PopInvoice invoice, string qbCustomerListId, string qbARListId)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendInvoiceAddRq();
         request.CustomerRef.ListID.SetValue(qbCustomerListId); 
         request.PONumber.SetValue(invoice.Id.ToString());
         request.RefNumber.SetValue(invoice.Number.ToString());
-        request.ARAccountRef.ListID.SetValue(QbSettings.Instance.ARForInvoice.ListId);
+        // request.ARAccountRef.ListID.SetValue(QbSettings.Instance.ARForInvoice.ListId);
+        request.ARAccountRef.ListID.SetValue(qbARListId);
         
         if (!string.IsNullOrEmpty(invoice.Status) && invoice.Status != "unpaid")
         {

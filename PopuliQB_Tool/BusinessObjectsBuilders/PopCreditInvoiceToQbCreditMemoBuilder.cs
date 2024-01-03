@@ -12,20 +12,20 @@ public class PopCreditMemoToQbCreditMemoBuilder
         request.CustomerRef.ListID.SetValue(qbCustomerListId);
         request.PONumber.SetValue(memo.Id.ToString());
         request.RefNumber.SetValue(memo.Number.ToString());
-
         request.ARAccountRef.ListID.SetValue(arListId);
-        
-        if (!string.IsNullOrEmpty(memo.Status) && memo.Status != "unpaid")
+
+        request.IsPending.SetValue(false);
+        if (!string.IsNullOrEmpty(memo.Status) && memo.Status == "unpaid")
         {
-            request.IsPending.SetValue(false);
+            request.IsPending.SetValue(true);
         }
 
-        if (Convert.ToDateTime(memo.DueOn) is var dueDate)
+        if (memo.DueOn != null && Convert.ToDateTime(memo.DueOn) is var dueDate)
         {
             request.DueDate.SetValue(dueDate);
         }
 
-        if (Convert.ToDateTime(memo.PostedOn) is var postedDate)
+        if (memo.PostedOn != null && Convert.ToDateTime(memo.PostedOn) is var postedDate)
         {
             request.TxnDate.SetValue(postedDate);
         }

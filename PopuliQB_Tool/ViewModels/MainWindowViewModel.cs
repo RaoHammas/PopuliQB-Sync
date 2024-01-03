@@ -5,12 +5,10 @@ using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MiniExcelLibs;
-using MiniExcelLibs.OpenXml;
 using NLog;
 using PopuliQB_Tool.BusinessObjects;
 using PopuliQB_Tool.BusinessServices;
 using PopuliQB_Tool.EventArgs;
-using PopuliQB_Tool.Helpers;
 using PopuliQB_Tool.Models;
 using PopuliQB_Tool.Services;
 
@@ -21,15 +19,18 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly MessageBoxService _messageBoxService;
     private readonly QBCompanyService _qbCompanyService;
-    [ObservableProperty] private PopuliAccessService _populiAccessService;
-    [ObservableProperty] private QbCustomerService _qbCustomerService;
+    [ObservableProperty] private bool _isAccountsListSynced = false;
+    [ObservableProperty] private bool _isItemsListSynced = false;
+    [ObservableProperty] private bool _isStudentsListListSynced = false;
+
     private readonly QBInvoiceService _qbInvoiceService;
-    [ObservableProperty] private QbAccountsService _qbAccountsService;
     private readonly QbItemService _qbItemService;
 
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
     [ObservableProperty] private ICollectionView _filteredLogs;
-
+    [ObservableProperty] private PopuliAccessService _populiAccessService;
+    [ObservableProperty] private QbCustomerService _qbCustomerService;
+    [ObservableProperty] private QbAccountsService _qbAccountsService;
     [ObservableProperty] private int _totalRecords = 0;
     [ObservableProperty] private int _progressCount = 0;
     [ObservableProperty] private string? _companyName = "";
@@ -124,10 +125,11 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         try
         {
             PopuliAccessService.AllPopuliPersons.Clear();
-            
+
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from QB.");
             await QbCustomerService.SyncAllExistingCustomersAsync();
-            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched Persons from QB: {QbCustomerService.AllExistingCustomersList.Count}");
+            SetSyncStatusMessage(StatusMessageType.Success,
+                $"Fetched Persons from QB: {QbCustomerService.AllExistingCustomersList.Count}");
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from Populi.");
             var page = 1;
@@ -166,6 +168,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                     return;
                 }
             }
+
+            IsStudentsListListSynced = true;
+            SetSyncStatusMessage(StatusMessageType.Success, $"Students List Sync Completed.");
         }
         catch (Exception ex)
         {
@@ -177,6 +182,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartPopuliInvoicesSync()
     {
+        if (string.IsNullOrEmpty(QbSettings.Instance.ADForPayments.FullName))
+        {
+            _messageBoxService.ShowError("Error", "Select a Deposit account for Payments.");
+            return;
+        }
+
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -215,7 +226,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                     SetSyncStatusMessage(StatusMessageType.Info,
                         $"Fetching next {popInvoices.ResultsPerPage} from Populi.");
 
-                    popInvoices = await  PopuliAccessService.GetAllInvoicesAsync(page);
+                    popInvoices = await PopuliAccessService.GetAllInvoicesAsync(page);
                     SetSyncStatusMessage(StatusMessageType.Success,
                         $"Fetched {popInvoices.Data!.Count} Invoices from Populi.");
                 }
@@ -256,7 +267,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Accounts From Populi.");
             await PopuliAccessService.SyncAllAccountsAsync();
-            SetSyncStatusMessage(StatusMessageType.Success, $"Fetched accounts: {PopuliAccessService.AllPopuliAccounts.Count}.");
+            SetSyncStatusMessage(StatusMessageType.Success,
+                $"Fetched accounts: {PopuliAccessService.AllPopuliAccounts.Count}.");
 
             foreach (var account in PopuliAccessService.AllPopuliAccounts)
             {
@@ -270,12 +282,24 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                 }
                 else
                 {
-                    SetSyncStatusMessage(StatusMessageType.Error, $"Populi Acc No: {account.AccountNumber}  Name: {account.Name} doesn't exist in QB.");
+                    SetSyncStatusMessage(StatusMessageType.Error,
+                        $"Populi Acc No: {account.AccountNumber}  Name: {account.Name} doesn't exist in QB.");
                 }
             }
-
         });
 
+        if (QbAccountsService.AllExistingAccountsList.Any())
+        {
+            var dpAcc = QbAccountsService.AllExistingAccountsList.FirstOrDefault(x =>
+                x.Title == "Truist Main Deposit (9155)");
+
+            if (dpAcc != null)
+            {
+                QbSettings.Instance.ADForPayments = dpAcc;
+            }
+        }
+
+        IsAccountsListSynced = true;
         SetSyncStatusMessage(StatusMessageType.Success, $"Accounts List Sync Completed.");
     }
 
@@ -306,12 +330,11 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             ProgressCount = 0;
 
             await _qbItemService.AddExcelItemsAsync(excelItems);
-
         });
 
+        IsItemsListSynced = true;
         SetSyncStatusMessage(StatusMessageType.Success, $"Items List Sync Completed.");
     }
-
 
     [RelayCommand]
     private void ClearLogs()
@@ -343,6 +366,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             });
         });
     }
+
     public void Dispose()
     {
         // TODO release managed resources here

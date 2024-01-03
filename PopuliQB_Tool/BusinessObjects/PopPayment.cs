@@ -26,7 +26,7 @@ public class PopPayment
 
     [JsonPropertyName("paid_by_id")] public int? PaidById { get; set; }
 
-    [JsonPropertyName("aid_type_id")] public object? AidTypeId { get; set; }
+    [JsonPropertyName("aid_type_id")] public int? AidTypeId { get; set; }
 
     [JsonPropertyName("refund_source")] public object? RefundSource { get; set; }
 

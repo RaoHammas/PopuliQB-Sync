@@ -38,29 +38,32 @@ public class PopuliAccessService
         var request = new RestRequest($"{ProdUrl}/people/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
+        var filter = new PopFilter
+        {
+            Page = page,
+            Expand = new []{"addresses", "phone_numbers", "student"},
+            FilterItems = new List<PopFilterItem>
+            {
+                new()
+                {
+                    Logic = "ALL",
+                    Fields = new List<PopFilterField>(),
+                }
+            }
+        };
 
-        // var body = $@"{{""expand"": [""addresses"", ""phone_numbers"", ""student""], ""page"": {page}}}"; //from name
-        var body = """
-                   {
-                     "expand": ["addresses", "phone_numbers", "student"],
-                       "filter":
-                       {
-                           "0": {
-                               "logic": "ALL",
-                               "fields": [
-                                   {
-                                       "name": "student_id",
-                                       "value": {
-                                           "type": "IS",
-                                           "text": "97113"
-                                       },
-                                       "positive": 1
-                                   }
-                               ]
-                           }
-                       }
-                   }
-                   """;
+        filter.FilterItems[0].Fields.Add(new PopFilterField
+        {
+            Name = "student_id",
+            Positive = "1",
+            Value = new PopFilterValueTypeText()
+            {
+                Type = "IS",
+                Text = "97113", //PERSON ID
+            }
+        });
+        
+        var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 
         var response =
@@ -243,6 +246,75 @@ public class PopuliAccessService
         }
 
         _logger.Error("Failed to fetch Accounts. {@response}", response);
+        return new();
+    }
+
+    
+    public async Task<List<PopAidAwards>> FetchAllAStudentAwardsAsync(int studentId, string studentDisplayName)
+    {
+        var aidAwardsList = new List<PopAidAwards>();
+        var page = 1;
+        var resp = await GetAllStudentAwardsAsync(studentId, studentDisplayName, page);
+        if (resp.Data != null)
+        {
+            aidAwardsList.AddRange(resp.Data);
+        }
+        while (resp.HasMore == true)
+        {
+            resp = await GetAllStudentAwardsAsync(studentId, studentDisplayName, ++page);
+            if (resp.Data != null)
+            {
+                aidAwardsList.AddRange(resp.Data);
+            }
+        }
+
+        return aidAwardsList;
+    }
+
+    private async Task<PopResponse<PopAidAwards>> GetAllStudentAwardsAsync(int studentId, string studentDisplayName, int page)
+    {
+        var request = new RestRequest($"{ProdUrl}/aidawards");
+        request.AddHeader("Authorization", $"Bearer {AuthToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        var filter = new PopFilter
+        {
+            Page = page,
+            FilterItems = new List<PopFilterItem>
+            {
+                new()
+                {
+                    Logic = "ALL",
+                    Fields = new List<PopFilterField>(),
+                }
+            }
+        };
+
+        filter.FilterItems[0].Fields.Add(new PopFilterField
+        {
+            Name = "student",
+            Positive = "1",
+            Value = new PopFilterValue()
+            {
+                DisplayText = studentDisplayName,
+                Id = studentId.ToString()
+            }
+        });
+
+        var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
+        request.AddStringBody(body, DataFormat.Json);
+
+        var response =
+            await _client.ExecuteAsync<PopResponse<PopAidAwards>>(request, Method.Get, CancellationToken.None);
+        if (response is { IsSuccessStatusCode: true, Content: not null })
+        {
+            if (response.Data != null)
+            {
+                return response.Data;
+            }
+        }
+
+        _logger.Error("Failed to fetch Aid Awards. {@response}", response);
         return new();
     }
 }

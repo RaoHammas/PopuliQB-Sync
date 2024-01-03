@@ -11,6 +11,15 @@ public class PopFilterValue
     public string Id { get; set; }
 }
 
+public class PopFilterValueTypeText
+{
+    [JsonPropertyName("type")]
+    public string Type { get; set; }
+
+    [JsonPropertyName("text")]
+    public string Text { get; set; }
+}
+
 public class PopFilterValueRange
 {
     [JsonPropertyName("type")]
@@ -51,4 +60,7 @@ public class PopFilter
 
     [JsonPropertyName("filter")]
     public List<PopFilterItem> FilterItems { get; set; }
+
+    [JsonPropertyName("page")]
+    public int Page { get; set; }
 }
