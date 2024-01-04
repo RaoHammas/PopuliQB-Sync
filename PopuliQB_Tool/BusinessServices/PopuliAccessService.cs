@@ -46,7 +46,7 @@ public class PopuliAccessService
             {
                 new()
                 {
-                    Logic = "ALL",
+                    Logic = "ANY",
                     Fields = new List<PopFilterField>(),
                 }
             }
@@ -62,7 +62,18 @@ public class PopuliAccessService
                 Text = "97113", //PERSON ID
             }
         });
-        
+
+        filter.FilterItems[0].Fields.Add(new PopFilterField
+        {
+            Name = "student_id",
+            Positive = "1",
+            Value = new PopFilterValueTypeText()
+            {
+                Type = "IS",
+                Text = "35196", //PERSON ID
+            }
+        });
+
         var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 
@@ -315,6 +326,29 @@ public class PopuliAccessService
         }
 
         _logger.Error("Failed to fetch Aid Awards. {@response}", response);
+        return new();
+    }
+
+
+    public async Task<PopResponse<PopPayment>> GetAllStudentPaymentsAsync(int studentId)
+    {
+        var request = new RestRequest($"{ProdUrl}/people/{studentId}/payments/");
+        request.AddHeader("Authorization", $"Bearer {AuthToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        // var body = $@"{{""page"": {page}}}"; //from url
+
+        var response =
+            await _client.ExecuteAsync<PopResponse<PopPayment>>(request, Method.Get, CancellationToken.None);
+        if (response is { IsSuccessStatusCode: true, Content: not null })
+        {
+            if (response.Data != null)
+            {
+                return response.Data;
+            }
+        }
+
+        _logger.Error("Failed to fetch Invoices. {@response}", response);
         return new();
     }
 }

@@ -266,6 +266,7 @@ public class QBInvoiceService
                         }
 
 
+
                         if (invoice.Credits != null && invoice.Credits.Any())
                         {
                             allCredits.AddRange(invoice.Credits);
