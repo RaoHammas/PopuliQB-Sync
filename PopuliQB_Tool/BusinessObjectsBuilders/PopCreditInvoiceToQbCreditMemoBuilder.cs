@@ -38,11 +38,7 @@ public class PopCreditMemoToQbCreditMemoBuilder
         {
             foreach (var item in memo.Items)
             {
-                if (item.Amount is < 1)
-                {
-                    item.Amount = (double?)Math.Abs((decimal)item.Amount);
-                }
-
+                
                 var invItem = request.ORCreditMemoLineAddList.Append();
                 invItem.CreditMemoLineAdd.ItemRef.ListID.SetValue(item.ItemQbListId);
                 invItem.CreditMemoLineAdd.Desc.SetValue(item.Description);

@@ -6,13 +6,13 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 public class PopPaymentToQbPaymentBuilder
 {
     public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopPayment payment, string qbCustomerListId,
-        string arListId, string adListId)
+        string arListId, string adListId, DateTime transPostedOn)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendReceivePaymentAddRq();
         request.CustomerRef.ListID.SetValue(qbCustomerListId);
         request.RefNumber.SetValue(payment.Number.ToString());
-        
+        request.TxnDate.SetValue(transPostedOn);
         request.ARAccountRef.ListID.SetValue(arListId);
         request.DepositToAccountRef.ListID.SetValue(adListId);
         

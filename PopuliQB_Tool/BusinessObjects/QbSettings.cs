@@ -20,7 +20,7 @@ public sealed class QbSettings : INotifyPropertyChanged
     private string _invoiceNumFrom = "";
     private string _invoiceNumTo = "";
     private bool _applyInvoiceNumFilter;
-    private PopPerson _student;
+    private PopPerson? _student;
     private bool _applyStudentFilter;
     private bool _applyIgnoreStartingBalanceFilter = true;
     private bool _applyAidPaymentsAreCreditMemoFilter = true;
@@ -108,7 +108,7 @@ public sealed class QbSettings : INotifyPropertyChanged
         set => SetField(ref _applyInvoiceNumFilter, value);
     }
 
-    public PopPerson Student
+    public PopPerson? Student
     {
         get => _student;
         set => SetField(ref _student, value);

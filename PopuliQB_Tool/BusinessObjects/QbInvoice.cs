@@ -14,13 +14,20 @@ public class QbMemo
     public string? QbCustomerName { get; set; }
     public int? PopMemoNumber { get; set; }
     public int? PopInvoiceId { get; set; }
-
 }
 
 public class QbPayment
-    {
-        public string? QbCustomerListId { get; set; }
-        public string? QbCustomerName { get; set; }
-        public int? PopPaymentNumber { get; set; }
-        // public int? PopPaymentId { get; set; }
-    }
+{
+    public string? QbCustomerListId { get; set; }
+    public string? QbCustomerName { get; set; }
+
+    public int? PopPaymentNumber { get; set; }
+    // public int? PopPaymentId { get; set; }
+}
+
+public class QbCheque
+{
+    public string? QbCustomerListId { get; set; }
+    public string? QbCustomerName { get; set; }
+    public int? PopChequeNumber { get; set; }
+}

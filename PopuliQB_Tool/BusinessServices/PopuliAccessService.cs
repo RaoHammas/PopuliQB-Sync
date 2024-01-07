@@ -34,14 +34,13 @@ public class PopuliAccessService
 
     public async Task<PopResponse<PopPerson>> GetAllPersonsAsync(int page = 1)
     {
-
         var request = new RestRequest($"{ProdUrl}/people/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
         var filter = new PopFilter
         {
             Page = page,
-            Expand = new []{"addresses", "phone_numbers", "student"},
+            Expand = new[] { "addresses", "phone_numbers", "student" },
             FilterItems = new List<PopFilterItem>
             {
                 new()
@@ -221,10 +220,10 @@ public class PopuliAccessService
     public async Task SyncAllAccountsAsync(int page = 1)
     {
         AllPopuliAccounts = new List<PopAccount>();
-        var resp = await GetAllAccountsAsync(1);
+        var resp = await FetchAllAccountsAsync(1);
         while (resp.HasMore == true)
         {
-            await GetAllAccountsAsync(++page);
+            await FetchAllAccountsAsync(++page);
         }
 
         foreach (var account in AllPopuliAccounts)
@@ -237,7 +236,7 @@ public class PopuliAccessService
         }
     }
 
-    private async Task<PopResponse<PopAccount>> GetAllAccountsAsync(int page)
+    private async Task<PopResponse<PopAccount>> FetchAllAccountsAsync(int page)
     {
         var request = new RestRequest($"{ProdUrl}/accounts");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
@@ -260,19 +259,20 @@ public class PopuliAccessService
         return new();
     }
 
-    
-    public async Task<List<PopAidAwards>> FetchAllAStudentAwardsAsync(int studentId, string studentDisplayName)
+
+    public async Task<List<PopAidAwards>> GetAllStudentAwardsAsync(int studentId, string studentDisplayName)
     {
         var aidAwardsList = new List<PopAidAwards>();
         var page = 1;
-        var resp = await GetAllStudentAwardsAsync(studentId, studentDisplayName, page);
+        var resp = await FetchAllStudentAwardsAsync(studentId, studentDisplayName, page);
         if (resp.Data != null)
         {
             aidAwardsList.AddRange(resp.Data);
         }
+
         while (resp.HasMore == true)
         {
-            resp = await GetAllStudentAwardsAsync(studentId, studentDisplayName, ++page);
+            resp = await FetchAllStudentAwardsAsync(studentId, studentDisplayName, ++page);
             if (resp.Data != null)
             {
                 aidAwardsList.AddRange(resp.Data);
@@ -282,7 +282,8 @@ public class PopuliAccessService
         return aidAwardsList;
     }
 
-    private async Task<PopResponse<PopAidAwards>> GetAllStudentAwardsAsync(int studentId, string studentDisplayName, int page)
+    private async Task<PopResponse<PopAidAwards>> FetchAllStudentAwardsAsync(int studentId, string studentDisplayName,
+        int page)
     {
         var request = new RestRequest($"{ProdUrl}/aidawards");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
@@ -329,26 +330,49 @@ public class PopuliAccessService
         return new();
     }
 
+    #region Populi Payments
 
-    public async Task<PopResponse<PopPayment>> GetAllStudentPaymentsAsync(int studentId)
+    public async Task<List<PopPayment>> GetAllStudentPaymentsAsync(int studentId)
+    {
+        var dataList = new List<PopPayment>();
+        var page = 1;
+        var resp = await FetchAllStudentPaymentsAsync(studentId, page);
+        if (resp.Data != null)
+        {
+            dataList.AddRange(resp.Data);
+        }
+
+        while (resp.HasMore == true)
+        {
+            resp = await FetchAllStudentPaymentsAsync(studentId, ++page);
+            if (resp.Data != null)
+            {
+                dataList.AddRange(resp.Data);
+            }
+        }
+
+        return dataList;
+    }
+
+    private async Task<PopResponse<PopPayment>> FetchAllStudentPaymentsAsync(int studentId, int page)
     {
         var request = new RestRequest($"{ProdUrl}/people/{studentId}/payments/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
 
-        // var body = $@"{{""page"": {page}}}"; //from url
+        var body = $@"{{""page"": {page}}}";
+        request.AddStringBody(body, DataFormat.Json);
 
         var response =
             await _client.ExecuteAsync<PopResponse<PopPayment>>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        if (response is { IsSuccessStatusCode: true, Content: not null, Data: not null })
         {
-            if (response.Data != null)
-            {
-                return response.Data;
-            }
+            return response.Data;
         }
 
-        _logger.Error("Failed to fetch Invoices. {@response}", response);
+        _logger.Error("Failed to fetch Payments. {@response}", response);
         return new();
     }
+
+    #endregion
 }
