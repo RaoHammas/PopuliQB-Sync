@@ -34,7 +34,7 @@ public class PopPayment
 
     [JsonPropertyName("receipt_number")] public string? ReceiptNumber { get; set; }
 
-    [JsonPropertyName("amount_available")] public int? AmountAvailable { get; set; }
+    [JsonPropertyName("amount_available")] public double? AmountAvailable { get; set; }
 
     [JsonPropertyName("currency")] public string? Currency { get; set; }
 

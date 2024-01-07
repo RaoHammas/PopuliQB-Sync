@@ -104,6 +104,17 @@
                                     HorizontalContentAlignment="Left"
                                     Command="{Binding StartPopuliStudentsSyncCommand}"
                                     Content="3. Sync Students" />
+
+                                <TextBox
+                                    MinWidth="180"
+                                    Margin="0,20,0,0"
+                                    materialDesign:HintAssist.FloatingScale="1"
+                                    materialDesign:HintAssist.Hint="Student Ids"
+                                    AcceptsReturn="True"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                    Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=SyncStudentIds}"
+                                    TextWrapping="Wrap" />
+
                             </StackPanel>
                         </GroupBox>
 
@@ -135,12 +146,27 @@
                                 </Style>
                             </GroupBox.Style>
                             <StackPanel Orientation="Vertical">
-                                <Button
-                                    Height="40"
-                                    Margin="0,0,0,0"
-                                    Padding="10"
-                                    Command="{Binding StartPopuliInvoicesSyncCommand}"
-                                    Content="Sync Populi Invoices, Memos &amp; Payments To QB" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Button
+                                        Height="40"
+                                        Margin="0,0,0,0"
+                                        Padding="10"
+                                        Command="{Binding StartPopuliInvoicesSyncCommand}"
+                                        Content="Sync Invoices" />
+                                    <Button
+                                        Height="40"
+                                        Margin="10,0,0,0"
+                                        Padding="10"
+                                        Command="{Binding StartPopuliPaymentsSyncCommand}"
+                                        Content="Sync Payments, Memos &amp; Refunds" />
+                                    <Button
+                                        Height="40"
+                                        Margin="10,0,0,0"
+                                        Padding="10"
+                                        Command="{Binding StartPopuliInvoicesSyncCommand}"
+                                        Content="Sync Credits" />
+                                </StackPanel>
+
                                 <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
                                     <CheckBox
                                         x:Name="CheckBoxApplyPostedDate"

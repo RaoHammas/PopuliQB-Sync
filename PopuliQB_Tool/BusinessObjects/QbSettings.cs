@@ -20,10 +20,11 @@ public sealed class QbSettings : INotifyPropertyChanged
     private string _invoiceNumFrom = "";
     private string _invoiceNumTo = "";
     private bool _applyInvoiceNumFilter;
-    private PopPerson _student;
+    private PopPerson? _student;
     private bool _applyStudentFilter;
     private bool _applyIgnoreStartingBalanceFilter = true;
     private bool _applyAidPaymentsAreCreditMemoFilter = true;
+    private string _syncStudentIds = "97113, 35196";
     public static QbSettings Instance => Lazy.Value;
 
     private QbSettings()
@@ -53,6 +54,12 @@ public sealed class QbSettings : INotifyPropertyChanged
         get => _adForPayments;
         set => SetField(ref _adForPayments, value);
     }*/
+
+    public string SyncStudentIds
+    {
+        get => _syncStudentIds;
+        set => SetField(ref _syncStudentIds, value);
+    }
 
     public DateTime PostedFrom
     {
@@ -108,7 +115,7 @@ public sealed class QbSettings : INotifyPropertyChanged
         set => SetField(ref _applyInvoiceNumFilter, value);
     }
 
-    public PopPerson Student
+    public PopPerson? Student
     {
         get => _student;
         set => SetField(ref _student, value);

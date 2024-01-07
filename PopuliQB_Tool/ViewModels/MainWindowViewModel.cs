@@ -25,6 +25,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private readonly QBInvoiceService _qbInvoiceService;
     private readonly QbItemService _qbItemService;
+    private readonly QbPaymentsService _qbPaymentsService;
 
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
     [ObservableProperty] private ICollectionView _filteredLogs;
@@ -44,7 +45,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         QbCustomerService qbCustomerService,
         QBInvoiceService qbInvoiceService,
         QbAccountsService qbAccountsService,
-        QbItemService qbItemService
+        QbItemService qbItemService,
+        QbPaymentsService qbPaymentsService
     )
     {
         _messageBoxService = messageBoxService;
@@ -54,6 +56,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _qbInvoiceService = qbInvoiceService;
         QbAccountsService = qbAccountsService;
         _qbItemService = qbItemService;
+        _qbPaymentsService = qbPaymentsService;
 
         QbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
         QbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
@@ -66,6 +69,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         _qbItemService.OnSyncStatusChanged += SyncStatusChanged;
         _qbItemService.OnSyncProgressChanged += SyncProgressChanged;
+
+        _qbPaymentsService.OnSyncStatusChanged += SyncStatusChanged;
+        _qbPaymentsService.OnSyncProgressChanged += SyncProgressChanged;
 
         FilteredLogs = CollectionViewSource.GetDefaultView(SyncStatusMessages);
         FilteredLogs.Filter = null;
@@ -194,12 +200,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Invoices from QB.");
             await _qbInvoiceService.SyncAllExistingInvoicesAsync();
 
-            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Credit Memos from QB.");
-            await _qbInvoiceService.SyncAllExistingMemosAsync();
-
-            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Payments from QB.");
-            await _qbInvoiceService.SyncAllExistingPaymentsAsync();
-
+            
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from Populi.");
             var page = 1;
             var popInvoices = await PopuliAccessService.GetAllInvoicesAsync(page);
@@ -244,6 +245,40 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             _logger.Error(ex);
         }
     }
+
+
+    [RelayCommand]
+    private async Task StartPopuliPaymentsSync()
+    {
+        SyncStatusMessages.Clear();
+        TotalRecords = 0;
+        ProgressCount = 0;
+        SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
+
+        try
+        {
+            
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Payments from QB.");
+            await _qbPaymentsService.SyncAllExistingPaymentsAsync();
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Credit Memos from QB.");
+            await _qbPaymentsService.SyncAllExistingMemosAsync();
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Refunds from QB.");
+            await _qbPaymentsService.SyncAllExistingChequesAsync();
+
+            await _qbPaymentsService.SyncPaymentsAsync();
+            
+        }
+        catch (Exception ex)
+        {
+            SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
+            _logger.Error(ex);
+        }
+    }
+
+
+
 
     [RelayCommand]
     private async Task StartPopuliToQbAccountsSync()
