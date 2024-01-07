@@ -237,16 +237,16 @@ public class QBInvoiceService
 
                                 var arAccId = trans.LedgerEntries.First(x => x.Direction == "credit")
                                     .AccountId!;
-                                //var adAccId = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
+                                var adAccId = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
 
                                 var arQbAccListId = _populiAccessService.AllPopuliAccounts
                                     .First(x => x.Id == arAccId).QbAccountListId;
-                                /*var adQbAccListId = _populiAccessService.AllPopuliAccounts
-                                    .First(x => x.Id == adAccId).QbAccountListId;*/
+                                var adQbAccListId = _populiAccessService.AllPopuliAccounts
+                                    .First(x => x.Id == adAccId).QbAccountListId;
 
                                 _paymentBuilder.BuildAddRequest(requestMsgSet, payment,
                                     existingCustomer.QbListId!, arQbAccListId!,
-                                    QbSettings.Instance.ADForPayments.ListId);
+                                    adQbAccListId);
 
                                 responseMsgSet = sessionManager.DoRequests(requestMsgSet);
                                 if (!ReadAddedPayments(responseMsgSet))

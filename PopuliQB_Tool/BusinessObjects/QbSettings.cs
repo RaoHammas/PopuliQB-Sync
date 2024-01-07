@@ -7,10 +7,10 @@ namespace PopuliQB_Tool.BusinessObjects;
 public sealed class QbSettings : INotifyPropertyChanged
 {
     private static readonly Lazy<QbSettings> Lazy = new(() => new QbSettings());
-    private QbAccount _adForPayments = new QbAccount();
+    /*private QbAccount _adForPayments = new QbAccount();
     private QbAccount _arForInvoice = new QbAccount();
     private QbAccount _arForCreditMemos = new QbAccount();
-    private QbAccount _arForPayments = new QbAccount();
+    private QbAccount _arForPayments = new QbAccount();*/
     private DateTime _postedFrom = DateTime.UtcNow;
     private DateTime _postedTo = DateTime.UtcNow;
     private bool _applyPostedDateFilter;
@@ -30,7 +30,7 @@ public sealed class QbSettings : INotifyPropertyChanged
     {
     }
 
-    public QbAccount ARForInvoice
+    /*public QbAccount ARForInvoice
     {
         get => _arForInvoice;
         set => SetField(ref _arForInvoice, value);
@@ -52,7 +52,7 @@ public sealed class QbSettings : INotifyPropertyChanged
     {
         get => _adForPayments;
         set => SetField(ref _adForPayments, value);
-    }
+    }*/
 
     public DateTime PostedFrom
     {

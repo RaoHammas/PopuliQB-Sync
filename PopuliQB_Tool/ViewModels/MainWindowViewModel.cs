@@ -182,12 +182,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartPopuliInvoicesSync()
     {
-        if (string.IsNullOrEmpty(QbSettings.Instance.ADForPayments.FullName))
-        {
-            _messageBoxService.ShowError("Error", "Select a Deposit account for Payments.");
-            return;
-        }
-
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -287,17 +281,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                 }
             }
         });
-
-        if (QbAccountsService.AllExistingAccountsList.Any())
-        {
-            var dpAcc = QbAccountsService.AllExistingAccountsList.FirstOrDefault(x =>
-                x.Title == "Truist Main Deposit (9155)");
-
-            if (dpAcc != null)
-            {
-                QbSettings.Instance.ADForPayments = dpAcc;
-            }
-        }
 
         IsAccountsListSynced = true;
         SetSyncStatusMessage(StatusMessageType.Success, $"Accounts List Sync Completed.");
