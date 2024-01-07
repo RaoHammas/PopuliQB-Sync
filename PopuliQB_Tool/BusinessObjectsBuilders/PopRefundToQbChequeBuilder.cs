@@ -10,11 +10,11 @@ public class PopRefundToQbChequeBuilder
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendCheckAddRq();
-       
+
         request.PayeeEntityRef.ListID.SetValue(qbCustomerListId);
         request.RefNumber.SetValue(refund.Number.ToString());
         request.TxnDate.SetValue(transPostedOn);
-        
+
         request.AccountRef.ListID.SetValue(bankAccListId);
 
         request.Memo.SetValue($"Ref#{refund.Number}");
