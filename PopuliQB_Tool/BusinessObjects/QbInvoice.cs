@@ -31,3 +31,9 @@ public class QbCheque
     public string? QbCustomerName { get; set; }
     public int? PopChequeNumber { get; set; }
 }
+
+public class QbDeposit
+{
+    public int? PopDepositNumber { get; set; }
+    public string? QbListId { get; set; }
+}

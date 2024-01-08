@@ -159,12 +159,6 @@
                                         Padding="10"
                                         Command="{Binding StartPopuliPaymentsSyncCommand}"
                                         Content="Sync Payments, Memos &amp; Refunds" />
-                                    <Button
-                                        Height="40"
-                                        Margin="10,0,0,0"
-                                        Padding="10"
-                                        Command="{Binding StartPopuliInvoicesSyncCommand}"
-                                        Content="Sync Credits" />
                                 </StackPanel>
 
                                 <StackPanel Margin="0,20,0,0" Orientation="Horizontal">

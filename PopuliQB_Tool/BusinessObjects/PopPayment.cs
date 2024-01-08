@@ -20,7 +20,7 @@ public class PopPayment
     public object? OnlinePaymentId { get; set; }
 
     [JsonPropertyName("convenience_fee_amount")]
-    public int? ConvenienceFeeAmount { get; set; }
+    public double? ConvenienceFeeAmount { get; set; }
 
     [JsonPropertyName("paid_by_type")] public string? PaidByType { get; set; }
 

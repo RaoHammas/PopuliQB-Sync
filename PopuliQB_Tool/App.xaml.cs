@@ -55,6 +55,7 @@ public partial class App : Application
         services.AddSingleton<QbPaymentsService>();
         services.AddSingleton<PopPaymentToQbPaymentBuilder>();
         services.AddSingleton<PopRefundToQbChequeBuilder>();
+        services.AddSingleton<PopDepositToQbDepositBuilder>();
 
 
         return services.BuildServiceProvider();

@@ -13,14 +13,17 @@ public class QbPaymentsService
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly QbItemService _itemService;
     private readonly QbCustomerService _customerService;
+    private readonly QbAccountsService _accountsService;
     private readonly PopuliAccessService _populiAccessService;
     private readonly PopPaymentToQbPaymentBuilder _paymentBuilder;
     private readonly PopCreditMemoToQbCreditMemoBuilder _memoBuilder;
+    private readonly PopDepositToQbDepositBuilder _depositBuilder;
     private readonly PopRefundToQbChequeBuilder _chequeBuilder;
 
     public List<QbMemo> AllExistingMemosList { get; set; } = new();
     public List<QbPayment> AllExistingPaymentsList { get; set; } = new();
     public List<QbCheque> AllExistingChequesList { get; set; } = new();
+    public List<QbDeposit> AllExistingDepositsList { get; set; } = new();
 
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
@@ -28,18 +31,22 @@ public class QbPaymentsService
     public QbPaymentsService(
         PopPaymentToQbPaymentBuilder paymentBuilder,
         PopCreditMemoToQbCreditMemoBuilder memoBuilder,
+        PopDepositToQbDepositBuilder depositBuilder,
         PopRefundToQbChequeBuilder chequeBuilder,
         PopuliAccessService populiAccessService,
         QbItemService itemService,
-        QbCustomerService customerService
+        QbCustomerService customerService,
+        QbAccountsService accountsService
     )
     {
         _paymentBuilder = paymentBuilder;
         _memoBuilder = memoBuilder;
+        _depositBuilder = depositBuilder;
         _chequeBuilder = chequeBuilder;
         _populiAccessService = populiAccessService;
         _itemService = itemService;
         _customerService = customerService;
+        _accountsService = accountsService;
     }
 
 
@@ -87,6 +94,7 @@ public class QbPaymentsService
                     OnSyncStatusChanged?.Invoke(this,
                         new StatusMessageArgs(StatusMessageType.Info,
                             $"Syncing payments for student: {person.DisplayName}."));
+
                     var paymentsOnly =
                         popPaymentsAndCredits
                             .Where(x => x is { PaidByType: "person", RefundSource: null, AidTypeId: null }).ToList();
@@ -140,6 +148,58 @@ public class QbPaymentsService
                                 continue;
                             }
 
+                            if (payment.ConvenienceFeeAmount is > 0)
+                            {
+                                var convEntries = trans.LedgerEntries.Where(x => x.AccountId == 74).ToList(); //conv acc
+                                var fromAccIdConv= trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
+                                var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
+
+                                var fromQbAccListIdConv = _populiAccessService.AllPopuliAccounts.First(x => x.Id == fromAccIdConv).QbAccountListId;
+                                var adQbAccListIdConv = _populiAccessService.AllPopuliAccounts.First(x => x.Id == adAccIdConv).QbAccountListId;
+
+                                if (convEntries.Any())
+                                {
+                                    var conv = new PopCredit
+                                    {
+                                        Id = payment.Id,
+                                        Number = payment.Number,
+                                        TransactionId = trans.Id,
+                                        PostedOn = trans.PostedOn,
+                                        Object = "deposit",
+                                        ActorType = "person",
+                                        ActorId = person.Id!,
+                                        Amount = payment.ConvenienceFeeAmount,
+                                        Items = new List<PopItem>
+                                        {
+                                            new()
+                                            {
+                                                Amount = payment.ConvenienceFeeAmount,
+                                                Description = "",
+                                            }
+                                        },
+                                    };
+
+                                    _depositBuilder.BuildAddRequest(requestMsgSet, conv, qbCustomer.QbListId!,
+                                        fromQbAccListIdConv!, adQbAccListIdConv!, trans.PostedOn!.Value!);
+
+                                    var responseMsgSetDeposit = sessionManager.DoRequests(requestMsgSet);
+                                    if (!ReadAddedDeposit(responseMsgSetDeposit))
+                                    {
+                                        var xmResp = responseMsgSetDeposit.ToXMLString();
+                                        var msg = PqExtensions.GetXmlNodeValue(xmResp);
+                                        OnSyncStatusChanged?.Invoke(this,
+                                            new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                                    }
+                                    else
+                                    {
+                                        OnSyncStatusChanged?.Invoke(this,
+                                            new StatusMessageArgs(StatusMessageType.Success,
+                                                $"Added Deposit.Num: {payment.Number} for {person.DisplayName}"));
+                                    }
+                                }
+
+
+                            }
 
                             var arAccId = trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
                             var adAccId = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
@@ -150,7 +210,7 @@ public class QbPaymentsService
                                 .First(x => x.Id == adAccId).QbAccountListId;
 
                             _paymentBuilder.BuildAddRequest(requestMsgSet, payment, qbCustomer.QbListId!,
-                                arQbAccListId!, adQbAccListId!, trans.PostedOn.Value!);
+                                arQbAccListId!, adQbAccListId!, trans.PostedOn!.Value!);
 
                             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
                             if (!ReadAddedPayments(responseMsgSet))
@@ -265,6 +325,60 @@ public class QbPaymentsService
 
                                 continue;
                             }
+
+                            if (creditPayment.ConvenienceFeeAmount is > 0)
+                            {
+                                var convEntries = trans.LedgerEntries.Where(x => x.AccountId == 74).ToList(); //conv acc
+                                var fromAccIdConv= trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
+                                var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
+
+                                var fromQbAccListIdConv = _populiAccessService.AllPopuliAccounts.First(x => x.Id == fromAccIdConv).QbAccountListId;
+                                var adQbAccListIdConv = _populiAccessService.AllPopuliAccounts.First(x => x.Id == adAccIdConv).QbAccountListId;
+
+                                if (convEntries.Any())
+                                {
+                                    var conv = new PopCredit
+                                    {
+                                        Id = creditPayment.Id,
+                                        Number = creditPayment.Number,
+                                        TransactionId = trans.Id,
+                                        PostedOn = trans.PostedOn,
+                                        Object = "deposit",
+                                        ActorType = "person",
+                                        ActorId = person.Id!,
+                                        Amount = creditPayment.ConvenienceFeeAmount,
+                                        Items = new List<PopItem>
+                                        {
+                                            new()
+                                            {
+                                                Amount = creditPayment.ConvenienceFeeAmount,
+                                                Description = "",
+                                            }
+                                        },
+                                    };
+
+                                    _depositBuilder.BuildAddRequest(requestMsgSet, conv, qbCustomer.QbListId!,
+                                        fromQbAccListIdConv!, adQbAccListIdConv!, trans.PostedOn!.Value!);
+
+                                    var responseMsgSetDeposit = sessionManager.DoRequests(requestMsgSet);
+                                    if (!ReadAddedDeposit(responseMsgSetDeposit))
+                                    {
+                                        var xmResp = responseMsgSetDeposit.ToXMLString();
+                                        var msg = PqExtensions.GetXmlNodeValue(xmResp);
+                                        OnSyncStatusChanged?.Invoke(this,
+                                            new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                                    }
+                                    else
+                                    {
+                                        OnSyncStatusChanged?.Invoke(this,
+                                            new StatusMessageArgs(StatusMessageType.Success,
+                                                $"Added Deposit.Num: {creditPayment.Number} for {person.DisplayName}"));
+                                    }
+                                }
+
+
+                            }
+
 
                             if (memo.Items != null)
                             {
@@ -428,6 +542,62 @@ public class QbPaymentsService
 
                                 continue;
                             }
+
+
+                            if (refund.ConvenienceFeeAmount is > 0)
+                            {
+                                var convEntries = trans.LedgerEntries.Where(x => x.AccountId == 74).ToList(); //conv acc
+                                var fromAccIdConv= trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
+                                var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
+
+                                var fromQbAccListIdConv = _populiAccessService.AllPopuliAccounts.First(x => x.Id == fromAccIdConv).QbAccountListId;
+                                var adQbAccListIdConv = _populiAccessService.AllPopuliAccounts.First(x => x.Id == adAccIdConv).QbAccountListId;
+
+                                if (convEntries.Any())
+                                {
+                                    var conv = new PopCredit
+                                    {
+                                        Id = refund.Id,
+                                        Number = refund.Number,
+                                        TransactionId = trans.Id,
+                                        PostedOn = trans.PostedOn,
+                                        Object = "deposit",
+                                        ActorType = "person",
+                                        ActorId = person.Id!,
+                                        Amount = refund.ConvenienceFeeAmount,
+                                        Items = new List<PopItem>
+                                        {
+                                            new()
+                                            {
+                                                Amount = refund.ConvenienceFeeAmount,
+                                                Description = "",
+                                            }
+                                        },
+                                    };
+
+                                    _depositBuilder.BuildAddRequest(requestMsgSet, conv, qbCustomer.QbListId!,
+                                        fromQbAccListIdConv!, adQbAccListIdConv!, trans.PostedOn!.Value!);
+
+                                    var responseMsgSetDeposit = sessionManager.DoRequests(requestMsgSet);
+                                    if (!ReadAddedDeposit(responseMsgSetDeposit))
+                                    {
+                                        var xmResp = responseMsgSetDeposit.ToXMLString();
+                                        var msg = PqExtensions.GetXmlNodeValue(xmResp);
+                                        OnSyncStatusChanged?.Invoke(this,
+                                            new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                                    }
+                                    else
+                                    {
+                                        OnSyncStatusChanged?.Invoke(this,
+                                            new StatusMessageArgs(StatusMessageType.Success,
+                                                $"Added Deposit.Num: {refund.Number} for {person.DisplayName}"));
+                                    }
+                                }
+
+
+                            }
+
+
 
                             if (refundCheque.Items != null)
                             {
@@ -1024,6 +1194,176 @@ public class QbPaymentsService
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Info, $"Found Cheque: {cheque.PopChequeNumber}"));
             return cheque;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex);
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{ex.Message}"));
+        }
+
+        return null;
+    }
+
+    #endregion
+
+    
+    #region DEPOSITS
+
+    public async Task SyncAllExistingDepositsAsync()
+    {
+        var sessionManager = new QBSessionManager();
+        var isConnected = false;
+        var isSessionOpen = false;
+        try
+        {
+            AllExistingDepositsList.Clear();
+
+            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            isConnected = true;
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
+
+            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            isSessionOpen = true;
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
+
+            await Task.Run(() =>
+            {
+                var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
+                requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
+
+                _depositBuilder.BuildGetAllRequest(requestMsgSet);
+                var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
+                if (!ReadFetchedDeposits(responseMsgSet))
+                {
+                    var xmResp = responseMsgSet.ToXMLString();
+                    var msg = PqExtensions.GetXmlNodeValue(xmResp);
+                    _logger.Error(msg);
+
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                }
+            });
+
+            OnSyncStatusChanged?.Invoke(this,
+                new StatusMessageArgs(StatusMessageType.Success,
+                    $"Completed: Found Deposits in QB {AllExistingDepositsList.Count}"));
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex);
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
+        }
+        finally
+        {
+            if (isSessionOpen)
+            {
+                sessionManager.EndSession();
+                OnSyncStatusChanged?.Invoke(this,
+                    new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
+            }
+
+            if (isConnected)
+            {
+                sessionManager.CloseConnection();
+                OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
+            }
+        }
+    }
+
+    private bool ReadFetchedDeposits(IMsgSetResponse? responseMsgSet)
+    {
+        if (responseMsgSet == null) return false;
+        var responseList = responseMsgSet.ResponseList;
+        if (responseList == null) return false;
+
+        for (var i = 0; i < responseList.Count; i++)
+        {
+            var response = responseList.GetAt(i);
+
+            if (response.StatusCode >= 0)
+            {
+                if (response.Detail != null)
+                {
+                    var responseType = (ENResponseType)response.Type.GetValue();
+                    if (responseType == ENResponseType.rtDepositQueryRs)
+                    {
+                        var retList = (IDepositRetList)response.Detail;
+                        OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, retList.Count));
+
+                        for (var x = 0; x < retList.Count; x++)
+                        {
+                            ReadPropertiesDeposit(retList.GetAt(x));
+                            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
+                        }
+
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private bool ReadAddedDeposit(IMsgSetResponse? responseMsgSet)
+    {
+        if (responseMsgSet == null)
+        {
+            return false;
+        }
+
+        var responseList = responseMsgSet.ResponseList;
+        if (responseList == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < responseList.Count; i++)
+        {
+            var response = responseList.GetAt(i);
+
+            if (response.StatusCode >= 0)
+            {
+                if (response.Detail != null)
+                {
+                    var responseType = (ENResponseType)response.Type.GetValue();
+                    if (responseType == ENResponseType.rtDepositAddRs)
+                    {
+                        var ret = (IDepositRet)response.Detail;
+                        if (ret != null)
+                        {
+                            ReadPropertiesDeposit(ret);
+                            return true;
+                        }
+
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private QbDeposit? ReadPropertiesDeposit(IDepositRet? ret)
+    {
+        try
+        {
+            if (ret == null) return null;
+
+            var deposit = new QbDeposit();
+            
+            var refNum = ret.Memo.GetValue();
+            if (!string.IsNullOrEmpty(refNum))
+            {
+                var arr = refNum.Split("#");
+                deposit.PopDepositNumber = Convert.ToInt32(arr[1].Trim());
+            }
+
+            AllExistingDepositsList.Add(deposit);
+            OnSyncStatusChanged?.Invoke(this,
+                new StatusMessageArgs(StatusMessageType.Info, $"Found Deposit: {deposit.PopDepositNumber}"));
+            return deposit;
         }
         catch (Exception ex)
         {

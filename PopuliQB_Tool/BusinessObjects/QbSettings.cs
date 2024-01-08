@@ -24,7 +24,7 @@ public sealed class QbSettings : INotifyPropertyChanged
     private bool _applyStudentFilter;
     private bool _applyIgnoreStartingBalanceFilter = true;
     private bool _applyAidPaymentsAreCreditMemoFilter = true;
-    private string _syncStudentIds = "97113, 35196";
+    private string _syncStudentIds = "97113, 35196, 96420, 93831";
     public static QbSettings Instance => Lazy.Value;
 
     private QbSettings()

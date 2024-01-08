@@ -267,6 +267,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Refunds from QB.");
             await _qbPaymentsService.SyncAllExistingChequesAsync();
 
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Deposits from QB.");
+            await _qbPaymentsService.SyncAllExistingDepositsAsync();
+
             await _qbPaymentsService.SyncPaymentsAsync();
             
         }
