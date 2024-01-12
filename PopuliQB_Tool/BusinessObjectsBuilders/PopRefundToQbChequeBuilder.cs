@@ -6,7 +6,7 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 public class PopRefundToQbChequeBuilder
 {
     public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopCredit refund, string qbCustomerListId,
-        string bankAccListId, DateTime transPostedOn)
+        string bankAccListId, string recAccListId, DateTime transPostedOn)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendCheckAddRq();
@@ -23,14 +23,12 @@ public class PopRefundToQbChequeBuilder
         {
             foreach (var item in refund.Items)
             {
-                var orItem = request.ORItemLineAddList.Append();
-                orItem.ItemLineAdd.ItemRef.ListID.SetValue(item.ItemQbListId);
-                orItem.ItemLineAdd.Desc.SetValue(item.Description ?? "");
-                orItem.ItemLineAdd.Quantity.SetValue(1);
-                orItem.ItemLineAdd.Cost.SetValue(item.Amount ?? 0);
-                orItem.ItemLineAdd.Amount.SetValue(item.Amount ?? 0);
-                orItem.ItemLineAdd.CustomerRef.ListID.SetValue(qbCustomerListId);
-                orItem.ItemLineAdd.BillableStatus.SetValue(ENBillableStatus.bsHasBeenBilled);
+                var orItem = request.ExpenseLineAddList.Append();
+                orItem.AccountRef.ListID.SetValue(recAccListId);
+                orItem.Amount.SetValue(item.Amount ?? 0);
+                orItem.Memo.SetValue(item.Name);
+                // orItem.BillableStatus.SetValue(ENBillableStatus.bsNotBillable);
+                orItem.CustomerRef.ListID.SetValue(qbCustomerListId);
             }
         }
 

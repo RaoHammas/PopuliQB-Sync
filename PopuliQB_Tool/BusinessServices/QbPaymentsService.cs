@@ -151,7 +151,7 @@ public class QbPaymentsService
                             if (payment.ConvenienceFeeAmount is > 0)
                             {
                                 var convEntries = trans.LedgerEntries.Where(x => x.AccountId == 74).ToList(); //conv acc
-                                var fromAccIdConv= trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
+                                var fromAccIdConv= convEntries.First(x => x.Direction == "credit").AccountId!;
                                 var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
 
                                 var fromQbAccListIdConv = _populiAccessService.AllPopuliAccounts.First(x => x.Id == fromAccIdConv).QbAccountListId;
@@ -329,7 +329,7 @@ public class QbPaymentsService
                             if (creditPayment.ConvenienceFeeAmount is > 0)
                             {
                                 var convEntries = trans.LedgerEntries.Where(x => x.AccountId == 74).ToList(); //conv acc
-                                var fromAccIdConv= trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
+                                var fromAccIdConv= convEntries.First(x => x.Direction == "credit").AccountId!;
                                 var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
 
                                 var fromQbAccListIdConv = _populiAccessService.AllPopuliAccounts.First(x => x.Id == fromAccIdConv).QbAccountListId;
@@ -547,7 +547,7 @@ public class QbPaymentsService
                             if (refund.ConvenienceFeeAmount is > 0)
                             {
                                 var convEntries = trans.LedgerEntries.Where(x => x.AccountId == 74).ToList(); //conv acc
-                                var fromAccIdConv= trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
+                                var fromAccIdConv= convEntries.First(x => x.Direction == "credit").AccountId!;
                                 var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
 
                                 var fromQbAccListIdConv = _populiAccessService.AllPopuliAccounts.First(x => x.Id == fromAccIdConv).QbAccountListId;
@@ -648,10 +648,11 @@ public class QbPaymentsService
 
 
                             var bankAccId = trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
-                            var bankQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == bankAccId)
-                                .QbAccountListId;
+                            var recAccId = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
+                            var bankQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == bankAccId).QbAccountListId;
+                            var recQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == recAccId).QbAccountListId;
 
-                            _chequeBuilder.BuildAddRequest(requestMsgSet, refundCheque, qbCustomer.QbListId!, bankQbAccListId!, trans.PostedOn!.Value);
+                            _chequeBuilder.BuildAddRequest(requestMsgSet, refundCheque, qbCustomer.QbListId!, bankQbAccListId!, recQbAccListId!, trans.PostedOn!.Value);
 
                             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
                             if (!ReadAddedCheque(responseMsgSet))
