@@ -157,7 +157,7 @@
                                         Height="40"
                                         Margin="10,0,0,0"
                                         Padding="10"
-                                        Command="{Binding StartPopuliPaymentsSyncCommand}"
+                                        Command="{Binding StartPopuliQuickSyncCommand}"
                                         Content="Sync Payments, Memos &amp; Refunds" />
                                 </StackPanel>
 

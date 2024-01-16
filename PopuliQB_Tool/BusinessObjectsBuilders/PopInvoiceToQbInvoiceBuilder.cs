@@ -5,7 +5,7 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopInvoiceToQbInvoiceBuilder
 {
-    public void BuildInvoiceAddRequest(IMsgSetRequest requestMsgSet, PopInvoice invoice, string qbCustomerListId, string qbARListId)
+    public void BuildInvoiceAddRequest(IMsgSetRequest requestMsgSet, PopInvoice invoice, string qbCustomerListId, string qbArListId)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendInvoiceAddRq();
@@ -13,32 +13,23 @@ public class PopInvoiceToQbInvoiceBuilder
         request.PONumber.SetValue(invoice.Id.ToString());
         request.RefNumber.SetValue(invoice.Number.ToString());
         // request.ARAccountRef.ListID.SetValue(QbSettings.Instance.ARForInvoice.ListId);
-        request.ARAccountRef.ListID.SetValue(qbARListId);
+        request.ARAccountRef.ListID.SetValue(qbArListId);
         
         if (!string.IsNullOrEmpty(invoice.Status) && invoice.Status != "unpaid")
         {
             request.IsPending.SetValue(false);
         }
 
-        if (Convert.ToDateTime(invoice.ReportData?.InvoiceDueDate) is var dueDate)
+        if (Convert.ToDateTime(invoice.DueOn) is var dueDate)
         {
             request.DueDate.SetValue(dueDate);
         }
 
-        if (Convert.ToDateTime(invoice.ReportData?.PostedDate) is var postedDate)
+        if (Convert.ToDateTime(invoice.PostedOn) is var postedDate)
         {
             request.TxnDate.SetValue(postedDate);
         }
-        /*if (Convert.ToDouble(invoice.ReportData?.AmountPaid) is var paid)
-        {
-            var setCredit11155 = invoiceAddRq.SetCreditList.Append();
-            invoiceAddRq.LinkToTxnIDList.Add("200000-1011023419");
-            setCredit11155.AppliedAmount.SetValue(paid);
-            setCredit11155.CreditTxnID.SetValue("200000-1011023419");
-        }*/
-
-        request.IsToBePrinted.SetValue(false);
-        request.IsToBeEmailed.SetValue(false);
+        
         request.Memo.SetValue($"Trans#{invoice.TransactionId}");
         
         if (invoice.Items != null)

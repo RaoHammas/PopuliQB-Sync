@@ -14,8 +14,8 @@ public class PopDepositToQbDepositBuilder
         request.DepositToAccountRef.ListID.SetValue(depositAccListId);
         request.Memo.SetValue($"Ref#{memo.Number}");
 
-        request.CashBackInfoAdd.AccountRef.ListID.SetValue(depositAccListId);
-        request.CashBackInfoAdd.Amount.SetValue(memo.Amount ?? 0);
+        /*request.CashBackInfoAdd.AccountRef.ListID.SetValue(depositAccListId);
+        request.CashBackInfoAdd.Amount.SetValue(memo.Amount ?? 0);*/
 
         if (memo.Items != null)
         {

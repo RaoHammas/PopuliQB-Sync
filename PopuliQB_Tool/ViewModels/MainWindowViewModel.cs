@@ -26,6 +26,11 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly QBInvoiceService _qbInvoiceService;
     private readonly QbItemService _qbItemService;
     private readonly QbPaymentsService _qbPaymentsService;
+    private readonly QbDepositServiceQuick _depositServiceQuick;
+    private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
+    private readonly QbInvoiceServiceQuick _invoiceServiceQuick;
+    private readonly QbPaymentServiceQuick _paymentServiceQuick;
+    private readonly QbTransactionsService _qbTransactionsService;
 
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
     [ObservableProperty] private ICollectionView _filteredLogs;
@@ -46,7 +51,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         QBInvoiceService qbInvoiceService,
         QbAccountsService qbAccountsService,
         QbItemService qbItemService,
-        QbPaymentsService qbPaymentsService
+        QbPaymentsService qbPaymentsService,
+        QbDepositServiceQuick depositServiceQuick,
+        QbCreditMemoServiceQuick creditMemoServiceQuick,
+        QbInvoiceServiceQuick invoiceServiceQuick,
+        QbPaymentServiceQuick paymentServiceQuick,
+        QbTransactionsService qbTransactionsService
     )
     {
         _messageBoxService = messageBoxService;
@@ -57,6 +67,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         QbAccountsService = qbAccountsService;
         _qbItemService = qbItemService;
         _qbPaymentsService = qbPaymentsService;
+
+        _depositServiceQuick = depositServiceQuick;
+        _creditMemoServiceQuick = creditMemoServiceQuick;
+        _invoiceServiceQuick = invoiceServiceQuick;
+        _paymentServiceQuick = paymentServiceQuick;
+        _qbTransactionsService = qbTransactionsService;
 
         QbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
         QbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
@@ -72,6 +88,17 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         _qbPaymentsService.OnSyncStatusChanged += SyncStatusChanged;
         _qbPaymentsService.OnSyncProgressChanged += SyncProgressChanged;
+
+        _depositServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
+        _depositServiceQuick.OnSyncProgressChanged += SyncProgressChanged;       
+        _creditMemoServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
+        _creditMemoServiceQuick.OnSyncProgressChanged += SyncProgressChanged;   
+        _invoiceServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
+        _invoiceServiceQuick.OnSyncProgressChanged += SyncProgressChanged; 
+        _paymentServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
+        _paymentServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
+        _qbTransactionsService.OnSyncStatusChanged += SyncStatusChanged;
+        _qbTransactionsService.OnSyncProgressChanged += SyncProgressChanged;
 
         FilteredLogs = CollectionViewSource.GetDefaultView(SyncStatusMessages);
         FilteredLogs.Filter = null;
@@ -280,7 +307,37 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
+    [RelayCommand]
+    private async Task StartPopuliQuickSync()
+    {
+        SyncStatusMessages.Clear();
+        TotalRecords = 0;
+        ProgressCount = 0;
+        SetSyncStatusMessage(StatusMessageType.Info, "Starting Quick Sync.");
 
+        try
+        {
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Invoices from QB.");
+            await _paymentServiceQuick.SyncAllExistingPaymentsAsync();
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Payments from QB.");
+            await _paymentServiceQuick.SyncAllExistingPaymentsAsync();
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Credit Memos from QB.");
+            await _creditMemoServiceQuick.SyncAllExistingMemosAsync();
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Deposits from QB.");
+            await _depositServiceQuick.SyncAllExistingDepositsAsync();
+
+            await _qbTransactionsService.SyncAll();
+
+        }
+        catch (Exception ex)
+        {
+            SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
+            _logger.Error(ex);
+        }
+    }
 
 
     [RelayCommand]

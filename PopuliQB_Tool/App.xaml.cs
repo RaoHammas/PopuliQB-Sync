@@ -58,6 +58,11 @@ public partial class App : Application
         services.AddSingleton<PopDepositToQbDepositBuilder>();
 
 
+        services.AddSingleton<QbInvoiceServiceQuick>();
+        services.AddSingleton<QbPaymentServiceQuick>();
+        services.AddSingleton<QbDepositServiceQuick>();
+        services.AddSingleton<QbCreditMemoServiceQuick>();
+        services.AddSingleton<QbTransactionsService>();
         return services.BuildServiceProvider();
     }
 }
