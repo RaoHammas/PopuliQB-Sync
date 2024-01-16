@@ -7,10 +7,6 @@ namespace PopuliQB_Tool.BusinessObjects;
 public sealed class QbSettings : INotifyPropertyChanged
 {
     private static readonly Lazy<QbSettings> Lazy = new(() => new QbSettings());
-    /*private QbAccount _adForPayments = new QbAccount();
-    private QbAccount _arForInvoice = new QbAccount();
-    private QbAccount _arForCreditMemos = new QbAccount();
-    private QbAccount _arForPayments = new QbAccount();*/
     private DateTime _postedFrom = DateTime.UtcNow;
     private DateTime _postedTo = DateTime.UtcNow;
     private bool _applyPostedDateFilter;
@@ -25,35 +21,26 @@ public sealed class QbSettings : INotifyPropertyChanged
     private bool _applyIgnoreStartingBalanceFilter = true;
     private bool _applyAidPaymentsAreCreditMemoFilter = true;
     private string _syncStudentIds = "97113, 35196, 96420, 93831";
+    private int _popConvenienceAccId = 74;
+    private string _skipStartingBalanceItemName = "Starting Balance";
+
     public static QbSettings Instance => Lazy.Value;
 
     private QbSettings()
     {
     }
 
-    /*public QbAccount ARForInvoice
+    public string SkipStartingBalanceItemName
     {
-        get => _arForInvoice;
-        set => SetField(ref _arForInvoice, value);
+        get => _skipStartingBalanceItemName;
+        set => SetField(ref _skipStartingBalanceItemName, value);
     }
 
-    public QbAccount ARForCreditMemos
+    public int PopConvenienceAccId
     {
-        get => _arForCreditMemos;
-        set => SetField(ref _arForCreditMemos, value);
+        get => _popConvenienceAccId;
+        set => SetField(ref _popConvenienceAccId, value);
     }
-
-    public QbAccount ARForPayments
-    {
-        get => _arForPayments;
-        set => SetField(ref _arForPayments, value);
-    }
-
-    public QbAccount ADForPayments
-    {
-        get => _adForPayments;
-        set => SetField(ref _adForPayments, value);
-    }*/
 
     public string SyncStudentIds
     {
