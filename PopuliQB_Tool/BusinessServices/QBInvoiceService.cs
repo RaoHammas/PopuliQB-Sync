@@ -105,7 +105,7 @@ public class QBInvoiceService
                                 }
                             }
 
-                            var trans = await _populiAccessService.GetTransactionWithLedgerAsync(
+                            var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 invoice.TransactionId!.Value);
 
                             if (trans == null)

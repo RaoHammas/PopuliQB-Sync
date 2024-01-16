@@ -216,7 +216,7 @@ public class QbCreditMemoServiceQuick
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-            var trans = await _populiAccessService.GetTransactionWithLedgerAsync(salesCredit.TransactionId!.Value);
+            var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(salesCredit.TransactionId!.Value);
             if (trans.Id == null)
             {
                 OnSyncStatusChanged?.Invoke(this,

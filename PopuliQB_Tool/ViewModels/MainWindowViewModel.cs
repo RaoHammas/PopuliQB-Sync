@@ -30,6 +30,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
     private readonly QbInvoiceServiceQuick _invoiceServiceQuick;
     private readonly QbPaymentServiceQuick _paymentServiceQuick;
+    private readonly QbRefundServiceQuick _refundServiceQuick;
     private readonly QbService _qbService;
 
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
@@ -56,6 +57,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         QbCreditMemoServiceQuick creditMemoServiceQuick,
         QbInvoiceServiceQuick invoiceServiceQuick,
         QbPaymentServiceQuick paymentServiceQuick,
+        QbRefundServiceQuick refundServiceQuick,
         QbService qbService
     )
     {
@@ -72,6 +74,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _creditMemoServiceQuick = creditMemoServiceQuick;
         _invoiceServiceQuick = invoiceServiceQuick;
         _paymentServiceQuick = paymentServiceQuick;
+        _refundServiceQuick = refundServiceQuick;
         _qbService = qbService;
 
         QbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
@@ -90,11 +93,11 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _qbPaymentsService.OnSyncProgressChanged += SyncProgressChanged;
 
         _depositServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
-        _depositServiceQuick.OnSyncProgressChanged += SyncProgressChanged;       
+        _depositServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
         _creditMemoServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
-        _creditMemoServiceQuick.OnSyncProgressChanged += SyncProgressChanged;   
+        _creditMemoServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
         _invoiceServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
-        _invoiceServiceQuick.OnSyncProgressChanged += SyncProgressChanged; 
+        _invoiceServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
         _paymentServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
         _paymentServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
         _qbService.OnSyncStatusChanged += SyncStatusChanged;
@@ -212,6 +215,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
+
+
     [RelayCommand]
     private async Task StartPopuliInvoicesSync()
     {
@@ -227,7 +232,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Invoices from QB.");
             await _qbInvoiceService.SyncAllExistingInvoicesAsync();
 
-            
+
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Invoices from Populi.");
             var page = 1;
             var popInvoices = await PopuliAccessService.GetAllInvoicesAsync(page);
@@ -284,7 +289,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         try
         {
-            
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Payments from QB.");
             await _qbPaymentsService.SyncAllExistingPaymentsAsync();
 
@@ -298,7 +302,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             await _qbPaymentsService.SyncAllExistingDepositsAsync();
 
             await _qbPaymentsService.SyncPaymentsAsync();
-            
         }
         catch (Exception ex)
         {
@@ -308,7 +311,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private async Task StartPopuliQuickSync()
+    private async Task StartPopuliQuickInvoicesAndSalesCreditAsync()
     {
         SyncStatusMessages.Clear();
         TotalRecords = 0;
@@ -318,19 +321,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         try
         {
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Invoices from QB.");
-            await _paymentServiceQuick.SyncAllExistingPaymentsAsync();
-
-            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Payments from QB.");
-            await _paymentServiceQuick.SyncAllExistingPaymentsAsync();
-
-            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Credit Memos from QB.");
-            await _creditMemoServiceQuick.SyncAllExistingMemosAsync();
+            await _invoiceServiceQuick.SyncAllExistingInvoicesAsync();
 
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Deposits from QB.");
             await _depositServiceQuick.SyncAllExistingDepositsAsync();
 
-            await _qbService.SyncAll();
-
+            await _qbService.SyncAllInvoicesAndSaleCredits();
         }
         catch (Exception ex)
         {
@@ -338,6 +334,54 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             _logger.Error(ex);
         }
     }
+
+    [RelayCommand]
+    private async Task StartPopuliQuickPaymentsAndCredMemosAsync()
+    {
+        SyncStatusMessages.Clear();
+        TotalRecords = 0;
+        ProgressCount = 0;
+        SetSyncStatusMessage(StatusMessageType.Info, "Starting Quick Sync.");
+
+        try
+        {
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Payments from QB.");
+            await _paymentServiceQuick.SyncAllExistingPaymentsAsync();
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Cred Memos from QB.");
+            await _creditMemoServiceQuick.SyncAllExistingMemosAsync();
+
+            await _qbService.SyncAllPaymentsAndMemos();
+        }
+        catch (Exception ex)
+        {
+            SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
+            _logger.Error(ex);
+        }
+    }
+
+    [RelayCommand]
+    private async Task StartPopuliQuickRefundsAsync()
+    {
+        SyncStatusMessages.Clear();
+        TotalRecords = 0;
+        ProgressCount = 0;
+        SetSyncStatusMessage(StatusMessageType.Info, "Starting Quick Sync.");
+
+        try
+        {
+            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Refunds from QB.");
+            await _refundServiceQuick.SyncAllExistingChequesAsync();
+
+            await _qbService.SyncAllRefunds();
+        }
+        catch (Exception ex)
+        {
+            SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
+            _logger.Error(ex);
+        }
+    }
+
 
 
     [RelayCommand]

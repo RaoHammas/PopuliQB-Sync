@@ -39,22 +39,13 @@ public class QbInvoiceServiceQuick
         _depositServiceQuick = depositServiceQuick;
     }
 
-    public async Task<bool> AddInvoiceAsync(PopPerson person, PopTransaction trans, QBSessionManager sessionManager)
+    public async Task<bool> AddInvoiceAsync(PopPerson person, PopTransaction trans, PopInvoice invoice,
+        QBSessionManager sessionManager)
     {
         try
         {
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
-
-            var invoice = await _populiAccessService.GetInvoiceByIdAsync(trans.ReportData!.Invoiceid!.Value);
-            if (invoice.Id == null)
-            {
-                OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Error,
-                        $"Invoice num: {trans.ReportData!.InvoiceNumber!.Value} not found for student: {person.DisplayName!}"));
-
-                return false;
-            }
 
             var qbStudent =
                 _customerService.AllExistingCustomersList.FirstOrDefault(x =>
@@ -108,6 +99,9 @@ public class QbInvoiceServiceQuick
 
             var nonConvEntries = trans.LedgerEntries.Where(x => x.AccountId != QbSettings.Instance.PopConvenienceAccId)
                 .ToList();
+            var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId)
+                .ToList();
+
             var arAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
@@ -125,15 +119,16 @@ public class QbInvoiceServiceQuick
                 return false;
             }
 
+           
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Success,
-                    $"Successfully Added Invoice.Num: {invoice.Number} for student: {person.DisplayName!}"));
+                    $"Invoice num: {invoice.Number} added for student: {person.DisplayName}."));
 
             if (invoice.Credits != null && invoice.Credits.Any())
             {
                 OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Success,
-                        $"Sale Credits found for student: {person.DisplayName!}"));
+                    new StatusMessageArgs(StatusMessageType.Info,
+                        $"Sales Credit found for student: {person.DisplayName!}"));
 
                 foreach (var invoiceCredit in invoice.Credits)
                 {
@@ -142,6 +137,34 @@ public class QbInvoiceServiceQuick
                 }
             }
 
+            if (convEntries.Any())
+            {
+                OnSyncStatusChanged?.Invoke(this,
+                    new StatusMessageArgs(StatusMessageType.Info,
+                        $"Adding convenience fee as Deposit for Invoice.Num: {invoice.Number} for student: {person.DisplayName}"));
+
+                var payment = new PopPayment
+                {
+                    Id = invoice.Id,
+                    Number = invoice.Number,
+                    StudentId = person.Id,
+                    ConvenienceFeeAmount = convEntries.First(x => x.Debit > 0).Debit,
+                };
+
+                var resp = _depositServiceQuick.AddDeposit(trans, payment, qbStudent, sessionManager);
+                if (resp)
+                {
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Success,
+                            $"Added convenience fee as Deposit for Invoice.Num: {invoice.Number} for student: {person.DisplayName}"));
+                }
+                else
+                {
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Error,
+                            $"Failed to add convenience fee as Deposit for Invoice.Num: {invoice.Number} for student: {person.DisplayName}. Add manually!"));
+                }
+            }
 
             return true;
         }
@@ -153,7 +176,7 @@ public class QbInvoiceServiceQuick
         }
     }
 
-    public async Task<bool> AddInvoiceForRefundToSourceAsync(PopPerson person, PopTransaction trans, PopRefund refund,
+    public bool AddInvoiceForRefundToSourceAsync(PopPerson person, PopTransaction trans, PopRefund refund,
         QBSessionManager sessionManager)
     {
         try

@@ -39,7 +39,7 @@ public class QbRefundServiceQuick
     }
 
 
-    public async Task<bool> AddRefund(PopPerson person, PopTransaction trans, PopRefund refund,
+    public bool AddRefund(PopPerson person, PopTransaction trans, PopRefund refund,
         QBSessionManager sessionManager)
     {
         try
@@ -98,7 +98,8 @@ public class QbRefundServiceQuick
             {
                 if (QbSettings.Instance.ApplyIgnoreStartingBalanceFilter)
                 {
-                    var sbItems = refundCheque.Items.Where(x => x.Name == QbSettings.Instance.SkipStartingBalanceItemName).ToList();
+                    var sbItems = refundCheque.Items
+                        .Where(x => x.Name == QbSettings.Instance.SkipStartingBalanceItemName).ToList();
                     foreach (var sbItem in sbItems)
                     {
                         refundCheque.Items.Remove(sbItem);
@@ -140,16 +141,19 @@ public class QbRefundServiceQuick
                     item.ItemQbListId = existingItem!.QbListId;
                 }
             }
-            
-            var nonConvEntries = trans.LedgerEntries.Where(x => x.AccountId != QbSettings.Instance.PopConvenienceAccId).ToList();
-            var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList();
+
+            var nonConvEntries = trans.LedgerEntries.Where(x => x.AccountId != QbSettings.Instance.PopConvenienceAccId)
+                .ToList();
+            var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId)
+                .ToList();
 
             var bankAccId = nonConvEntries.First(x => x.Direction == "credit").AccountId!;
             var recAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
             var bankQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == bankAccId).QbAccountListId;
             var recQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == recAccId).QbAccountListId;
 
-            _builder.BuildAddRequest(requestMsgSet, refundCheque, qbStudent.QbListId!, bankQbAccListId!, recQbAccListId!, refund.PostedDate!.Value);
+            _builder.BuildAddRequest(requestMsgSet, refundCheque, qbStudent.QbListId!, bankQbAccListId!,
+                recQbAccListId!, refund.PostedDate!.Value);
             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedCheque(responseMsgSet))
             {
@@ -163,7 +167,7 @@ public class QbRefundServiceQuick
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Success,
                     $"Refund num: {refundCheque.Number} Added as Cheque for student: {person.DisplayName}."));
-            
+
             if (convEntries.Any())
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -175,7 +179,7 @@ public class QbRefundServiceQuick
                     Id = refund.Id,
                     Number = refundCheque.Number,
                     StudentId = person.Id,
-                    ConvenienceFeeAmount = convEntries.First(x=>x.Debit > 0).Debit,
+                    ConvenienceFeeAmount = convEntries.First(x => x.Debit > 0).Debit,
                 };
 
                 var resp = _depositServiceQuick.AddDeposit(trans, payment, qbStudent, sessionManager);

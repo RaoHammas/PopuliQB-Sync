@@ -106,7 +106,7 @@ public class QbPaymentsService
                     {
                         foreach (var payment in paymentsOnly)
                         {
-                            var trans = await _populiAccessService.GetTransactionWithLedgerAsync(payment.TransactionId!
+                            var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(payment.TransactionId!
                                 .Value);
 
                             if (trans == null)
@@ -255,7 +255,7 @@ public class QbPaymentsService
                         {
                             var trans =
                                 await _populiAccessService
-                                    .GetTransactionWithLedgerAsync(creditPayment.TransactionId!.Value);
+                                    .GetTransactionByIdWithLedgerAsync(creditPayment.TransactionId!.Value);
 
                             if (trans == null)
                             {
@@ -472,7 +472,7 @@ public class QbPaymentsService
                         {
                             var trans =
                                 await _populiAccessService
-                                    .GetTransactionWithLedgerAsync(refundReturn.TransactionId!.Value);
+                                    .GetTransactionByIdWithLedgerAsync(refundReturn.TransactionId!.Value);
 
                             if (trans == null)
                             {
@@ -527,7 +527,7 @@ public class QbPaymentsService
                         {
                             var trans =
                                 await _populiAccessService
-                                    .GetTransactionWithLedgerAsync(refund.TransactionId!.Value);
+                                    .GetTransactionByIdWithLedgerAsync(refund.TransactionId!.Value);
 
                             if (trans == null)
                             {

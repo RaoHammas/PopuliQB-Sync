@@ -210,33 +210,7 @@ public class PopuliAccessService
         return new();
     }
 
-    public async Task<PopTransaction> GetTransactionWithLedgerAsync(int transactionId)
-    {
-        var request = new RestRequest($"{ProdUrl}/transactions/{transactionId}");
-        request.AddHeader("Authorization", $"Bearer {AuthToken}");
-        request.AddHeader("Content-Type", "application/json");
-
-        var body = """
-                   {
-                       "expand": ["ledger_entries"]
-                   }
-                   """;
-
-        request.AddStringBody(body, DataFormat.Json);
-
-        var response =
-            await _client.ExecuteAsync<PopTransaction>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
-        {
-            if (response.Data != null)
-            {
-                return response.Data;
-            }
-        }
-
-        _logger.Error("Failed to fetch Transaction. {@response}", response);
-        return new();
-    }
+    #region ACCOUNTS
 
     public async Task SyncAllAccountsAsync(int page = 1)
     {
@@ -280,6 +254,10 @@ public class PopuliAccessService
         return new();
     }
 
+    #endregion
+
+
+    #region AWARDS
 
     public async Task<List<PopAidAwards>> GetAllStudentAwardsAsync(int studentId, string studentDisplayName)
     {
@@ -351,7 +329,9 @@ public class PopuliAccessService
         return new();
     }
 
-    #region Populi Payments
+    #endregion
+
+    #region PAYMENTS
 
     public async Task<List<PopPayment>> GetAllStudentPaymentsAsync(int studentId)
     {
@@ -397,8 +377,8 @@ public class PopuliAccessService
 
     #endregion
 
-    #region Transactions
-
+    #region TRANSACTIONS
+    
     public async Task<List<PopTransaction>> GetAllStudentTransactionsAsync(int personId, string displayName)
     {
         var page = 0;
@@ -465,7 +445,77 @@ public class PopuliAccessService
 
     #endregion
 
-    #region GET BY ID METODS
+    #region INVOICES
+    
+    public async Task<List<PopInvoice>> GetAllStudentInvoicesAsync(int personId, string displayName)
+    {
+        var page = 0;
+        var allData = new List<PopInvoice>();
+        var hasMore = true;
+        while (hasMore)
+        {
+            var data = await FetchAllStudentInvoicesAsync(personId, displayName, ++page);
+            allData.AddRange(data.Data!);
+            hasMore = data.HasMore!.Value;
+        }
+
+        return allData;
+    }
+
+    private async Task<PopResponse<PopInvoice>> FetchAllStudentInvoicesAsync(int personId, string displayName, int page)
+    {
+        var request = new RestRequest($"{ProdUrl}/invoices");
+        request.AddHeader("Authorization", $"Bearer {AuthToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        var filter = new PopFilter
+        {
+            Page = page,
+            Expand = new[] { "credits" },
+            FilterItems = new List<PopFilterItem>
+            {
+                new()
+                {
+                    Logic = "ALL",
+                    Fields = new List<PopFilterTypeField>
+                    {
+                        new()
+                        {
+                            Name = "student",
+                            Positive = "1",
+                            Value = new PopFilterValueDisplayName
+                            {
+                                DisplayText = displayName,
+                                Id = personId.ToString()
+                            }
+                        }
+                    },
+                }
+            }
+        };
+
+        var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
+        request.AddStringBody(body, DataFormat.Json);
+
+        var response =
+            await _client.ExecuteAsync<PopResponse<PopInvoice>>(request, Method.Get, CancellationToken.None);
+        if (response is { IsSuccessStatusCode: true, Content: not null })
+        {
+            if (response.Data != null)
+            {
+                return response.Data;
+            }
+        }
+
+        _logger.Error("Failed to fetch Invoices. {@response}", response);
+        return new();
+    }
+
+    #endregion
+
+
+
+    #region GET BY ID METHODS
 
     public async Task<PopInvoice> GetInvoiceByIdAsync(int invoiceId)
     {
@@ -514,7 +564,34 @@ public class PopuliAccessService
         _logger.Error("Failed to fetch Payment. {@response}", response);
         return new();
     }
+    
+    public async Task<PopTransaction> GetTransactionByIdWithLedgerAsync(int transactionId)
+    {
+        var request = new RestRequest($"{ProdUrl}/transactions/{transactionId}");
+        request.AddHeader("Authorization", $"Bearer {AuthToken}");
+        request.AddHeader("Content-Type", "application/json");
 
+        var body = """
+                   {
+                       "expand": ["ledger_entries"]
+                   }
+                   """;
+
+        request.AddStringBody(body, DataFormat.Json);
+
+        var response =
+            await _client.ExecuteAsync<PopTransaction>(request, Method.Get, CancellationToken.None);
+        if (response is { IsSuccessStatusCode: true, Content: not null })
+        {
+            if (response.Data != null)
+            {
+                return response.Data;
+            }
+        }
+
+        _logger.Error("Failed to fetch Transaction. {@response}", response);
+        return new();
+    }
     #endregion
 
     #region REFUNDS
