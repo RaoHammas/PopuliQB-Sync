@@ -150,7 +150,7 @@ public class QbPaymentsService
 
                             if (payment.ConvenienceFeeAmount is > 0)
                             {
-                                var convEntries = trans.LedgerEntries.Where(x => x.AccountId == 74).ToList(); //conv acc
+                                var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList(); //conv acc
                                 var fromAccIdConv= convEntries.First(x => x.Direction == "credit").AccountId!;
                                 var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
 
@@ -328,7 +328,7 @@ public class QbPaymentsService
 
                             if (creditPayment.ConvenienceFeeAmount is > 0)
                             {
-                                var convEntries = trans.LedgerEntries.Where(x => x.AccountId == 74).ToList(); //conv acc
+                                var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList(); //conv acc
                                 var fromAccIdConv= convEntries.First(x => x.Direction == "credit").AccountId!;
                                 var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
 
@@ -384,7 +384,7 @@ public class QbPaymentsService
                             {
                                 if (QbSettings.Instance.ApplyIgnoreStartingBalanceFilter)
                                 {
-                                    var sbItems = memo.Items.Where(x => x.Name == "Starting Balance").ToList();
+                                    var sbItems = memo.Items.Where(x => x.Name == QbSettings.Instance.SkipStartingBalanceItemName).ToList();
                                     foreach (var sbItem in sbItems)
                                     {
                                         memo.Items.Remove(sbItem);
@@ -546,7 +546,7 @@ public class QbPaymentsService
 
                             if (refund.ConvenienceFeeAmount is > 0)
                             {
-                                var convEntries = trans.LedgerEntries.Where(x => x.AccountId == 74).ToList(); //conv acc
+                                var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList(); //conv acc
                                 var fromAccIdConv= convEntries.First(x => x.Direction == "credit").AccountId!;
                                 var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
 
@@ -603,7 +603,7 @@ public class QbPaymentsService
                             {
                                 if (QbSettings.Instance.ApplyIgnoreStartingBalanceFilter)
                                 {
-                                    var sbItems = refundCheque.Items.Where(x => x.Name == "Starting Balance").ToList();
+                                    var sbItems = refundCheque.Items.Where(x => x.Name == QbSettings.Instance.SkipStartingBalanceItemName).ToList();
                                     foreach (var sbItem in sbItems)
                                     {
                                         refundCheque.Items.Remove(sbItem);
