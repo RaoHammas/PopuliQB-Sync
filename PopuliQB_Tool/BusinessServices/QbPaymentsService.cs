@@ -653,8 +653,6 @@ public class QbPaymentsService
 
                             }
 
-
-
                             if (refundCheque.Items != null)
                             {
                                 if (QbSettings.Instance.ApplyIgnoreStartingBalanceFilter)

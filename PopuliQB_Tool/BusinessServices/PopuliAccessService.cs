@@ -47,7 +47,7 @@ public class PopuliAccessService
                 new()
                 {
                     Logic = "ANY",
-                    Fields = new List<PopFilterField>(),
+                    Fields = new List<PopFilterTypeField>(),
                 }
             }
         };
@@ -57,11 +57,11 @@ public class PopuliAccessService
             var ids = QbSettings.Instance.SyncStudentIds.Split(',');
             foreach (var id in ids)
             {
-                filter.FilterItems[0].Fields.Add(new PopFilterField
+                filter.FilterItems[0].Fields.Add(new PopFilterTypeField
                 {
                     Name = "student_id",
                     Positive = "1",
-                    Value = new PopFilterValueTypeText()
+                    Value = new PopFilterValueText()
                     {
                         Type = "IS",
                         Text = id.Trim(), //PERSON ID
@@ -128,18 +128,18 @@ public class PopuliAccessService
                 new()
                 {
                     Logic = "ALL",
-                    Fields = new List<PopFilterField>(),
+                    Fields = new List<PopFilterTypeField>(),
                 }
             }
         };
 
         if (QbSettings.Instance.ApplyPostedDateFilter)
         {
-            filter.FilterItems[0].Fields.Add(new PopFilterField
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
             {
                 Name = "posted_date",
                 Positive = "1",
-                Value = new PopFilterValueRange
+                Value = new PopFilterValueDateRange
                 {
                     Type = "RANGE",
                     Start = QbSettings.Instance.PostedFrom.Date.ToString("yyyy-MM-dd"),
@@ -150,11 +150,11 @@ public class PopuliAccessService
 
         if (QbSettings.Instance.ApplyAddedDateFilter)
         {
-            filter.FilterItems[0].Fields.Add(new PopFilterField
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
             {
                 Name = "added_time",
                 Positive = "1",
-                Value = new PopFilterValueRange
+                Value = new PopFilterValueDateRange
                 {
                     Type = "RANGE",
                     Start = QbSettings.Instance.AddedFrom.Date.ToString("yyyy-MM-dd"),
@@ -165,11 +165,11 @@ public class PopuliAccessService
 
         if (QbSettings.Instance.ApplyInvoiceNumFilter)
         {
-            filter.FilterItems[0].Fields.Add(new PopFilterField
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
             {
                 Name = "invoice_number",
                 Positive = "1",
-                Value = new PopFilterValueRange
+                Value = new PopFilterValueDateRange
                 {
                     Type = "RANGE",
                     Start = QbSettings.Instance.InvoiceNumFrom,
@@ -180,11 +180,11 @@ public class PopuliAccessService
 
         if (QbSettings.Instance.ApplyStudentFilter)
         {
-            filter.FilterItems[0].Fields.Add(new PopFilterField
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
             {
                 Name = "student",
                 Positive = "1",
-                Value = new PopFilterValue()
+                Value = new PopFilterValueDisplayName()
                 {
                     DisplayText = QbSettings.Instance.Student.DisplayName!,
                     Id = QbSettings.Instance.Student.Id!.Value.ToString()
@@ -235,7 +235,7 @@ public class PopuliAccessService
         }
 
         _logger.Error("Failed to fetch Transaction. {@response}", response);
-        return new ();
+        return new();
     }
 
     public async Task SyncAllAccountsAsync(int page = 1)
@@ -318,16 +318,16 @@ public class PopuliAccessService
                 new()
                 {
                     Logic = "ALL",
-                    Fields = new List<PopFilterField>(),
+                    Fields = new List<PopFilterTypeField>(),
                 }
             }
         };
 
-        filter.FilterItems[0].Fields.Add(new PopFilterField
+        filter.FilterItems[0].Fields.Add(new PopFilterTypeField
         {
             Name = "student",
             Positive = "1",
-            Value = new PopFilterValue()
+            Value = new PopFilterValueDisplayName()
             {
                 DisplayText = studentDisplayName,
                 Id = studentId.ToString()
@@ -430,16 +430,16 @@ public class PopuliAccessService
                 new()
                 {
                     Logic = "ALL",
-                    Fields = new List<PopFilterField>(),
+                    Fields = new List<PopFilterTypeField>(),
                 }
             }
         };
 
-        filter.FilterItems[0].Fields.Add(new PopFilterField
+        filter.FilterItems[0].Fields.Add(new PopFilterTypeField
         {
             Name = "primary_actor",
             Positive = "1",
-            Value = new PopFilterValue()
+            Value = new PopFilterValueDisplayName()
             {
                 DisplayText = displayName,
                 Id = personId.ToString()
@@ -514,5 +514,134 @@ public class PopuliAccessService
         _logger.Error("Failed to fetch Payment. {@response}", response);
         return new();
     }
+
+    #endregion
+
+    #region REFUNDS
+
+    public async Task<List<PopRefund>> GetAllStudentRefundsAsync(int personId, string displayName)
+    {
+        var page = 0;
+        var allData = new List<PopRefund>();
+        var hasMore = true;
+        while (hasMore)
+        {
+            var data = await FetchAllStudentRefundsAsync(personId, displayName, ++page);
+            allData.AddRange(data.Data!);
+            hasMore = data.HasMore!.Value;
+        }
+
+        return allData;
+    }
+
+    private async Task<PopResponse<PopRefund>> FetchAllStudentRefundsAsync(int personId, string displayName,
+        int page)
+    {
+        var request = new RestRequest($"{ProdUrl}/aiddisbursements");
+        request.AddHeader("Authorization", $"Bearer {AuthToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        var filter = new PopFilter
+        {
+            Page = page,
+            Expand = new[] { "ledger_entries" },
+            FilterItems = new List<PopFilterItem>
+            {
+                new()
+                {
+                    Logic = "ALL",
+                    Fields = new List<PopFilterTypeField>
+                    {
+                        new()
+                        {
+                            Name = "student",
+                            Positive = "1",
+                            Value = new PopFilterValueDisplayName()
+                            {
+                                DisplayText = displayName,
+                                Id = personId.ToString()
+                            }
+                        }
+                    },
+                },
+                new()
+                {
+                    Logic = "ANY",
+                    Fields = new List<PopFilterTypeField>
+                    {
+                        new()
+                        {
+                            Name = "type",
+                            Positive = "1",
+                            Value = "SCHOLARSHIP",
+                        },
+                        new()
+                        {
+                            Name = "type",
+                            Positive = "1",
+                            Value = "GRANT",
+                        }, 
+                        new()
+                        {
+                            Name = "type",
+                            Positive = "1",
+                            Value = "LOAN",
+                        },
+                    },
+                },               
+                new()
+                {
+                    Logic = "ANY",
+                    Fields = new List<PopFilterTypeField>
+                    {
+                        new()
+                        {
+                            Name = "disbursement_type",
+                            Positive = "1",
+                            Value = "REFUND_TO_STUDENT",
+                        },
+                        new()
+                        {
+                            Name = "disbursement_type",
+                            Positive = "1",
+                            Value = "REFUND_TO_SOURCE",
+                        }
+                    },
+                },
+            }
+        };
+
+        if (QbSettings.Instance.ApplyPostedDateFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
+            {
+                Name = "date",
+                Positive = "1",
+                Value = new PopFilterValueDateRange
+                {
+                    Type = "RANGE",
+                    Start = QbSettings.Instance.PostedFrom.Date.ToString("yyyy-MM-dd"),
+                    End = QbSettings.Instance.PostedTo.Date.ToString("yyyy-MM-dd"),
+                }
+            });
+        }
+        
+        var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
+        request.AddStringBody(body, DataFormat.Json);
+
+        var response =
+            await _client.ExecuteAsync<PopResponse<PopRefund>>(request, Method.Get, CancellationToken.None);
+        if (response is { IsSuccessStatusCode: true, Content: not null })
+        {
+            if (response.Data != null)
+            {
+                return response.Data;
+            }
+        }
+
+        _logger.Error("Failed to fetch Refunds. {@response}", response);
+        return new();
+    }
+
     #endregion
 }

@@ -30,7 +30,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
     private readonly QbInvoiceServiceQuick _invoiceServiceQuick;
     private readonly QbPaymentServiceQuick _paymentServiceQuick;
-    private readonly QbTransactionsService _qbTransactionsService;
+    private readonly QbService _qbService;
 
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
     [ObservableProperty] private ICollectionView _filteredLogs;
@@ -56,7 +56,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         QbCreditMemoServiceQuick creditMemoServiceQuick,
         QbInvoiceServiceQuick invoiceServiceQuick,
         QbPaymentServiceQuick paymentServiceQuick,
-        QbTransactionsService qbTransactionsService
+        QbService qbService
     )
     {
         _messageBoxService = messageBoxService;
@@ -72,7 +72,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _creditMemoServiceQuick = creditMemoServiceQuick;
         _invoiceServiceQuick = invoiceServiceQuick;
         _paymentServiceQuick = paymentServiceQuick;
-        _qbTransactionsService = qbTransactionsService;
+        _qbService = qbService;
 
         QbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
         QbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
@@ -97,8 +97,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _invoiceServiceQuick.OnSyncProgressChanged += SyncProgressChanged; 
         _paymentServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
         _paymentServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
-        _qbTransactionsService.OnSyncStatusChanged += SyncStatusChanged;
-        _qbTransactionsService.OnSyncProgressChanged += SyncProgressChanged;
+        _qbService.OnSyncStatusChanged += SyncStatusChanged;
+        _qbService.OnSyncProgressChanged += SyncProgressChanged;
 
         FilteredLogs = CollectionViewSource.GetDefaultView(SyncStatusMessages);
         FilteredLogs.Filter = null;
@@ -329,7 +329,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Deposits from QB.");
             await _depositServiceQuick.SyncAllExistingDepositsAsync();
 
-            await _qbTransactionsService.SyncAll();
+            await _qbService.SyncAll();
 
         }
         catch (Exception ex)

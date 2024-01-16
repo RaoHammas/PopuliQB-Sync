@@ -2,13 +2,12 @@
 using PopuliQB_Tool.BusinessObjects;
 using PopuliQB_Tool.BusinessObjectsBuilders;
 using PopuliQB_Tool.EventArgs;
-using PopuliQB_Tool.Helpers;
 using PopuliQB_Tool.Models;
 using QBFC16Lib;
 
 namespace PopuliQB_Tool.BusinessServices;
 
-public class QbTransactionsService
+public class QbService
 {
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
@@ -20,6 +19,7 @@ public class QbTransactionsService
     private readonly QbInvoiceServiceQuick _invoiceServiceQuick;
     private readonly QbPaymentServiceQuick _paymentServiceQuick;
     private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
+    private readonly QbRefundServiceQuick _refundServiceQuick;
     private readonly PopuliAccessService _populiAccessService;
     private readonly QBInvoiceService _qbInvoiceService;
     private readonly PopPaymentToQbPaymentBuilder _paymentBuilder;
@@ -27,7 +27,7 @@ public class QbTransactionsService
     private readonly PopDepositToQbDepositBuilder _depositBuilder;
     private readonly PopRefundToQbChequeBuilder _chequeBuilder;
 
-    public QbTransactionsService(
+    public QbService(
         PopPaymentToQbPaymentBuilder paymentBuilder,
         PopCreditMemoToQbCreditMemoBuilder memoBuilder,
         PopDepositToQbDepositBuilder depositBuilder,
@@ -39,7 +39,8 @@ public class QbTransactionsService
         QbAccountsService accountsService,
         QbInvoiceServiceQuick invoiceServiceQuick,
         QbPaymentServiceQuick paymentServiceQuick,
-        QbCreditMemoServiceQuick creditMemoServiceQuick
+        QbCreditMemoServiceQuick creditMemoServiceQuick,
+        QbRefundServiceQuick refundServiceQuick
     )
     {
         _paymentBuilder = paymentBuilder;
@@ -54,10 +55,11 @@ public class QbTransactionsService
         _invoiceServiceQuick = invoiceServiceQuick;
         _paymentServiceQuick = paymentServiceQuick;
         _creditMemoServiceQuick = creditMemoServiceQuick;
+        _refundServiceQuick = refundServiceQuick;
     }
 
 
-    public async Task SyncAll()
+    public async Task SyncAllPaymentsAndCredits()
     {
         var sessionManager = new QBSessionManager();
         var isConnected = false;
@@ -92,34 +94,140 @@ public class QbTransactionsService
                         new StatusMessageArgs(StatusMessageType.Info,
                             $"Syncing Transactions for student: {person.DisplayName}."));
 
-                    var allTransactionsOfStd =
+                    /*var allTransactionsOfStd =
                         await _populiAccessService.GetAllStudentTransactionsAsync(person.Id!.Value,
-                            person.DisplayName!);
-                    if (allTransactionsOfStd.Any())
+                            person.DisplayName!);*/
+
+                    var allPayments = await _populiAccessService.GetAllStudentPaymentsAsync(person.Id.Value!);
+
+                    if (allPayments.Any())
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Info,
-                                $"{allTransactionsOfStd.Count} Transactions found for student: {person.DisplayName} in Populi."));
-
-                        foreach (var trans in allTransactionsOfStd)
+                                $"{allPayments.Count} Payments found for student: {person.DisplayName} in Populi."));
+                        foreach (var payment in allPayments)
                         {
+                            var trans = await _populiAccessService.GetTransactionWithLedgerAsync(payment.TransactionId!
+                                .Value);
+
                             switch (trans.Type)
                             {
                                 case "aid_payment":
                                     var respAid = await _creditMemoServiceQuick.AddCreditMemo(person, trans, sessionManager);
                                     break;
-                                case "sales_credit":
-                                    //Do nothing because Sales credits are being saved from Invoice service with invoice.
-                                    break;
-                                case "sales_invoice":
+                                /*case "sales_invoice":
                                     var respInv =
                                         await _invoiceServiceQuick.AddInvoiceAsync(person, trans, sessionManager);
-                                    break;
-                                case "aid_repayment":
-                                    break;
+                                    break;*/
+                                /*case "aid_repayment":
+                                    if (payment.RefundSource != null)
+                                    {
+                                        
+                                    }
+                                    else
+                                    {
+                                        
+                                    }
+                                    break;*/
                                 case "customer_payment":
-                                    var respPay =
-                                        await _paymentServiceQuick.AddPaymentAsync(person, trans, sessionManager);
+                                    var respPay = await _paymentServiceQuick.AddPaymentAsync(person, trans, sessionManager);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Warn,
+                                $"Transactions not found for student: {person.DisplayName} in Populi."));
+                    }
+
+                    OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
+                }
+            });
+
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, "Completed."));
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex);
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
+        }
+        finally
+        {
+            if (isSessionOpen)
+            {
+                sessionManager.EndSession();
+                OnSyncStatusChanged?.Invoke(this,
+                    new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
+            }
+
+            if (isConnected)
+            {
+                sessionManager.CloseConnection();
+                OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
+            }
+        }
+    }    
+    
+    
+    public async Task SyncAllRefunds()
+    {
+        var sessionManager = new QBSessionManager();
+        var isConnected = false;
+        var isSessionOpen = false;
+        try
+        {
+            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            isConnected = true;
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
+
+            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            isSessionOpen = true;
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
+
+            await Task.Run(async () =>
+            {
+                List<PopPerson> allPersons;
+                if (QbSettings.Instance.ApplyStudentFilter && QbSettings.Instance.Student != null)
+                {
+                    allPersons = new List<PopPerson> { QbSettings.Instance.Student };
+                }
+                else
+                {
+                    allPersons = _populiAccessService.AllPopuliPersons;
+                }
+
+                OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, allPersons.Count));
+
+                foreach (var person in allPersons)
+                {
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Info,
+                            $"Syncing Transactions for student: {person.DisplayName}."));
+
+
+                    var allRefunds =
+                        await _populiAccessService.GetAllStudentRefundsAsync(person.Id!.Value, person.DisplayName!);
+
+                    if (allRefunds.Any())
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Info,
+                                $"{allRefunds.Count} Refunds found for student: {person.DisplayName} in Populi."));
+                        foreach (var refund in allRefunds)
+                        {
+                            var trans = await _populiAccessService.GetTransactionWithLedgerAsync(refund.TransactionId!.Value);
+
+                            switch (trans.Type)
+                            {
+                                case "refund_to_student":
+                                    var respRefund = await _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
+                                    break;
+                                case "refund_to_source":
+                                    var respPay = await _invoiceServiceQuick.AddInvoiceAsync(person, trans, sessionManager);
                                     break;
                                 default:
                                     break;

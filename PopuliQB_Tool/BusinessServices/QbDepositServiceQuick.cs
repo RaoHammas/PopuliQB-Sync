@@ -43,7 +43,7 @@ public class QbDepositServiceQuick
 
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList(); //conv acc
             var fromAccIdConv = convEntries.First(x => x.Direction == "credit").AccountId!;
-            var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit").AccountId!;
+            var adAccIdConv = convEntries.First(x => x.Direction == "debit").AccountId!;
 
             var fromQbAccListIdConv =
                 _populiAccessService.AllPopuliAccounts.First(x => x.Id == fromAccIdConv).QbAccountListId;
@@ -70,8 +70,7 @@ public class QbDepositServiceQuick
                 },
             };
 
-            _builder.BuildAddRequest(requestMsgSet, conv, qbStudent.QbListId!, fromQbAccListIdConv!,
-                adQbAccListIdConv!, trans.PostedOn!.Value!);
+            _builder.BuildAddRequest(requestMsgSet, conv, qbStudent.QbListId!, fromQbAccListIdConv!, adQbAccListIdConv!, trans.PostedOn!.Value!);
             var responseMsgSetDeposit = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedDeposit(responseMsgSetDeposit))
             {
