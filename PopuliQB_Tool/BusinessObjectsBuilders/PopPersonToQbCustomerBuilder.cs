@@ -34,8 +34,10 @@ public class PopPersonToQbCustomerBuilder
         request.Salutation.SetValue(person.Prefix?.Length < maxLength ? person.Prefix : "");
         request.Name.SetValue(GetFullName(person.FirstName, person.LastName));
 
+        /*
         maxLength = Convert.ToInt32(request.Name.GetMaxLength());
-        /*if (!string.IsNullOrEmpty(person.DisplayName) && person.DisplayName.Length < maxLength)
+                    
+        if (!string.IsNullOrEmpty(person.DisplayName) && person.DisplayName.Length < maxLength)
         {
             request.Name.SetValue(person.DisplayName);
         }

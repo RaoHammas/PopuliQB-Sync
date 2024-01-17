@@ -151,14 +151,20 @@
                                         Height="40"
                                         Margin="0,0,0,0"
                                         Padding="10"
-                                        Command="{Binding StartPopuliInvoicesSyncCommand}"
-                                        Content="Sync Invoices" />
+                                        Command="{Binding StartPopuliQuickInvoicesAndSalesCreditCommand}"
+                                        Content="Sync Invoices &amp; Sales Credits" />
                                     <Button
                                         Height="40"
                                         Margin="10,0,0,0"
                                         Padding="10"
-                                        Command="{Binding StartPopuliQuickSyncCommand}"
-                                        Content="Sync Payments, Memos &amp; Refunds" />
+                                        Command="{Binding StartPopuliQuickPaymentsAndCredMemosCommand}"
+                                        Content="Sync Payments &amp; Memos" />
+                                    <Button
+                                        Height="40"
+                                        Margin="10,0,0,0"
+                                        Padding="10"
+                                        Command="{Binding StartPopuliQuickRefundsCommand}"
+                                        Content="Sync Refunds" />
                                 </StackPanel>
 
                                 <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
@@ -259,7 +265,7 @@
                     </StackPanel>
                 </Grid>
 
-                <GroupBox Grid.Column="1">
+                <GroupBox Grid.Column="1" Visibility="Collapsed">
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock

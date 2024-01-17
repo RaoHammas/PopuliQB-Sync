@@ -485,7 +485,7 @@ public class QbPaymentsService
                             var item = aidAwardsList.First(x => x.AidTypeId == refundReturn.AidTypeId).ReportData!.AidName!;
                             var popInvoice = new PopInvoice
                             {
-                                PostedOn = trans.PostedOn.ToString(),
+                                PostedOn = trans.PostedOn.Value,
                                 ActorId = refundReturn.StudentId,
                                 TransactionId = trans.Id,
                                 Number = refundReturn.Number,

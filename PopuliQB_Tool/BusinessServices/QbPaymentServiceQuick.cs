@@ -37,23 +37,13 @@ public class QbPaymentServiceQuick
 
     #region PAYMENTS
 
-    public async Task<bool> AddPaymentAsync(PopPerson person, PopTransaction trans, QBSessionManager sessionManager)
+    public bool AddPaymentAsync(PopPerson person, PopTransaction trans, PopPayment payment, QBSessionManager sessionManager)
     {
         try
         {
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
             
-            var payment = await _populiAccessService.GetPaymentByIdAsync(trans.ReportData!.Paymentid!.Value);
-            if (payment.Id == null)
-            {
-                OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Error,
-                        $"Payment num: {trans.ReportData!.PaymentNumber!.Value} not found for student: {person.DisplayName!}"));
-
-                return false;
-            }
-
             var qbStudent =
                 _customerService.AllExistingCustomersList.FirstOrDefault(x => x.PopPersonId == person.Id!);
 
@@ -73,7 +63,7 @@ public class QbPaymentServiceQuick
             if (existingPay != null)
             {
                 OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Error,
+                    new StatusMessageArgs(StatusMessageType.Warn,
                         $"Skipped Payment: Payment.Num: {payment.Number} already exists for: {person.DisplayName!}"));
 
                 return false;

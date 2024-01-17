@@ -29,7 +29,7 @@ public class PopInvoice
 
     [JsonPropertyName("report_data")] public PopInvoiceReportData? ReportData { get; set; }
 
-    [JsonPropertyName("posted_on")] public string? PostedOn { get; set; }
+    [JsonPropertyName("posted_on")] public DateTime? PostedOn { get; set; }
 
     [JsonPropertyName("academic_term_id")] public int? AcademicTermId { get; set; }
 

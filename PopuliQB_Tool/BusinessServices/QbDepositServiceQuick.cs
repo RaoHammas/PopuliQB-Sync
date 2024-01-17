@@ -39,11 +39,10 @@ public class QbDepositServiceQuick
         {
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
-            var personFullName = trans.ReportData!.PrimaryActor!;
-
+            
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList(); //conv acc
             var fromAccIdConv = convEntries.First(x => x.Direction == "credit").AccountId!;
-            var adAccIdConv = convEntries.First(x => x.Direction == "debit").AccountId!;
+            var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit" && x.Debit!.Value! == convEntries[0].Credit!.Value!).AccountId!;
 
             var fromQbAccListIdConv =
                 _populiAccessService.AllPopuliAccounts.First(x => x.Id == fromAccIdConv).QbAccountListId;
@@ -84,7 +83,7 @@ public class QbDepositServiceQuick
 
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Success,
-                    $"Added Deposit.Num: {payment.Number} for {personFullName}"));
+                    $"Added Deposit.Num: {payment.Number} for {qbStudent.QbCustomerName}"));
             return true;
         }
         catch (Exception ex)

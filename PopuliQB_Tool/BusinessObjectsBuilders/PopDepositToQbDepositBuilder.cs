@@ -25,6 +25,7 @@ public class PopDepositToQbDepositBuilder
                 invItem.ORDepositLineAdd.DepositInfo.EntityRef.ListID.SetValue(qbCustomerListId);
                 invItem.ORDepositLineAdd.DepositInfo.AccountRef.ListID.SetValue(fromAccListId);
                 //invItem.ORDepositLineAdd.DepositInfo.CheckNumber.SetValue("ab");
+                item.Amount = Math.Abs(item.Amount ?? 0);
                 invItem.ORDepositLineAdd.DepositInfo.Amount.SetValue(item.Amount ?? 0);
             }
         }

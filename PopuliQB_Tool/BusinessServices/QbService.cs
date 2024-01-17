@@ -92,25 +92,10 @@ public class QbService
                             {
                                 case "aid_payment":
                                     var respAid =
-                                        await _creditMemoServiceQuick.AddCreditMemo(person, trans, sessionManager);
+                                        await _creditMemoServiceQuick.AddCreditMemo(person, trans, payment, sessionManager);
                                     break;
-                                /*case "sales_invoice":
-                                    var respInv =
-                                        await _invoiceServiceQuick.AddInvoiceAsync(person, trans, sessionManager);
-                                    break;*/
-                                /*case "aid_repayment":
-                                    if (payment.RefundSource != null)
-                                    {
-
-                                    }
-                                    else
-                                    {
-
-                                    }
-                                    break;*/
                                 case "customer_payment":
-                                    var respPay =
-                                        await _paymentServiceQuick.AddPaymentAsync(person, trans, sessionManager);
+                                    var respPay = _paymentServiceQuick.AddPaymentAsync(person, trans,payment, sessionManager);
                                     break;
                                 default:
                                     break;
@@ -202,15 +187,15 @@ public class QbService
                                 refund.TransactionId!
                                     .Value);
 
-                            switch (trans.Type)
+                            switch (refund.Type)
                             {
                                 case "refund_to_student":
                                     var respRefund =
-                                        await _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
+                                         _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
                                     break;
                                 case "refund_to_source":
                                     var respRefundToSource =
-                                        await _invoiceServiceQuick.AddInvoiceForRefundToSourceAsync(person, trans,
+                                        _invoiceServiceQuick.AddInvoiceForRefundToSourceAsync(person, trans,
                                             refund, sessionManager);
                                     break;
                                 default:

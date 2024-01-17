@@ -20,12 +20,12 @@ public class PopInvoiceToQbInvoiceBuilder
             request.IsPending.SetValue(false);
         }
 
-        if (Convert.ToDateTime(invoice.DueOn) is var dueDate)
+        if (invoice.DueOn != null && Convert.ToDateTime(invoice.DueOn) is var dueDate)
         {
             request.DueDate.SetValue(dueDate);
         }
 
-        if (Convert.ToDateTime(invoice.PostedOn) is var postedDate)
+        if (invoice.PostedOn != null && Convert.ToDateTime(invoice.PostedOn) is var postedDate)
         {
             request.TxnDate.SetValue(postedDate);
         }
@@ -41,6 +41,8 @@ public class PopInvoiceToQbInvoiceBuilder
                 invItem.InvoiceLineAdd.ItemRef.ListID.SetValue(item.ItemQbListId);
                 invItem.InvoiceLineAdd.Desc.SetValue(item.Description);
                 invItem.InvoiceLineAdd.Quantity.SetValue(1);
+
+                item.Amount = Math.Abs(item.Amount ?? 0);
                 invItem.InvoiceLineAdd.ORRatePriceLevel.Rate.SetValue(item.Amount!.Value);
                 invItem.InvoiceLineAdd.Amount.SetValue(item.Amount!.Value);
                 invItem.InvoiceLineAdd.IsTaxable.SetValue(false);

@@ -43,6 +43,7 @@ public class PopCreditMemoToQbCreditMemoBuilder
                 invItem.CreditMemoLineAdd.ItemRef.ListID.SetValue(item.ItemQbListId);
                 invItem.CreditMemoLineAdd.Desc.SetValue(item.Description);
                 invItem.CreditMemoLineAdd.Quantity.SetValue(1);
+                item.Amount = Math.Abs(item.Amount ?? 0);
                 invItem.CreditMemoLineAdd.ORRatePriceLevel.Rate.SetValue(item.Amount!.Value);
                 invItem.CreditMemoLineAdd.Amount.SetValue(item.Amount!.Value);
                 invItem.CreditMemoLineAdd.TaxAmount.SetValue(0);

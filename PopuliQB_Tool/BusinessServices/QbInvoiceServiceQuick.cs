@@ -67,7 +67,7 @@ public class QbInvoiceServiceQuick
             if (existingInv != null)
             {
                 OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Error,
+                    new StatusMessageArgs(StatusMessageType.Warn,
                         $"Skipped: Invoice.Num: {invoice.Number} already exists for student: {person.DisplayName}"));
                 return false;
             }
@@ -203,7 +203,7 @@ public class QbInvoiceServiceQuick
             if (existingInv != null)
             {
                 OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Error,
+                    new StatusMessageArgs(StatusMessageType.Warn,
                         $"Skipped: RefundToSource: {refund.RefundId} already exists as Invoice.Num: {refund.RefundId} for student: {person.DisplayName}"));
                 return false;
             }
@@ -214,7 +214,7 @@ public class QbInvoiceServiceQuick
                 Number = refund.RefundId,
                 Amount = refund.Amount,
                 Description = $"Refund to Source: {refund.RefundId} as Invoice.",
-                PostedOn = refund.PostedDate.ToString(),
+                PostedOn = refund.PostedDate!.Value,
                 TransactionId = refund.TransactionId,
                 ActorId = person.Id,
                 ActorType = "Person",

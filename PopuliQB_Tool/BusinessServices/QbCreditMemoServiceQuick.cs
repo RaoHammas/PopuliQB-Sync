@@ -39,22 +39,12 @@ public class QbCreditMemoServiceQuick
     }
 
 
-    public async Task<bool> AddCreditMemo(PopPerson person, PopTransaction trans, QBSessionManager sessionManager)
+    public async Task<bool> AddCreditMemo(PopPerson person, PopTransaction trans, PopPayment payment,  QBSessionManager sessionManager)
     {
         try
         {
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
-
-            var payment = await _populiAccessService.GetPaymentByIdAsync(trans.ReportData!.Paymentid!.Value);
-            if (payment.Id == null)
-            {
-                OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Warn,
-                        $"Aid Payment num: {trans.ReportData!.PaymentNumber!.Value} not found for student: {person.DisplayName!} in Populi."));
-
-                return false;
-            }
 
             var qbStudent = _customerService.AllExistingCustomersList.FirstOrDefault(x => x.PopPersonId == person.Id!);
             if (qbStudent == null)
@@ -243,7 +233,7 @@ public class QbCreditMemoServiceQuick
             if (existing != null)
             {
                 OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Error,
+                    new StatusMessageArgs(StatusMessageType.Warn,
                         $"Skipped SalesCredit: SalesCredit.Num: {salesCredit.Number} already exists as CredMemo for: {person.DisplayName!}"));
 
                 return false;
