@@ -63,6 +63,7 @@ public partial class App : Application
         services.AddSingleton<QbDepositServiceQuick>();
         services.AddSingleton<QbCreditMemoServiceQuick>();
         services.AddSingleton<QbRefundServiceQuick>();
+        services.AddSingleton<CustomFieldBuilderQuick>();
         services.AddSingleton<QbService>();
         return services.BuildServiceProvider();
     }

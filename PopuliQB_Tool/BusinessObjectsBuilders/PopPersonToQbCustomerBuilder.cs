@@ -27,9 +27,6 @@ public class PopPersonToQbCustomerBuilder
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendCustomerAddRq();
-
-        request.Fax.SetValue(person.Id.ToString());
-
         var maxLength = Convert.ToInt32(request.Salutation.GetMaxLength());
         request.Salutation.SetValue(person.Prefix?.Length < maxLength ? person.Prefix : "");
         request.Name.SetValue(GetFullName(person.FirstName, person.LastName));
@@ -205,5 +202,7 @@ public class PopPersonToQbCustomerBuilder
         request.IncludeRetElementList.Add("Name");
         request.IncludeRetElementList.Add("Fax");
         request.IncludeRetElementList.Add("ListID");
+        request.IncludeRetElementList.Add("DataExtRet");
+        request.OwnerIDList.Add("0");
     }
 }

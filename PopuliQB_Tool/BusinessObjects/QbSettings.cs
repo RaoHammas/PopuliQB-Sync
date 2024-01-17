@@ -23,7 +23,7 @@ public sealed class QbSettings : INotifyPropertyChanged
     private string _syncStudentIds = "97113, 35196, 96420, 93831";
     private int _popConvenienceAccId = 74;
     private string _skipStartingBalanceItemName = "Starting Balance";
-
+    public string UniquePopuliIdName { get; set; } = "UniquePopuliId";
     public static QbSettings Instance => Lazy.Value;
 
     private QbSettings()

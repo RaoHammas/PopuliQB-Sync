@@ -110,7 +110,7 @@
                                     Margin="0,20,0,0"
                                     materialDesign:HintAssist.FloatingScale="1"
                                     materialDesign:HintAssist.Hint="Student Ids"
-                                    AcceptsReturn="True"
+                                    AcceptsReturn="True" MaxWidth="100"
                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                     Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=SyncStudentIds}"
                                     TextWrapping="Wrap" />

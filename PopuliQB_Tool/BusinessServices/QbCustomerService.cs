@@ -12,37 +12,41 @@ public class QbCustomerService
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly PopPersonToQbCustomerBuilder _customerBuilder;
+    private readonly CustomFieldBuilderQuick _customFieldBuilderQuick;
 
     public bool IsConnected { get; set; }
     public bool IsSessionOpen { get; set; }
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
     public List<QBCustomer> AllExistingCustomersList { get; set; } = new();
+    QBSessionManager _sessionManager;
 
-    public QbCustomerService(PopPersonToQbCustomerBuilder customerBuilder)
+    public QbCustomerService(PopPersonToQbCustomerBuilder customerBuilder,
+        CustomFieldBuilderQuick customFieldBuilderQuick)
     {
         _customerBuilder = customerBuilder;
+        _customFieldBuilderQuick = customFieldBuilderQuick;
     }
 
     #region ADD NEW CUSTOMER
 
     public async Task<bool> AddCustomersAsync(List<PopPerson> persons)
     {
-        var sessionManager = new QBSessionManager();
+        _sessionManager = new QBSessionManager();
 
         try
         {
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            _sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
             IsConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            _sessionManager.BeginSession("", ENOpenMode.omDontCare);
             IsSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
             await Task.Run(() =>
             {
-                var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
+                var requestMsgSet = _sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
                 foreach (var person in persons)
@@ -59,9 +63,14 @@ public class QbCustomerService
                         new StatusMessageArgs(StatusMessageType.Info,
                             $"Adding student: {person.DisplayName} | Id = {person.Id}"));
                     _customerBuilder.BuildQbCustomerAddRequest(requestMsgSet, person);
-                    var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
+                    var responseMsgSet = _sessionManager.DoRequests(requestMsgSet);
                     if (ReadAddedCustomer(responseMsgSet))
                     {
+                        var added = AllExistingCustomersList.Last();
+                        _customFieldBuilderQuick.AddCustomField(_sessionManager, ENAssignToObject.atoCustomer,
+                            added.QbListId!, QbSettings.Instance.UniquePopuliIdName, person.Id!.Value.ToString());
+                        added.UniquePopuliId = person.Id.Value.ToString();
+
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Success,
                                 $"Added student: {person.DisplayName} | Id = {person.Id}"));
@@ -92,7 +101,7 @@ public class QbCustomerService
         {
             if (IsSessionOpen)
             {
-                sessionManager.EndSession();
+                _sessionManager.EndSession();
                 IsSessionOpen = false;
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
@@ -100,7 +109,7 @@ public class QbCustomerService
 
             if (IsConnected)
             {
-                sessionManager.CloseConnection();
+                _sessionManager.CloseConnection();
                 IsConnected = false;
                 OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
             }
@@ -256,10 +265,18 @@ public class QbCustomerService
 
             var customer = new QBCustomer();
             customer.QbListId = customerRet.ListID.GetValue();
-            customer.PopPersonId = Convert.ToInt32(customerRet.Fax.GetValue());
             customer.QbCustomerName = customerRet.Name.GetValue();
+
+            if (customerRet.DataExtRetList != null)
+            {
+                customer.UniquePopuliId = _customFieldBuilderQuick.GetFieldValue(customerRet.DataExtRetList,
+                    QbSettings.Instance.UniquePopuliIdName);
+            }
+
+
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Info, $"Found Customer: {customer.QbCustomerName}"));
+
             AllExistingCustomersList.Add(customer);
         }
         catch (Exception ex)
