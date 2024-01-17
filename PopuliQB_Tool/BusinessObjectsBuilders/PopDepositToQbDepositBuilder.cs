@@ -5,17 +5,14 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopDepositToQbDepositBuilder
 {
-    public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopCredit memo, string qbCustomerListId,
+    public void BuildAddRequest(IMsgSetRequest requestMsgSet, string key, PopCredit memo, string qbCustomerListId,
         string fromAccListId, string depositAccListId, DateTime transDate)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendDepositAddRq();
         request.TxnDate.SetValue(transDate);
         request.DepositToAccountRef.ListID.SetValue(depositAccListId);
-        request.Memo.SetValue($"Ref#{memo.Number}");
-
-        /*request.CashBackInfoAdd.AccountRef.ListID.SetValue(depositAccListId);
-        request.CashBackInfoAdd.Amount.SetValue(memo.Amount ?? 0);*/
+        request.Memo.SetValue(key);
 
         if (memo.Items != null)
         {
@@ -24,14 +21,11 @@ public class PopDepositToQbDepositBuilder
                 var invItem = request.DepositLineAddList.Append();
                 invItem.ORDepositLineAdd.DepositInfo.EntityRef.ListID.SetValue(qbCustomerListId);
                 invItem.ORDepositLineAdd.DepositInfo.AccountRef.ListID.SetValue(fromAccListId);
-                //invItem.ORDepositLineAdd.DepositInfo.CheckNumber.SetValue("ab");
                 item.Amount = Math.Abs(item.Amount ?? 0);
                 invItem.ORDepositLineAdd.DepositInfo.Amount.SetValue(item.Amount ?? 0);
             }
         }
 
-
-        //request.IncludeRetElementList.Add("ListID");
         request.IncludeRetElementList.Add("Memo");
     }
 
@@ -39,8 +33,7 @@ public class PopDepositToQbDepositBuilder
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendDepositQueryRq();
-        
-        //request.IncludeRetElementList.Add("ListID");
+       
         request.IncludeRetElementList.Add("Memo");
     }
 }

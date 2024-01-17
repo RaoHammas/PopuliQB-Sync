@@ -47,6 +47,8 @@ public class QbRefundServiceQuick
     {
         try
         {
+            var key = $"R:{refund.RefundId}##";
+
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
@@ -62,8 +64,7 @@ public class QbRefundServiceQuick
 
             var existing =
                 AllExistingChequesList.FirstOrDefault(
-                    x => x.PopChequeNumber == refund.RefundId
-                         && x.QbCustomerListId == qbStudent.QbListId);
+                    x => x.UniqueId == key && x.QbCustomerListId == qbStudent.QbListId);
             if (existing != null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -108,7 +109,7 @@ public class QbRefundServiceQuick
                         refundCheque.Items.Remove(sbItem);
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn,
-                                $"Skipped: refund.Num = {refundCheque.Number} | Item {sbItem.Name}."));
+                                $"Skipped: refund.Num = {refund.RefundId} | Item {sbItem.Name}."));
                     }
                 }
 
@@ -116,7 +117,7 @@ public class QbRefundServiceQuick
                 {
                     OnSyncStatusChanged?.Invoke(this,
                         new StatusMessageArgs(StatusMessageType.Warn,
-                            $"Skipped: refund.Num = {refundCheque.Number}. It has no items."));
+                            $"Skipped: refund.Num = {refund.RefundId}. It has no items."));
                     return false;
                 }
 
@@ -136,7 +137,7 @@ public class QbRefundServiceQuick
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Error,
-                                $"refund.Num = {refundCheque.Number} | Item {item.Name} doesn't exist in QB."));
+                                $"refund.Num = {refund.RefundId} | Item {item.Name} doesn't exist in QB."));
 
                         return false;
                     }
@@ -155,7 +156,7 @@ public class QbRefundServiceQuick
             var bankQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == bankAccId).QbAccountListId;
             var recQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == recAccId).QbAccountListId;
 
-            _builder.BuildAddRequest(requestMsgSet, refundCheque, qbStudent.QbListId!, bankQbAccListId!,
+            _builder.BuildAddRequest(requestMsgSet, key, refundCheque, qbStudent.QbListId!, bankQbAccListId!,
                 recQbAccListId!, refund.PostedDate!.Value);
             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedCheque(responseMsgSet))
@@ -170,34 +171,41 @@ public class QbRefundServiceQuick
             
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Success,
-                    $"Refund num: {refundCheque.Number} Added as Cheque for student: {person.DisplayName}."));
+                    $"Refund num: {refund.RefundId} Added as Cheque num: {refund.RefundId} for student: {person.DisplayName}."));
 
             if (convEntries.Any())
             {
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info,
-                        $"Adding convenience fee as Deposit for Payment.Num: {refundCheque.Number} for student: {person.DisplayName}"));
+                        $"Adding convenience fee as Deposit for Payment.Num: {refund.RefundId} for student: {person.DisplayName}"));
 
-                var payment = new PopPayment
+                foreach (var convEntry in convEntries)
                 {
-                    Id = refund.Id,
-                    Number = refundCheque.Number,
-                    StudentId = person.Id,
-                    ConvenienceFeeAmount = convEntries.First(x => x.Debit > 0).Debit,
-                };
+                    var payment = new PopPayment
+                    {
+                        Id = refund.Id,
+                        Number = $"Conv:{convEntry.Id}-{key}",
+                        StudentId = person.Id,
+                        ConvenienceFeeAmount = convEntry.Credit!.Value,
+                        TransactionId = convEntry.TransactionId,
+                    };
 
-                var resp = _depositServiceQuick.AddDeposit(trans, payment, qbStudent, sessionManager);
-                if (resp)
-                {
-                    OnSyncStatusChanged?.Invoke(this,
-                        new StatusMessageArgs(StatusMessageType.Success,
-                            $"Added convenience fee as Deposit for Refund.Num: {refundCheque.Number} for student: {person.DisplayName}"));
-                }
-                else
-                {
-                    OnSyncStatusChanged?.Invoke(this,
-                        new StatusMessageArgs(StatusMessageType.Error,
-                            $"Failed to add convenience fee as Deposit for Refund.Num: {refundCheque.Number} for student: {person.DisplayName}. Add manually!"));
+                    var arAcc = convEntry.AccountId!.Value;
+                    var adAcc = trans.LedgerEntries.First(x => x.Direction == "debit" && x.Debit!.Value! == convEntry.Credit!.Value).AccountId!.Value;
+                    
+                    var resp = _depositServiceQuick.AddDeposit(payment, payment.Number.ToString()!, qbStudent, arAcc, adAcc, trans.PostedOn, sessionManager);
+                    if (resp)
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Success,
+                                $"Added convenience fee as Deposit for Refund.Num: {refund.RefundId} for student: {person.DisplayName}"));
+                    }
+                    else
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Error,
+                                $"Failed to add convenience fee as Deposit for Refund.Num: {refund.RefundId} for student: {person.DisplayName}. Add manually!"));
+                    }
                 }
             }
 
@@ -362,8 +370,8 @@ public class QbRefundServiceQuick
             var refNum = ret.Memo.GetValue();
             if (!string.IsNullOrEmpty(refNum))
             {
-                var arr = refNum.Split("#");
-                cheque.PopChequeNumber = Convert.ToInt32(arr[1].Trim());
+                var arr = refNum.Split("##");
+                cheque.UniqueId = arr[0].Trim() + "##";
             }
 
             AllExistingChequesList.Add(cheque);

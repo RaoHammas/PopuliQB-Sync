@@ -41,18 +41,12 @@ public partial class App : Application
 
         services.AddSingleton<QbCustomerService>();
         services.AddSingleton<PopPersonToQbCustomerBuilder>();
-        
-        services.AddSingleton<QBInvoiceService>();
         services.AddSingleton<PopInvoiceToQbInvoiceBuilder>();        
-        
         services.AddSingleton<QbAccountsService>();
         services.AddSingleton<PopAccountsToQbAccountsBuilder>();
-
         services.AddSingleton<QbItemService>();
         services.AddSingleton<PopItemToQbItemBuilder>();
         services.AddSingleton<PopCreditMemoToQbCreditMemoBuilder>();
-
-        services.AddSingleton<QbPaymentsService>();
         services.AddSingleton<PopPaymentToQbPaymentBuilder>();
         services.AddSingleton<PopRefundToQbChequeBuilder>();
         services.AddSingleton<PopDepositToQbDepositBuilder>();

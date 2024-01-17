@@ -5,13 +5,13 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopInvoiceToQbInvoiceBuilder
 {
-    public void BuildInvoiceAddRequest(IMsgSetRequest requestMsgSet, PopInvoice invoice, string qbCustomerListId, string qbArListId)
+    public void BuildInvoiceAddRequest(IMsgSetRequest requestMsgSet, string key, PopInvoice invoice, string qbCustomerListId, string qbArListId)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendInvoiceAddRq();
         request.CustomerRef.ListID.SetValue(qbCustomerListId); 
         request.PONumber.SetValue(invoice.Id.ToString());
-        request.RefNumber.SetValue(invoice.Number.ToString());
+        request.RefNumber.SetValue(invoice.Number!.ToString());
         // request.ARAccountRef.ListID.SetValue(QbSettings.Instance.ARForInvoice.ListId);
         request.ARAccountRef.ListID.SetValue(qbArListId);
         
@@ -30,7 +30,7 @@ public class PopInvoiceToQbInvoiceBuilder
             request.TxnDate.SetValue(postedDate);
         }
         
-        request.Memo.SetValue($"Trans#{invoice.TransactionId}");
+        request.Memo.SetValue(key);
         
         if (invoice.Items != null)
         {
@@ -55,6 +55,7 @@ public class PopInvoiceToQbInvoiceBuilder
         request.IncludeRetElementList.Add("RefNumber");
         request.IncludeRetElementList.Add("PONumber");
         request.IncludeRetElementList.Add("FullName");
+        request.IncludeRetElementList.Add("Memo");
     }
 
     public void BuildGetAllInvoicesRequest(IMsgSetRequest requestMsgSet)
@@ -64,6 +65,6 @@ public class PopInvoiceToQbInvoiceBuilder
         request.IncludeRetElementList.Add("CustomerRef");
         request.IncludeRetElementList.Add("RefNumber");
         request.IncludeRetElementList.Add("PONumber");
-        request.IncludeRetElementList.Add("FullName");
+        request.IncludeRetElementList.Add("Memo");
     }
 }

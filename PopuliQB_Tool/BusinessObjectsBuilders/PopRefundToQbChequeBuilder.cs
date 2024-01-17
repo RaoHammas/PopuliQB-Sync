@@ -5,20 +5,20 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopRefundToQbChequeBuilder
 {
-    public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopCredit refund, string qbCustomerListId,
+    public void BuildAddRequest(IMsgSetRequest requestMsgSet, string key, PopCredit refund, string qbCustomerListId,
         string bankAccListId, string recAccListId, DateTime transPostedOn)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendCheckAddRq();
 
         request.PayeeEntityRef.ListID.SetValue(qbCustomerListId);
-        request.RefNumber.SetValue(refund.Number.ToString());
+        request.RefNumber.SetValue(refund.Number!.ToString());
         request.TxnDate.SetValue(transPostedOn);
 
         request.AccountRef.ListID.SetValue(bankAccListId);
 
-        request.Memo.SetValue($"Ref#{refund.Number}");
-
+        request.Memo.SetValue(key);
+        
         if (refund.Items != null)
         {
             foreach (var item in refund.Items)

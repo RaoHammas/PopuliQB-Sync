@@ -44,6 +44,9 @@ public class QbInvoiceServiceQuick
     {
         try
         {
+            var numb = invoice.Number;
+            var key = $"I:{invoice.Number}##";
+
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
@@ -59,7 +62,7 @@ public class QbInvoiceServiceQuick
 
                 return false;
             }
-            
+
             if (invoice.Credits != null && invoice.Credits.Any())
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -71,13 +74,13 @@ public class QbInvoiceServiceQuick
 
             var existingInv =
                 AllExistingInvoicesList.FirstOrDefault(x =>
-                    x.PopInvoiceNumber == invoice.Number &&
-                    x.QbCustomerListId == qbStudent.QbListId);
+                    x.UniqueId == key
+                    && x.QbCustomerListId == qbStudent.QbListId);
             if (existingInv != null)
             {
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Warn,
-                        $"Skipped: Invoice.Num: {invoice.Number} already exists for student: {person.DisplayName}"));
+                        $"Skipped: Invoice.Num: {numb} already exists for student: {person.DisplayName}"));
                 return false;
             }
 
@@ -93,7 +96,7 @@ public class QbInvoiceServiceQuick
                         invoice.Items.Remove(sbItem);
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn,
-                                $"skipped Invoice Item: Invoice.Num = {invoice.Number} | Item {sbItem.Name}."));
+                                $"skipped Invoice Item: Invoice.Num = {numb} | Item {sbItem.Name}."));
                     }
                 }
 
@@ -101,7 +104,7 @@ public class QbInvoiceServiceQuick
                 {
                     OnSyncStatusChanged?.Invoke(this,
                         new StatusMessageArgs(StatusMessageType.Warn,
-                            $"Skipped Invoice: Invoice.Num = {invoice.Number}. It has no items."));
+                            $"Skipped Invoice: Invoice.Num = {numb}. It has no items."));
 
                     return false;
                 }
@@ -120,7 +123,7 @@ public class QbInvoiceServiceQuick
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Error,
-                                $"Invoice.Num = {invoice.Number} | Invoice Item {invoiceItem.Name} doesn't exist in QB."));
+                                $"Invoice.Num = {numb} | Invoice Item {invoiceItem.Name} doesn't exist in QB."));
 
                         return false;
                     }
@@ -137,8 +140,7 @@ public class QbInvoiceServiceQuick
             var arAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
-            _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, qbStudent.QbListId!,
-                arQbAccListId!);
+            _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, key, invoice, qbStudent.QbListId!, arQbAccListId!);
             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedInvoice(responseMsgSet))
             {
@@ -146,42 +148,52 @@ public class QbInvoiceServiceQuick
                 var msg = PqExtensions.GetXmlNodeValue(xmResp);
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Error,
-                        $"{person.DisplayName!} | Invoice.Num = {invoice.Number} | {msg}"));
+                        $"{person.DisplayName!} | Invoice.Num = {numb} | {msg}"));
 
                 return false;
             }
 
-           
+
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Success,
-                    $"Invoice num: {invoice.Number} added for student: {person.DisplayName}."));
+                    $"Invoice num: {numb} added for student: {person.DisplayName}."));
 
             if (convEntries.Any())
             {
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info,
-                        $"Adding convenience fee as Deposit for Invoice.Num: {invoice.Number} for student: {person.DisplayName}"));
+                        $"Adding convenience fee as Deposit for Invoice.Num: {numb} for student: {person.DisplayName}"));
 
-                var payment = new PopPayment
+                foreach (var convEntry in convEntries)
                 {
-                    Id = invoice.Id,
-                    Number = invoice.Number,
-                    StudentId = person.Id,
-                    ConvenienceFeeAmount = convEntries.First(x => x.Debit > 0).Debit,
-                };
+                    var payment = new PopPayment
+                    {
+                        Id = invoice.Id,
+                        Number = $"Conv:{convEntry.Id}-{key}",
+                        StudentId = person.Id,
+                        ConvenienceFeeAmount = convEntry.Credit!.Value,
+                        TransactionId = convEntry.TransactionId,
+                    };
 
-                var resp = _depositServiceQuick.AddDeposit(trans, payment, qbStudent, sessionManager);
-                if (resp)
-                {
-                    OnSyncStatusChanged?.Invoke(this,
-                        new StatusMessageArgs(StatusMessageType.Success,
-                            $"Added convenience fee as Deposit for Invoice.Num: {invoice.Number} for student: {person.DisplayName}"));
-                }
-                else
-                {
-                    OnSyncStatusChanged?.Invoke(this,
-                        new StatusMessageArgs(StatusMessageType.Error,
-                            $"Failed to add convenience fee as Deposit for Invoice.Num: {invoice.Number} for student: {person.DisplayName}. Add manually!"));
+                    var arAcc = convEntry.AccountId!.Value;
+                    var adAcc = trans.LedgerEntries
+                        .First(x => x.Direction == "debit" && x.Debit!.Value! == convEntry.Credit!.Value).AccountId!
+                        .Value;
+
+                    var resp = _depositServiceQuick.AddDeposit(payment, payment.Number.ToString(), qbStudent, arAcc,
+                        adAcc, trans.PostedOn, sessionManager);
+                    if (resp)
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Success,
+                                $"Added convenience fee as Deposit for Invoice.Num: {numb} for student: {person.DisplayName}"));
+                    }
+                    else
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Error,
+                                $"Failed to add convenience fee as Deposit for Invoice.Num: {numb} for student: {person.DisplayName}. Add manually!"));
+                    }
                 }
             }
 
@@ -210,6 +222,7 @@ public class QbInvoiceServiceQuick
     {
         try
         {
+            var key = $"RS:{refund.RefundId}##";
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
@@ -227,8 +240,8 @@ public class QbInvoiceServiceQuick
 
             var existingInv =
                 AllExistingInvoicesList.FirstOrDefault(x =>
-                    x.PopInvoiceNumber == refund.RefundId &&
-                    x.QbCustomerListId == qbStudent.QbListId);
+                    x.UniqueId == key
+                    && x.QbCustomerListId == qbStudent.QbListId);
             if (existingInv != null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -292,7 +305,7 @@ public class QbInvoiceServiceQuick
             var arAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
-            _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, qbStudent.QbListId!, arQbAccListId!);
+            _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, key, invoice, qbStudent.QbListId!, arQbAccListId!);
             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedInvoice(responseMsgSet))
             {
@@ -307,34 +320,43 @@ public class QbInvoiceServiceQuick
 
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Success,
-                    $"RefundToSource: {refund.RefundId} added as Invoice.Num: {invoice.Number} for student: {person.DisplayName!}"));
+                    $"RefundToSource: {refund.RefundId} added as Invoice.Num: {refund.RefundId} for student: {person.DisplayName!}"));
 
             if (convEntries.Any())
             {
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info,
                         $"Adding convenience fee as Deposit for Payment.Num: {refund.RefundId} for student: {person.DisplayName}"));
+                foreach (var convEntry in convEntries)
+                {
+                    var payment = new PopPayment
+                    {
+                        Id = invoice.Id,
+                        Number = $"Conv:{convEntry.Id}-{key}",
+                        StudentId = person.Id,
+                        ConvenienceFeeAmount = convEntry.Credit!.Value,
+                        TransactionId = convEntry.TransactionId,
+                    };
 
-                var payment = new PopPayment
-                {
-                    Id = refund.Id,
-                    Number = refund.RefundId,
-                    StudentId = person.Id,
-                    ConvenienceFeeAmount = convEntries.First(x => x.Debit > 0).Debit,
-                };
+                    var arAcc = convEntry.AccountId!.Value;
+                    var adAcc = trans.LedgerEntries
+                        .First(x => x.Direction == "debit" && x.Debit!.Value! == convEntry.Credit!.Value).AccountId!
+                        .Value;
 
-                var resp = _depositServiceQuick.AddDeposit(trans, payment, qbStudent, sessionManager);
-                if (resp)
-                {
-                    OnSyncStatusChanged?.Invoke(this,
-                        new StatusMessageArgs(StatusMessageType.Success,
-                            $"Added convenience fee as Deposit for RefundToSource.Num: {refund.RefundId} for student: {person.DisplayName}"));
-                }
-                else
-                {
-                    OnSyncStatusChanged?.Invoke(this,
-                        new StatusMessageArgs(StatusMessageType.Error,
-                            $"Failed to add convenience fee as Deposit for RefundToSource.Num: {refund.RefundId} for student: {person.DisplayName}. Add manually!"));
+                    var resp = _depositServiceQuick.AddDeposit(payment, key, qbStudent, arAcc, adAcc, trans.PostedOn,
+                        sessionManager);
+                    if (resp)
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Success,
+                                $"Added convenience fee as Deposit for RefundToSource.Num: {refund.RefundId} for student: {person.DisplayName}"));
+                    }
+                    else
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Error,
+                                $"Failed to add convenience fee as Deposit for RefundToSource.Num: {refund.RefundId} for student: {person.DisplayName}. Add manually!"));
+                    }
                 }
             }
 
@@ -494,10 +516,17 @@ public class QbInvoiceServiceQuick
 
             var invoice = new QbInvoice();
             invoice.PopInvoiceId = Convert.ToInt32(ret.PONumber.GetValue()); //unique inv id from populi
-            invoice.PopInvoiceNumber = Convert.ToInt32(ret.RefNumber.GetValue());
+            invoice.PopInvoiceNumber = ret.RefNumber.GetValue();
             invoice.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
             invoice.QbCustomerName = ret.CustomerRef.FullName.GetValue();
-            
+
+            var refNum = ret.Memo.GetValue();
+            if (!string.IsNullOrEmpty(refNum))
+            {
+                var arr = refNum.Split("##");
+                invoice.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
+            }
+
             AllExistingInvoicesList.Add(invoice);
 
             OnSyncStatusChanged?.Invoke(this,

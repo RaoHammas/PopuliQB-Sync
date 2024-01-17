@@ -5,6 +5,7 @@ using PopuliQB_Tool.EventArgs;
 using PopuliQB_Tool.Helpers;
 using PopuliQB_Tool.Models;
 using QBFC16Lib;
+using System.Windows.Input;
 
 namespace PopuliQB_Tool.BusinessServices;
 
@@ -31,30 +32,33 @@ public class QbDepositServiceQuick
     }
 
 
-    public bool AddDeposit(PopTransaction trans, PopPayment payment,
-        QBCustomer qbStudent,
+    public bool AddDeposit(PopPayment payment, string key, QBCustomer qbStudent, int arAccId, int adAcc, DateTime? transPostedOn,
         QBSessionManager sessionManager)
     {
         try
         {
+            var existing = AllExistingDepositsList.FirstOrDefault(x => x.UniqueId == key);
+            if (existing != null)
+            {
+                OnSyncStatusChanged?.Invoke(this,
+                    new StatusMessageArgs(StatusMessageType.Warn,
+                        $"Skipped: Deposit: {payment.Number} already exists as Deposit.Num: {payment.Number}."));
+                return false;
+            }
+
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
-            
-            var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList(); //conv acc
-            var fromAccIdConv = convEntries.First(x => x.Direction == "credit").AccountId!;
-            var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit" && x.Debit!.Value! == convEntries[0].Credit!.Value!).AccountId!;
-            
+
             var fromQbAccListIdConv =
-                _populiAccessService.AllPopuliAccounts.First(x => x.Id == fromAccIdConv).QbAccountListId;
+                _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
             var adQbAccListIdConv =
-                _populiAccessService.AllPopuliAccounts.First(x => x.Id == adAccIdConv).QbAccountListId;
+                _populiAccessService.AllPopuliAccounts.First(x => x.Id == adAcc).QbAccountListId;
 
             var conv = new PopCredit
             {
                 Id = payment.Id,
-                Number = payment.Number,
-                TransactionId = trans.Id,
-                PostedOn = trans.PostedOn,
+                TransactionId = payment.TransactionId,
+                PostedOn = transPostedOn!.Value,
                 Object = "deposit",
                 ActorType = "person",
                 ActorId = payment.StudentId!,
@@ -69,7 +73,8 @@ public class QbDepositServiceQuick
                 },
             };
 
-            _builder.BuildAddRequest(requestMsgSet, conv, qbStudent.QbListId!, fromQbAccListIdConv!, adQbAccListIdConv!, trans.PostedOn!.Value!);
+            _builder.BuildAddRequest(requestMsgSet, key, conv, qbStudent.QbListId!, fromQbAccListIdConv!, adQbAccListIdConv!,
+                transPostedOn!.Value!);
             var responseMsgSetDeposit = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedDeposit(responseMsgSetDeposit))
             {
@@ -245,8 +250,8 @@ public class QbDepositServiceQuick
             var refNum = ret.Memo.GetValue();
             if (!string.IsNullOrEmpty(refNum))
             {
-                var arr = refNum.Split("#");
-                deposit.PopDepositNumber = Convert.ToInt32(arr[1].Trim());
+                var arr = refNum.Split("##");
+                deposit.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
             }
 
             AllExistingDepositsList.Add(deposit);

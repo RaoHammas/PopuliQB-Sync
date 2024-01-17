@@ -23,9 +23,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isItemsListSynced = false;
     [ObservableProperty] private bool _isStudentsListListSynced = false;
 
-    private readonly QBInvoiceService _qbInvoiceService;
     private readonly QbItemService _qbItemService;
-    private readonly QbPaymentsService _qbPaymentsService;
     private readonly QbDepositServiceQuick _depositServiceQuick;
     private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
     private readonly QbInvoiceServiceQuick _invoiceServiceQuick;
@@ -49,10 +47,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         QBCompanyService qbCompanyService,
         PopuliAccessService populiAccessService,
         QbCustomerService qbCustomerService,
-        QBInvoiceService qbInvoiceService,
         QbAccountsService qbAccountsService,
         QbItemService qbItemService,
-        QbPaymentsService qbPaymentsService,
         QbDepositServiceQuick depositServiceQuick,
         QbCreditMemoServiceQuick creditMemoServiceQuick,
         QbInvoiceServiceQuick invoiceServiceQuick,
@@ -65,10 +61,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _qbCompanyService = qbCompanyService;
         PopuliAccessService = populiAccessService;
         QbCustomerService = qbCustomerService;
-        _qbInvoiceService = qbInvoiceService;
         QbAccountsService = qbAccountsService;
         _qbItemService = qbItemService;
-        _qbPaymentsService = qbPaymentsService;
 
         _depositServiceQuick = depositServiceQuick;
         _creditMemoServiceQuick = creditMemoServiceQuick;
@@ -80,17 +74,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         QbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
         QbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
 
-        _qbInvoiceService.OnSyncStatusChanged += SyncStatusChanged;
-        _qbInvoiceService.OnSyncProgressChanged += SyncProgressChanged;
 
         QbAccountsService.OnSyncStatusChanged += SyncStatusChanged;
         QbAccountsService.OnSyncProgressChanged += SyncProgressChanged;
 
         _qbItemService.OnSyncStatusChanged += SyncStatusChanged;
         _qbItemService.OnSyncProgressChanged += SyncProgressChanged;
-
-        _qbPaymentsService.OnSyncStatusChanged += SyncStatusChanged;
-        _qbPaymentsService.OnSyncProgressChanged += SyncProgressChanged;
 
         _depositServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
         _depositServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
