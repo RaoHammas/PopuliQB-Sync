@@ -382,6 +382,27 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                 MessageType = type
             });
         });
+
+        switch (type)
+        {
+            case StatusMessageType.Error:
+                _logger.Error(message);
+                break;
+            case StatusMessageType.Success:
+                _logger.Info(message);
+                break;
+            case StatusMessageType.Info:
+                _logger.Info(message);
+                break;
+            case StatusMessageType.Warn:
+                _logger.Warn(message);
+                break;
+            case StatusMessageType.All:
+                _logger.Warn(message);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(type), type, null);
+        }
     }
 
     public void Dispose()
