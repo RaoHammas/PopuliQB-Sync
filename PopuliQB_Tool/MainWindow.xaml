@@ -29,12 +29,12 @@
         </b:EventTrigger>
     </b:Interaction.Triggers>
     <Grid>
-        <!--<Grid.Background>
-            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-                <GradientStop Color="#FFD6BCFF"/>
-                <GradientStop Color="White" Offset="1"/>
+        <Grid.Background>
+            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0" Opacity="0.5">
+                <GradientStop Color="#FFD6BCFF" Offset="1"/>
+                <GradientStop Color="White" />
             </LinearGradientBrush>
-        </Grid.Background>-->
+        </Grid.Background>
 
 
         <Grid Margin="20">
@@ -107,10 +107,11 @@
 
                                 <TextBox
                                     MinWidth="180"
+                                    MaxWidth="100"
                                     Margin="0,20,0,0"
                                     materialDesign:HintAssist.FloatingScale="1"
                                     materialDesign:HintAssist.Hint="Student Ids"
-                                    AcceptsReturn="True" MaxWidth="100"
+                                    AcceptsReturn="True"
                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                     Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=SyncStudentIds}"
                                     TextWrapping="Wrap" />
@@ -191,7 +192,10 @@
                                         SelectedDate="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=PostedTo}"
                                         Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
                                 </StackPanel>
-                                <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
+                                <StackPanel
+                                    Margin="0,20,0,0"
+                                    Orientation="Horizontal"
+                                    Visibility="Collapsed">
                                     <CheckBox
                                         x:Name="CheckBoxApplyAddedDate"
                                         VerticalAlignment="Center"

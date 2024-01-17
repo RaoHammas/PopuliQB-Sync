@@ -89,7 +89,7 @@ public class QbPaymentsService
                 foreach (var person in allPersons)
                 {
                     var qbCustomer =
-                        _customerService.AllExistingCustomersList.First(x => x.PopPersonId == person.Id!.Value);
+                        _customerService.AllExistingCustomersList.First(x => x.UniquePopuliId == person.Id!.Value);
 
                     var popPaymentsAndCredits = await _populiAccessService.GetAllStudentPaymentsAsync(person.Id!.Value);
 

@@ -19,7 +19,7 @@ public class QbCustomerService
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
     public List<QBCustomer> AllExistingCustomersList { get; set; } = new();
-    QBSessionManager _sessionManager;
+    
 
     public QbCustomerService(PopPersonToQbCustomerBuilder customerBuilder,
         CustomFieldBuilderQuick customFieldBuilderQuick)
@@ -32,26 +32,26 @@ public class QbCustomerService
 
     public async Task<bool> AddCustomersAsync(List<PopPerson> persons)
     {
-        _sessionManager = new QBSessionManager();
+        var sessionManager = new QBSessionManager();
 
         try
         {
-            _sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
             IsConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            _sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession("", ENOpenMode.omDontCare);
             IsSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
             await Task.Run(() =>
             {
-                var requestMsgSet = _sessionManager.CreateMsgSetRequest("US", 16, 0);
+                var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
                 foreach (var person in persons)
                 {
-                    if (AllExistingCustomersList.FirstOrDefault(x => x.PopPersonId == person.Id) != null)
+                    if (AllExistingCustomersList.FirstOrDefault(x => x.UniquePopuliId == person.Id) != null)
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn,
@@ -63,13 +63,13 @@ public class QbCustomerService
                         new StatusMessageArgs(StatusMessageType.Info,
                             $"Adding student: {person.DisplayName} | Id = {person.Id}"));
                     _customerBuilder.BuildQbCustomerAddRequest(requestMsgSet, person);
-                    var responseMsgSet = _sessionManager.DoRequests(requestMsgSet);
+                    var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
                     if (ReadAddedCustomer(responseMsgSet))
                     {
                         var added = AllExistingCustomersList.Last();
-                        _customFieldBuilderQuick.AddCustomField(_sessionManager, ENAssignToObject.atoCustomer,
+                        _customFieldBuilderQuick.AddCustomField(sessionManager, ENAssignToObject.atoCustomer,
                             added.QbListId!, QbSettings.Instance.UniquePopuliIdName, person.Id!.Value.ToString());
-                        added.UniquePopuliId = person.Id.Value.ToString();
+                        added.UniquePopuliId = person.Id.Value;
 
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Success,
@@ -101,7 +101,7 @@ public class QbCustomerService
         {
             if (IsSessionOpen)
             {
-                _sessionManager.EndSession();
+                sessionManager.EndSession();
                 IsSessionOpen = false;
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info, "Session Ended."));
@@ -109,7 +109,7 @@ public class QbCustomerService
 
             if (IsConnected)
             {
-                _sessionManager.CloseConnection();
+                sessionManager.CloseConnection();
                 IsConnected = false;
                 OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Disconnected."));
             }
@@ -269,8 +269,10 @@ public class QbCustomerService
 
             if (customerRet.DataExtRetList != null)
             {
-                customer.UniquePopuliId = _customFieldBuilderQuick.GetFieldValue(customerRet.DataExtRetList,
+                var value = _customFieldBuilderQuick.GetFieldValue(customerRet.DataExtRetList,
                     QbSettings.Instance.UniquePopuliIdName);
+
+                customer.UniquePopuliId = Convert.ToInt32(value);
             }
 
 

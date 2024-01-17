@@ -16,6 +16,7 @@ public class QbRefundServiceQuick
     private readonly QbCustomerService _customerService;
     private readonly QbDepositServiceQuick _depositServiceQuick;
     private readonly QbItemService _itemsService;
+    private readonly CustomFieldBuilderQuick _customFieldBuilderQuick;
 
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
@@ -27,7 +28,8 @@ public class QbRefundServiceQuick
         PopuliAccessService populiAccessService,
         QbCustomerService customerService,
         QbDepositServiceQuick depositServiceQuick,
-        QbItemService itemsService
+        QbItemService itemsService,
+        CustomFieldBuilderQuick customFieldBuilderQuick
     )
     {
         _builder = builder;
@@ -36,6 +38,7 @@ public class QbRefundServiceQuick
         _customerService = customerService;
         _depositServiceQuick = depositServiceQuick;
         _itemsService = itemsService;
+        _customFieldBuilderQuick = customFieldBuilderQuick;
     }
 
 
@@ -47,7 +50,7 @@ public class QbRefundServiceQuick
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-            var qbStudent = _customerService.AllExistingCustomersList.FirstOrDefault(x => x.PopPersonId == person.Id!);
+            var qbStudent = _customerService.AllExistingCustomersList.FirstOrDefault(x => x.UniquePopuliId == person.Id!);
             if (qbStudent == null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -164,6 +167,7 @@ public class QbRefundServiceQuick
                 return false;
             }
 
+            
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Success,
                     $"Refund num: {refundCheque.Number} Added as Cheque for student: {person.DisplayName}."));
@@ -355,7 +359,6 @@ public class QbRefundServiceQuick
             var cheque = new QbCheque();
             cheque.QbCustomerListId = ret.PayeeEntityRef.ListID.GetValue();
             cheque.QbCustomerName = ret.PayeeEntityRef.FullName.GetValue();
-
             var refNum = ret.Memo.GetValue();
             if (!string.IsNullOrEmpty(refNum))
             {

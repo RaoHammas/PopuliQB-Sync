@@ -71,31 +71,35 @@ public class QbService
                         new StatusMessageArgs(StatusMessageType.Info,
                             $"Syncing Payments & Memos for student: {person.DisplayName}."));
 
-                    /*var allTransactionsOfStd =
-                        await _populiAccessService.GetAllStudentTransactionsAsync(person.Id!.Value,
-                            person.DisplayName!);*/
-
                     var allPayments = await _populiAccessService.GetAllStudentPaymentsAsync(person.Id.Value!);
 
                     if (allPayments.Any())
                     {
-                        OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Info,
-                                $"{allPayments.Count} Payments & Memos found for student: {person.DisplayName} in Populi."));
                         foreach (var payment in allPayments)
                         {
+                           
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 payment.TransactionId!
                                     .Value);
+
+                            if (QbSettings.Instance.ApplyPostedDateFilter
+                                && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date
+                                    || trans.PostedOn!.Value.Date > QbSettings.Instance.PostedTo.Date)
+                               )
+                            {
+                                continue;
+                            }
 
                             switch (trans.Type)
                             {
                                 case "aid_payment":
                                     var respAid =
-                                        await _creditMemoServiceQuick.AddCreditMemo(person, trans, payment, sessionManager);
+                                        await _creditMemoServiceQuick.AddCreditMemo(person, trans, payment,
+                                            sessionManager);
                                     break;
                                 case "customer_payment":
-                                    var respPay = _paymentServiceQuick.AddPaymentAsync(person, trans,payment, sessionManager);
+                                    var respPay =
+                                        _paymentServiceQuick.AddPaymentAsync(person, trans, payment, sessionManager);
                                     break;
                                 default:
                                     break;
@@ -178,20 +182,25 @@ public class QbService
 
                     if (allRefunds.Any())
                     {
-                        OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Info,
-                                $"{allRefunds.Count} Refunds found for student: {person.DisplayName} in Populi."));
                         foreach (var refund in allRefunds)
                         {
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 refund.TransactionId!
                                     .Value);
+                            
+                            if (QbSettings.Instance.ApplyPostedDateFilter
+                                && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date
+                                    || trans.PostedOn!.Value.Date > QbSettings.Instance.PostedTo.Date)
+                               )
+                            {
+                                continue;
+                            }
 
                             switch (refund.Type)
                             {
                                 case "refund_to_student":
                                     var respRefund =
-                                         _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
+                                        _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
                                     break;
                                 case "refund_to_source":
                                     var respRefundToSource =
@@ -278,14 +287,19 @@ public class QbService
 
                     if (allInvoices.Any())
                     {
-                        OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Info,
-                                $"{allInvoices.Count} Invoices found for student: {person.DisplayName} in Populi."));
                         foreach (var invoice in allInvoices)
                         {
                             var trans =
                                 await _populiAccessService.GetTransactionByIdWithLedgerAsync(invoice.TransactionId!
                                     .Value);
+
+                            if (QbSettings.Instance.ApplyPostedDateFilter
+                                && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date
+                                    || trans.PostedOn!.Value.Date > QbSettings.Instance.PostedTo.Date)
+                               )
+                            {
+                                continue;
+                            }
 
                             var respInv =
                                 await _invoiceServiceQuick.AddInvoiceAsync(person, trans, invoice, sessionManager);

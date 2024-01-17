@@ -39,14 +39,16 @@ public class QbCreditMemoServiceQuick
     }
 
 
-    public async Task<bool> AddCreditMemo(PopPerson person, PopTransaction trans, PopPayment payment,  QBSessionManager sessionManager)
+    public async Task<bool> AddCreditMemo(PopPerson person, PopTransaction trans, PopPayment payment,
+        QBSessionManager sessionManager)
     {
         try
         {
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-            var qbStudent = _customerService.AllExistingCustomersList.FirstOrDefault(x => x.PopPersonId == person.Id!);
+            var qbStudent =
+                _customerService.AllExistingCustomersList.FirstOrDefault(x => x.UniquePopuliId == person.Id!);
             if (qbStudent == null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -199,7 +201,8 @@ public class QbCreditMemoServiceQuick
         }
     }
 
-    public async Task<bool> AddCreditMemoForSalesCredit(PopPerson person, PopCredit salesCredit, QBSessionManager sessionManager)
+    public async Task<bool> AddCreditMemoForSalesCredit(PopPerson person, PopCredit salesCredit,
+        QBSessionManager sessionManager)
     {
         try
         {
@@ -216,7 +219,8 @@ public class QbCreditMemoServiceQuick
                 return false;
             }
 
-            var qbStudent = _customerService.AllExistingCustomersList.FirstOrDefault(x => x.PopPersonId == person.Id!);
+            var qbStudent =
+                _customerService.AllExistingCustomersList.FirstOrDefault(x => x.UniquePopuliId == person.Id!);
             if (qbStudent == null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -243,7 +247,8 @@ public class QbCreditMemoServiceQuick
             {
                 if (QbSettings.Instance.ApplyIgnoreStartingBalanceFilter)
                 {
-                    var sbItems = salesCredit.Items.Where(x => x.Name == QbSettings.Instance.SkipStartingBalanceItemName)
+                    var sbItems = salesCredit.Items
+                        .Where(x => x.Name == QbSettings.Instance.SkipStartingBalanceItemName)
                         .ToList();
                     foreach (var sbItem in sbItems)
                     {
@@ -287,7 +292,8 @@ public class QbCreditMemoServiceQuick
                 }
             }
 
-            var nonConvEntries = trans.LedgerEntries.Where(x => x.AccountId != QbSettings.Instance.PopConvenienceAccId).ToList();
+            var nonConvEntries = trans.LedgerEntries.Where(x => x.AccountId != QbSettings.Instance.PopConvenienceAccId)
+                .ToList();
             var arAccId = nonConvEntries.First(x => x.Direction == "credit").AccountId!;
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
@@ -483,5 +489,4 @@ public class QbCreditMemoServiceQuick
     }
 
     #endregion
-
 }

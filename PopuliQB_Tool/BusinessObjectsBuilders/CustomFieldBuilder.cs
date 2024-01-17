@@ -27,6 +27,7 @@ public class CustomFieldBuilderQuick
         dataExtAddRq.OwnerID.SetValue("0");
         dataExtAddRq.DataExtName.SetValue(fieldName);
         dataExtAddRq.ORListTxnWithMacro.ListDataExt.ListDataExtType.SetValue(ENListDataExtType.ldetCustomer);
+        
         dataExtAddRq.ORListTxnWithMacro.ListDataExt.ListObjRef.ListID.SetValue(dataListId);
 
         dataExtAddRq.DataExtValue.SetValue(fieldValue);

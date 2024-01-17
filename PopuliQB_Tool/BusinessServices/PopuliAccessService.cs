@@ -494,6 +494,36 @@ public class PopuliAccessService
             }
         };
 
+        if (QbSettings.Instance.ApplyPostedDateFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
+            {
+                Name = "posted_date",
+                Positive = "1",
+                Value = new PopFilterValueDateRange
+                {
+                    Type = "RANGE",
+                    Start = QbSettings.Instance.PostedFrom.Date.ToString("yyyy-MM-dd"),
+                    End = QbSettings.Instance.PostedTo.Date.ToString("yyyy-MM-dd"),
+                }
+            });
+        }
+
+        if (QbSettings.Instance.ApplyInvoiceNumFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
+            {
+                Name = "invoice_number",
+                Positive = "1",
+                Value = new PopFilterValueDateRange
+                {
+                    Type = "RANGE",
+                    Start = QbSettings.Instance.InvoiceNumFrom,
+                    End = QbSettings.Instance.InvoiceNumTo,
+                }
+            });
+        }
+
         var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 

@@ -49,7 +49,7 @@ public class QbInvoiceServiceQuick
 
             var qbStudent =
                 _customerService.AllExistingCustomersList.FirstOrDefault(x =>
-                    x.PopPersonId == person.Id!.Value);
+                    x.UniquePopuliId == person.Id!.Value);
 
             if (qbStudent == null)
             {
@@ -58,6 +58,15 @@ public class QbInvoiceServiceQuick
                         $"{person.DisplayName!} | Id = {person.Id!.Value} student not found."));
 
                 return false;
+            }
+            
+            if (invoice.Credits != null && invoice.Credits.Any())
+            {
+                OnSyncStatusChanged?.Invoke(this,
+                    new StatusMessageArgs(StatusMessageType.Info,
+                        $"Sales Credit found for student: {person.DisplayName!}"));
+
+                await AddCredits(invoice.Credits, person, sessionManager);
             }
 
             var existingInv =
@@ -74,6 +83,29 @@ public class QbInvoiceServiceQuick
 
             if (invoice.Items != null)
             {
+                if (QbSettings.Instance.ApplyIgnoreStartingBalanceFilter)
+                {
+                    var sbItems = invoice.Items
+                        .Where(x => x.Name == QbSettings.Instance.SkipStartingBalanceItemName)
+                        .ToList();
+                    foreach (var sbItem in sbItems)
+                    {
+                        invoice.Items.Remove(sbItem);
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Warn,
+                                $"skipped Invoice Item: Invoice.Num = {invoice.Number} | Item {sbItem.Name}."));
+                    }
+                }
+
+                if (!invoice.Items.Any())
+                {
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Warn,
+                            $"Skipped Invoice: Invoice.Num = {invoice.Number}. It has no items."));
+
+                    return false;
+                }
+
                 foreach (var invoiceItem in invoice.Items)
                 {
                     if (invoiceItem.Name!.Length > 31) //31 is max length for Item name field in QB
@@ -124,19 +156,6 @@ public class QbInvoiceServiceQuick
                 new StatusMessageArgs(StatusMessageType.Success,
                     $"Invoice num: {invoice.Number} added for student: {person.DisplayName}."));
 
-            if (invoice.Credits != null && invoice.Credits.Any())
-            {
-                OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Info,
-                        $"Sales Credit found for student: {person.DisplayName!}"));
-
-                foreach (var invoiceCredit in invoice.Credits)
-                {
-                    var resp = await _creditMemoServiceQuick.AddCreditMemoForSalesCredit(person, invoiceCredit,
-                        sessionManager);
-                }
-            }
-
             if (convEntries.Any())
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -176,6 +195,16 @@ public class QbInvoiceServiceQuick
         }
     }
 
+    private async Task AddCredits(List<PopCredit> credits, PopPerson person, QBSessionManager sessionManager)
+    {
+        foreach (var invoiceCredit in credits)
+        {
+            var resp = await _creditMemoServiceQuick.AddCreditMemoForSalesCredit(person, invoiceCredit,
+                sessionManager);
+        }
+    }
+
+
     public bool AddInvoiceForRefundToSourceAsync(PopPerson person, PopTransaction trans, PopRefund refund,
         QBSessionManager sessionManager)
     {
@@ -186,7 +215,7 @@ public class QbInvoiceServiceQuick
 
             var qbStudent =
                 _customerService.AllExistingCustomersList.FirstOrDefault(x =>
-                    x.PopPersonId == person.Id!.Value);
+                    x.UniquePopuliId == person.Id!.Value);
             if (qbStudent == null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -468,7 +497,7 @@ public class QbInvoiceServiceQuick
             invoice.PopInvoiceNumber = Convert.ToInt32(ret.RefNumber.GetValue());
             invoice.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
             invoice.QbCustomerName = ret.CustomerRef.FullName.GetValue();
-
+            
             AllExistingInvoicesList.Add(invoice);
 
             OnSyncStatusChanged?.Invoke(this,

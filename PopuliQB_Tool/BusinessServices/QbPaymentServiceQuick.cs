@@ -37,15 +37,16 @@ public class QbPaymentServiceQuick
 
     #region PAYMENTS
 
-    public bool AddPaymentAsync(PopPerson person, PopTransaction trans, PopPayment payment, QBSessionManager sessionManager)
+    public bool AddPaymentAsync(PopPerson person, PopTransaction trans, PopPayment payment,
+        QBSessionManager sessionManager)
     {
         try
         {
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
-            
+
             var qbStudent =
-                _customerService.AllExistingCustomersList.FirstOrDefault(x => x.PopPersonId == person.Id!);
+                _customerService.AllExistingCustomersList.FirstOrDefault(x => x.UniquePopuliId == person.Id!);
 
             if (qbStudent == null)
             {
