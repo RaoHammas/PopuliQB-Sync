@@ -43,7 +43,7 @@ public class QbDepositServiceQuick
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList(); //conv acc
             var fromAccIdConv = convEntries.First(x => x.Direction == "credit").AccountId!;
             var adAccIdConv = trans.LedgerEntries.First(x => x.Direction == "debit" && x.Debit!.Value! == convEntries[0].Credit!.Value!).AccountId!;
-
+            
             var fromQbAccListIdConv =
                 _populiAccessService.AllPopuliAccounts.First(x => x.Id == fromAccIdConv).QbAccountListId;
             var adQbAccListIdConv =

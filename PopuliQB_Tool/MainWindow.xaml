@@ -30,8 +30,8 @@
     </b:Interaction.Triggers>
     <Grid>
         <Grid.Background>
-            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0" Opacity="0.5">
-                <GradientStop Color="#FFD6BCFF" Offset="1"/>
+            <LinearGradientBrush Opacity="0.5" StartPoint="0.5,0" EndPoint="0.5,1">
+                <GradientStop Offset="1" Color="#FFD6BCFF" />
                 <GradientStop Color="White" />
             </LinearGradientBrush>
         </Grid.Background>
@@ -264,12 +264,20 @@
                                         SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=Student}"
                                         Style="{StaticResource MaterialDesignOutlinedComboBox}" />
                                 </StackPanel>
+
+                                <CheckBox
+                                    x:Name="CheckBoxIgnoreStartingBalance"
+                                    Margin="0,10,0,0"
+                                    VerticalAlignment="Center"
+                                    IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyIgnoreStartingBalanceFilter}">
+                                    Ignore Starting Balance Item ?
+                                </CheckBox>
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
                 </Grid>
 
-                <GroupBox Grid.Column="1" Visibility="Collapsed">
+                <!--<GroupBox Grid.Column="1" Visibility="Collapsed">
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock
@@ -281,7 +289,7 @@
                     </GroupBox.Header>
 
                     <StackPanel Margin="0,0,0,0" Orientation="Vertical">
-                        <!--<ComboBox
+                        ~1~<ComboBox
                             Margin="0,0,0,0"
                             HorizontalAlignment="Stretch"
                             materialDesign:HintAssist.FloatingScale="1"
@@ -290,9 +298,9 @@
                             IsEditable="True"
                             ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
                             SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ARForInvoice}"
-                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />-->
+                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />@1@
 
-                        <!--<ComboBox
+                        ~1~<ComboBox
                             Margin="0,15,0,0"
                             HorizontalAlignment="Stretch"
                             materialDesign:HintAssist.FloatingScale="1"
@@ -301,7 +309,7 @@
                             IsEditable="True"
                             ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
                             SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ADForPayments}"
-                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />-->
+                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />@1@
                         <CheckBox
                             x:Name="CheckBoxIgnoreStartingBalance"
                             Margin="0,10,0,0"
@@ -316,7 +324,7 @@
                             IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyAidPaymentsAreCreditMemoFilter}">
                             Aid Payments are Credit Memo?
                         </CheckBox>
-                        <!--<ComboBox
+                        ~1~<ComboBox
                             Margin="0,15,0,0"
                             HorizontalAlignment="Stretch"
                             materialDesign:HintAssist.FloatingScale="1"
@@ -336,11 +344,11 @@
                             ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
                             SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ARForPayments}"
                             Style="{StaticResource MaterialDesignOutlinedComboBox}" />
-                        -->
+                        @1@
                     </StackPanel>
 
 
-                </GroupBox>
+                </GroupBox>-->
             </Grid>
 
             <!--  PROGRESS SECTION  -->
