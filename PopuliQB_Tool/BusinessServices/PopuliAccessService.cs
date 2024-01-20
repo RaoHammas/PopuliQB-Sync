@@ -34,6 +34,7 @@ public class PopuliAccessService
 
     public async Task<PopResponse<PopPerson>> GetAllPersonsAsync(int page = 1)
     {
+        await Task.Delay(2000);
         var request = new RestRequest($"{ProdUrl}/people/");
         request.AddHeader("Authorization", $"Bearer {AuthToken}");
         request.AddHeader("Content-Type", "application/json");
@@ -46,18 +47,37 @@ public class PopuliAccessService
             {
                 new()
                 {
-                    Logic = "ANY",
-                    Fields = new List<PopFilterTypeField>(),
+                    Logic = "ALL",
+                    Fields = new List<PopFilterTypeField>
+                    {
+                        new PopFilterTypeField
+                        {
+                            Name = "role",
+                            Positive = "1",
+                            Value = new PopFilterValueStatusId
+                            {
+                                Id = "5", // Role = Student
+                                Status = "ACTIVE",
+                            }
+                        }
+                    },
                 }
             }
         };
 
-        if (!string.IsNullOrEmpty(QbSettings.Instance.SyncStudentIds))
+        if (QbSettings.Instance.ApplySyncStudentIdsFilter)
         {
+            filter.FilterItems.Add(
+                new()
+                {
+                    Logic = "ANY",
+                    Fields = new List<PopFilterTypeField>(),
+                });
+
             var ids = QbSettings.Instance.SyncStudentIds.Split(',');
             foreach (var id in ids)
             {
-                filter.FilterItems[0].Fields.Add(new PopFilterTypeField
+                filter.FilterItems[1].Fields.Add(new PopFilterTypeField
                 {
                     Name = "student_id",
                     Positive = "1",
@@ -69,33 +89,10 @@ public class PopuliAccessService
                 });
             }
 
-            var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
-            request.AddStringBody(body, DataFormat.Json);
         }
-
-        /*
-        filter.FilterItems[0].Fields.Add(new PopFilterField
-        {
-            Name = "student_id",
-            Positive = "1",
-            Value = new PopFilterValueTypeText()
-            {
-                Type = "IS",
-                Text = "97113", //PERSON ID
-            }
-        });
-
-        filter.FilterItems[0].Fields.Add(new PopFilterField
-        {
-            Name = "student_id",
-            Positive = "1",
-            Value = new PopFilterValueTypeText()
-            {
-                Type = "IS",
-                Text = "35196", //PERSON ID
-            }
-        });*/
-
+        
+        var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
+        request.AddStringBody(body, DataFormat.Json);
 
         var response =
             await _client.ExecuteAsync<PopResponse<PopPerson>>(request, Method.Get, CancellationToken.None);

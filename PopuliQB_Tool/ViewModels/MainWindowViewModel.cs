@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Runtime.InteropServices.ComTypes;
 using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -21,7 +22,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly QBCompanyService _qbCompanyService;
     [ObservableProperty] private bool _isAccountsListSynced = false;
     [ObservableProperty] private bool _isItemsListSynced = false;
-    [ObservableProperty] private bool _isStudentsListListSynced = false;
+    [ObservableProperty] private bool _isStudentsListSynced = false;
 
     private readonly QbItemService _qbItemService;
     private readonly QbDepositServiceQuick _depositServiceQuick;
@@ -151,51 +152,44 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         {
             PopuliAccessService.AllPopuliPersons.Clear();
 
-            SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from QB.");
+            SetSyncStatusMessage(StatusMessageType.Info, "Fetching Students from QB.");
             await QbCustomerService.SyncAllExistingCustomersAsync();
             SetSyncStatusMessage(StatusMessageType.Success,
-                $"Fetched Persons from QB: {QbCustomerService.AllExistingCustomersList.Count}");
+                $"Fetched Students from QB: {QbCustomerService.AllExistingCustomersList.Count}");
 
-            SetSyncStatusMessage(StatusMessageType.Info, "Fetching Persons from Populi.");
+            SetSyncStatusMessage(StatusMessageType.Info, "Fetching Students from Populi.");
             var page = 1;
             var persons = await PopuliAccessService.GetAllPersonsAsync(page);
             TotalRecords = persons.Results ?? 0;
-            SetSyncStatusMessage(StatusMessageType.Success, $"Total Persons found on Populi: {persons.Results}");
-
-            if (persons.Data!.Count == 0)
-            {
-                SetSyncStatusMessage(StatusMessageType.Warn, $"Fetched Persons : 0");
-                return;
-            }
+            SetSyncStatusMessage(StatusMessageType.Success, $"Total Students found on Populi: {TotalRecords}");
 
             while (page <= persons.Pages)
             {
                 if (page != 1)
                 {
-                    persons.Data.Clear();
                     SetSyncStatusMessage(StatusMessageType.Info,
                         $"Fetching next {persons.ResultsPerPage} from Populi.");
 
                     persons = await PopuliAccessService.GetAllPersonsAsync(page);
                     SetSyncStatusMessage(StatusMessageType.Success,
-                        $"Fetched {persons.Data!.Count} Persons from Populi.");
+                        $"Fetched {persons.Data!.Count} Students from Populi.");
                 }
 
                 page++;
-                if (persons.Data.Count != 0)
+                if (persons.Data != null && persons.Data.Count != 0)
                 {
-                    SetSyncStatusMessage(StatusMessageType.Info, $"Adding next {persons.Data.Count} to QB.");
+                    SetSyncStatusMessage(StatusMessageType.Info, $"Adding next {persons.Data.Count} students to QB.");
                     var resp = await QbCustomerService.AddCustomersAsync(persons.Data);
                 }
                 else
                 {
-                    SetSyncStatusMessage(StatusMessageType.Warn, $"Fetched Persons : 0");
+                    SetSyncStatusMessage(StatusMessageType.Warn, $"Fetched Students : 0");
                     return;
                 }
             }
 
-            IsStudentsListListSynced = true;
-            SetSyncStatusMessage(StatusMessageType.Success, $"Students List Sync Completed.");
+            IsStudentsListSynced = true;
+            SetSyncStatusMessage(StatusMessageType.Success, $"Students Sync Completed.");
         }
         catch (Exception ex)
         {
@@ -216,10 +210,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         try
         {
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Invoices from QB.");
-            await _invoiceServiceQuick.SyncAllExistingInvoicesAsync();
+            //await _invoiceServiceQuick.SyncAllExistingInvoicesAsync();
 
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Deposits from QB.");
-            await _depositServiceQuick.SyncAllExistingDepositsAsync();
+            //await _depositServiceQuick.SyncAllExistingDepositsAsync();
 
             await _qbService.SyncAllInvoicesAndSaleCredits();
         }
@@ -241,10 +235,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         try
         {
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Payments from QB.");
-            await _paymentServiceQuick.SyncAllExistingPaymentsAsync();
+            //await _paymentServiceQuick.SyncAllExistingPaymentsAsync();
 
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Cred Memos from QB.");
-            await _creditMemoServiceQuick.SyncAllExistingMemosAsync();
+            //await _creditMemoServiceQuick.SyncAllExistingMemosAsync();
 
             await _qbService.SyncAllPaymentsAndMemos();
         }
@@ -266,7 +260,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         try
         {
             SetSyncStatusMessage(StatusMessageType.Info, "Syncing Refunds from QB.");
-            await _refundServiceQuick.SyncAllExistingChequesAsync();
+            //await _refundServiceQuick.SyncAllExistingChequesAsync();
 
             await _qbService.SyncAllRefunds();
         }
@@ -374,6 +368,11 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private void SetSyncStatusMessage(StatusMessageType type, string message)
     {
+        if (message.Contains("&quot;"))
+        {
+            message = message.Replace("&quot;", " ");
+        }
+
         Application.Current.Dispatcher.Invoke(() =>
         {
             SyncStatusMessages.Insert(0, new StatusMessage

@@ -49,7 +49,9 @@ public class QbPaymentServiceQuick
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
             var qbStudent =
-                _customerService.AllExistingCustomersList.FirstOrDefault(x => x.UniquePopuliId == person.Id!);
+                _customerService.AllExistingCustomersList
+                    .FirstOrDefault(x => x.QbCustomerFName == person.FirstName!.Trim() 
+                                         && x.QbCustomerLName == person.LastName!.Trim());
 
             if (qbStudent == null)
             {

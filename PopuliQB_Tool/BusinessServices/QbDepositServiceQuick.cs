@@ -251,7 +251,10 @@ public class QbDepositServiceQuick
             if (!string.IsNullOrEmpty(refNum))
             {
                 var arr = refNum.Split("##");
-                deposit.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
+                if (arr.Any())
+                {
+                    deposit.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
+                }
             }
 
             AllExistingDepositsList.Add(deposit);

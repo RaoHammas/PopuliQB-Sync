@@ -77,7 +77,7 @@ public class QbService
                     {
                         foreach (var payment in allPayments)
                         {
-                           
+                            await Task.Delay(2000);
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 payment.TransactionId!
                                     .Value);

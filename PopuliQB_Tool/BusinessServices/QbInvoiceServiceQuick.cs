@@ -52,7 +52,8 @@ public class QbInvoiceServiceQuick
 
             var qbStudent =
                 _customerService.AllExistingCustomersList.FirstOrDefault(x =>
-                    x.UniquePopuliId == person.Id!.Value);
+                  x.QbCustomerFName == person.FirstName!.Trim() 
+                  && x.QbCustomerLName == person.LastName!.Trim());
 
             if (qbStudent == null)
             {
@@ -227,8 +228,11 @@ public class QbInvoiceServiceQuick
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
             var qbStudent =
-                _customerService.AllExistingCustomersList.FirstOrDefault(x =>
-                    x.UniquePopuliId == person.Id!.Value);
+                _customerService.AllExistingCustomersList
+                    .FirstOrDefault(x =>
+                        x.QbCustomerFName == person.FirstName!.Trim() 
+                        && x.QbCustomerLName == person.LastName!.Trim());
+
             if (qbStudent == null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -515,7 +519,6 @@ public class QbInvoiceServiceQuick
             if (ret == null) return null;
 
             var invoice = new QbInvoice();
-            invoice.PopInvoiceId = Convert.ToInt32(ret.PONumber.GetValue()); //unique inv id from populi
             invoice.PopInvoiceNumber = ret.RefNumber.GetValue();
             invoice.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
             invoice.QbCustomerName = ret.CustomerRef.FullName.GetValue();
@@ -524,7 +527,10 @@ public class QbInvoiceServiceQuick
             if (!string.IsNullOrEmpty(refNum))
             {
                 var arr = refNum.Split("##");
-                invoice.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
+                if (arr.Any())
+                {
+                    invoice.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
+                }
             }
 
             AllExistingInvoicesList.Add(invoice);

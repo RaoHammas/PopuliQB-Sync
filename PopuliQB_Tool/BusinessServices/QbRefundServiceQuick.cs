@@ -52,7 +52,10 @@ public class QbRefundServiceQuick
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-            var qbStudent = _customerService.AllExistingCustomersList.FirstOrDefault(x => x.UniquePopuliId == person.Id!);
+            var qbStudent = _customerService.AllExistingCustomersList
+                .FirstOrDefault(x =>
+                    x.QbCustomerFName == person.FirstName!.Trim() 
+                    && x.QbCustomerLName == person.LastName!.Trim());
             if (qbStudent == null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -371,7 +374,10 @@ public class QbRefundServiceQuick
             if (!string.IsNullOrEmpty(refNum))
             {
                 var arr = refNum.Split("##");
-                cheque.UniqueId = arr[0].Trim() + "##";
+                if (arr.Any())
+                {
+                    cheque.UniqueId = arr[0].Trim() + "##";
+                }
             }
 
             AllExistingChequesList.Add(cheque);

@@ -2,7 +2,14 @@
 
 namespace PopuliQB_Tool.PopuliFilters;
 
+public class PopFilterValueStatusId
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; }
 
+    [JsonPropertyName("status")]
+    public string Status { get; set; }
+}
 public class PopFilterValueDisplayName
 {
     [JsonPropertyName("display_text")]

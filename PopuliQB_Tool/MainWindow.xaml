@@ -79,29 +79,70 @@
                             Padding="10"
                             HorizontalContentAlignment="Left"
                             Command="{Binding StartPopuliToQbAccountsSyncCommand}"
-                            Content="1. Sync Accounts" />
+                            Content="1. Sync Accounts">
+                            <Button.Style>
+                                <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAccountsListSynced}" Value="True">
+                                            <Setter Property="Background" Value="Green" />
+                                            <Setter Property="BorderBrush" Value="Green" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <Button
                             Height="40"
                             Margin="0,10,0,0"
                             Padding="10"
                             HorizontalContentAlignment="Left"
                             Command="{Binding StartExcelToQbItemsSyncCommand}"
-                            Content="2. Sync Items List" />
+                            Content="2. Sync Items List">
+                            <Button.Style>
+                                <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsItemsListSynced}" Value="True">
+                                            <Setter Property="Background" Value="Green" />
+                                            <Setter Property="BorderBrush" Value="Green" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <Button
                             Height="40"
                             Margin="0,10,0,0"
                             Padding="10"
                             HorizontalContentAlignment="Left"
                             Command="{Binding StartPopuliStudentsSyncCommand}"
-                            Content="3. Sync Students" />
+                            Content="3. Sync Students">
+                            <Button.Style>
+                                <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsStudentsListSynced}" Value="True">
+                                            <Setter Property="Background" Value="Green" />
+                                            <Setter Property="BorderBrush" Value="Green" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
 
+                        <CheckBox
+                            x:Name="CheckBoxApplyStudentsIdFilter"
+                            Margin="0,20,0,0"
+                            VerticalAlignment="Center"
+                            IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplySyncStudentIdsFilter}">
+                            Apply
+                        </CheckBox>
                         <TextBox
                             MinWidth="180"
                             MaxWidth="100"
-                            Margin="0,20,0,0"
+                            Margin="0,8,0,0"
                             materialDesign:HintAssist.FloatingScale="1"
                             materialDesign:HintAssist.Hint="Student Ids"
                             AcceptsReturn="True"
+                            IsEnabled="{Binding ElementName=CheckBoxApplyStudentsIdFilter, Path=IsChecked}"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
                             Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=SyncStudentIds}"
                             TextWrapping="Wrap" />
@@ -109,7 +150,7 @@
                     </StackPanel>
                 </GroupBox>
 
-                <GroupBox Grid.Column="1">
+                <GroupBox Grid.Column="1" BorderThickness="0 0 0 1">
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal" ToolTip="Before performing Invoice related sync operations following operations must be performed in sequence.">
                             <TextBlock
@@ -126,7 +167,7 @@
                                 <MultiDataTrigger>
                                     <MultiDataTrigger.Conditions>
                                         <Condition Binding="{Binding IsAccountsListSynced}" Value="True" />
-                                        <Condition Binding="{Binding IsStudentsListListSynced}" Value="True" />
+                                        <Condition Binding="{Binding IsStudentsListSynced}" Value="True" />
                                         <Condition Binding="{Binding IsItemsListSynced}" Value="True" />
                                     </MultiDataTrigger.Conditions>
                                     <MultiDataTrigger.Setters>
@@ -244,7 +285,7 @@
                             </CheckBox>
                             <ComboBox
                                 MinWidth="370"
-                                Margin="10,0,0,0"
+                                Margin="10,0,0,0" IsTextSearchEnabled="True" IsEditable="True" StaysOpenOnEdit="True"
                                 HorizontalAlignment="Stretch"
                                 materialDesign:HintAssist.FloatingScale="1"
                                 materialDesign:HintAssist.Hint="Select Student"

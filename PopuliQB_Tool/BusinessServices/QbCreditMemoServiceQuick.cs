@@ -50,7 +50,9 @@ public class QbCreditMemoServiceQuick
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
             var qbStudent =
-                _customerService.AllExistingCustomersList.FirstOrDefault(x => x.UniquePopuliId == person.Id!);
+                _customerService.AllExistingCustomersList
+                    .FirstOrDefault(x => x.QbCustomerFName == person.FirstName!.Trim() 
+                                         && x.QbCustomerLName == person.LastName!.Trim());
             if (qbStudent == null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -245,8 +247,9 @@ public class QbCreditMemoServiceQuick
                 return false;
             }
 
-            var qbStudent =
-                _customerService.AllExistingCustomersList.FirstOrDefault(x => x.UniquePopuliId == person.Id!);
+            var qbStudent = _customerService.AllExistingCustomersList
+                    .FirstOrDefault(x => x.QbCustomerFName == person.FirstName!.Trim() 
+                                         && x.QbCustomerLName == person.LastName!.Trim());
             if (qbStudent == null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -534,7 +537,6 @@ public class QbCreditMemoServiceQuick
             if (ret == null) return null;
 
             var memo = new QbMemo();
-            memo.PopInvoiceId = Convert.ToInt32(ret.PONumber.GetValue()); //unique memo id from populi
             memo.PopMemoNumber = ret.RefNumber.GetValue();
             memo.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
             memo.QbCustomerName = ret.CustomerRef.FullName.GetValue();
@@ -542,7 +544,10 @@ public class QbCreditMemoServiceQuick
             if (!string.IsNullOrEmpty(refNum))
             {
                 var arr = refNum.Split("##");
-                memo.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
+                if (arr.Any())
+                {
+                    memo.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
+                }
             }
             AllExistingMemosList.Add(memo);
             OnSyncStatusChanged?.Invoke(this,
