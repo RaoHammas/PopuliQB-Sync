@@ -29,13 +29,6 @@
         </b:EventTrigger>
     </b:Interaction.Triggers>
     <Grid>
-        <Grid.Background>
-            <LinearGradientBrush Opacity="0.5" StartPoint="0.5,0" EndPoint="0.5,1">
-                <GradientStop Offset="1" Color="#FFD6BCFF" />
-                <GradientStop Color="WhiteSmoke" />
-            </LinearGradientBrush>
-        </Grid.Background>
-
 
         <Grid Margin="0">
             <Grid.RowDefinitions>
@@ -150,7 +143,7 @@
                     </StackPanel>
                 </GroupBox>
 
-                <GroupBox Grid.Column="1" BorderThickness="0 0 0 1">
+                <GroupBox Grid.Column="1" BorderThickness="1,0,0,1">
                     <GroupBox.Header>
                         <StackPanel Orientation="Horizontal" ToolTip="Before performing Invoice related sync operations following operations must be performed in sequence.">
                             <TextBlock
@@ -285,14 +278,17 @@
                             </CheckBox>
                             <ComboBox
                                 MinWidth="370"
-                                Margin="10,0,0,0" IsTextSearchEnabled="True" IsEditable="True" StaysOpenOnEdit="True"
+                                Margin="10,0,0,0"
                                 HorizontalAlignment="Stretch"
                                 materialDesign:HintAssist.FloatingScale="1"
                                 materialDesign:HintAssist.Hint="Select Student"
                                 DisplayMemberPath="DisplayName"
+                                IsEditable="True"
                                 IsEnabled="{Binding ElementName=CheckBoxApplyStudent, Path=IsChecked}"
+                                IsTextSearchEnabled="True"
                                 ItemsSource="{Binding PopuliAccessService.AllPopuliPersons}"
                                 SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=Student}"
+                                StaysOpenOnEdit="True"
                                 Style="{StaticResource MaterialDesignOutlinedComboBox}" />
                         </StackPanel>
 
@@ -342,7 +338,14 @@
                     BorderThickness="0,0,0,1">
                     <GroupBox.Header>
                         <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
                             <TextBlock
+                                Grid.Column="0"
                                 Padding="5"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
@@ -350,8 +353,9 @@
                                 Foreground="{StaticResource MaterialDesignDarkForeground}"
                                 Text="Sync Logs" />
                             <StackPanel
-                                Margin="0,0,100,0"
-                                HorizontalAlignment="Right"
+                                Grid.Column="2"
+                                Margin="0,0,0,0"
+                                HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
                                 Orientation="Horizontal">
                                 <RadioButton
@@ -430,14 +434,32 @@
                                     </b:Interaction.Triggers>
                                 </RadioButton>
                             </StackPanel>
-                            <Button
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                Command="{Binding ClearLogsCommand}"
-                                Style="{DynamicResource MaterialDesignFlatButton}"
-                                ToolTip="Clear Logs">
-                                <materialDesign:PackIcon Foreground="{DynamicResource MaterialDesignDarkForeground}" Kind="clear" />
-                            </Button>
+                            <StackPanel
+                                Grid.Column="3"
+                                Margin="20,0,0,0"
+                                HorizontalAlignment="Left"
+                                Orientation="Horizontal">
+                                <Button
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding ClearLogsCommand}"
+                                    Style="{DynamicResource MaterialDesignFlatButton}"
+                                    ToolTip="Clear Logs">
+                                    <materialDesign:PackIcon Foreground="{DynamicResource MaterialDesignDarkForeground}" Kind="clear" />
+                                </Button>
+                                <Button
+                                    Margin="0,0,0,0"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding OpenLogsFolderCommand}"
+                                    Style="{DynamicResource MaterialDesignFlatButton}"
+                                    ToolTip="Clear Logs">
+                                    <materialDesign:PackIcon Foreground="{DynamicResource MaterialDesignDarkForeground}" Kind="FolderOpen" />
+                                </Button>
+
+
+                            </StackPanel>
+
                         </Grid>
                     </GroupBox.Header>
                     <DataGrid

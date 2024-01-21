@@ -64,6 +64,7 @@ public class QbCustomerService
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Info,
                                 $"Adding student: {person.DisplayName} | Id = {person.Id}"));
+
                         _customerBuilder.BuildQbCustomerAddRequest(requestMsgSet, person);
                         var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
                         if (ReadAddedCustomer(responseMsgSet))

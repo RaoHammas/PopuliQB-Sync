@@ -19,6 +19,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly MessageBoxService _messageBoxService;
+    private readonly IOService _ioService;
     private readonly QBCompanyService _qbCompanyService;
     [ObservableProperty] private bool _isAccountsListSynced = false;
     [ObservableProperty] private bool _isItemsListSynced = false;
@@ -45,6 +46,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
     public MainWindowViewModel(
         MessageBoxService messageBoxService,
+        IOService ioService,
         QBCompanyService qbCompanyService,
         PopuliAccessService populiAccessService,
         QbCustomerService qbCustomerService,
@@ -59,6 +61,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     )
     {
         _messageBoxService = messageBoxService;
+        _ioService = ioService;
         _qbCompanyService = qbCompanyService;
         PopuliAccessService = populiAccessService;
         QbCustomerService = qbCustomerService;
@@ -151,9 +154,14 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         try
         {
             PopuliAccessService.AllPopuliPersons.Clear();
+            if (!PopuliAccessService.AllPopuliDegrees.Any())
+            {
+                await PopuliAccessService.GetAllStudentDegreesAsync();
+            }
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Students from QB.");
             await QbCustomerService.SyncAllExistingCustomersAsync();
+            
             SetSyncStatusMessage(StatusMessageType.Success,
                 $"Fetched Students from QB: {QbCustomerService.AllExistingCustomersList.Count}");
 
@@ -209,10 +217,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         try
         {
-            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Invoices from QB.");
+            //SetSyncStatusMessage(StatusMessageType.Info, "Syncing Invoices from QB.");
             //await _invoiceServiceQuick.SyncAllExistingInvoicesAsync();
 
-            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Deposits from QB.");
+            //SetSyncStatusMessage(StatusMessageType.Info, "Syncing Deposits from QB.");
             //await _depositServiceQuick.SyncAllExistingDepositsAsync();
 
             await _qbService.SyncAllInvoicesAndSaleCredits();
@@ -234,10 +242,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         try
         {
-            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Payments from QB.");
+            //SetSyncStatusMessage(StatusMessageType.Info, "Syncing Payments from QB.");
             //await _paymentServiceQuick.SyncAllExistingPaymentsAsync();
 
-            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Cred Memos from QB.");
+            //SetSyncStatusMessage(StatusMessageType.Info, "Syncing Cred Memos from QB.");
             //await _creditMemoServiceQuick.SyncAllExistingMemosAsync();
 
             await _qbService.SyncAllPaymentsAndMemos();
@@ -259,7 +267,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         try
         {
-            SetSyncStatusMessage(StatusMessageType.Info, "Syncing Refunds from QB.");
+            //SetSyncStatusMessage(StatusMessageType.Info, "Syncing Refunds from QB.");
             //await _refundServiceQuick.SyncAllExistingChequesAsync();
 
             await _qbService.SyncAllRefunds();
@@ -351,6 +359,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private void ClearLogs()
     {
         SyncStatusMessages.Clear();
+    }
+    
+    [RelayCommand]
+    private void OpenLogsFolder()
+    {
+        _ioService.OpenLogsFolder();
     }
 
     [RelayCommand]

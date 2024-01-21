@@ -71,7 +71,7 @@ public class QbService
                         new StatusMessageArgs(StatusMessageType.Info,
                             $"Syncing Payments & Memos for student: {person.DisplayName}."));
 
-                    var allPayments = await _populiAccessService.GetAllStudentPaymentsAsync(person.Id.Value!);
+                    var allPayments = await _populiAccessService.GetAllStudentPaymentsAsync(person.Id!.Value!);
 
                     if (allPayments.Any())
                     {

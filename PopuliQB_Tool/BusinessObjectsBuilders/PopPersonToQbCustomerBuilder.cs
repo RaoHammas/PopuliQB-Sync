@@ -1,5 +1,6 @@
 ﻿using QBFC16Lib;
 using PopuliQB_Tool.BusinessObjects;
+using PopuliQB_Tool.BusinessServices;
 using PopuliQB_Tool.Helpers;
 
 namespace PopuliQB_Tool.BusinessObjectsBuilders;
@@ -57,8 +58,22 @@ public class PopPersonToQbCustomerBuilder
 
         request.Email.SetValue(person.ReportData?.ContactPrimaryEmail ?? "");
         request.IsActive.SetValue(true);
-        request.CompanyName.SetValue("Divine Mercy University");
+        
+        PopDegree? degree = null;
+        if (person.Degrees is { Count: > 0 })
+        {
+            degree = PopuliAccessService.AllPopuliDegrees.FirstOrDefault(x => x.Id == person.Degrees[0].Id)!;
+        }
 
+        if (degree != null)
+        {
+            request.CompanyName.SetValue(degree.ReportData!.DepartmentName ?? "Divine Mercy University");
+        }
+        else
+        {
+            request.CompanyName.SetValue("Divine Mercy University");
+        }
+        
         if (person.Addresses!= null && person.Addresses.Any())
         {
             var add = person.Addresses[0];
