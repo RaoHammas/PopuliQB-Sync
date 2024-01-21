@@ -209,7 +209,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
-
     [RelayCommand]
     private async Task StartPopuliQuickInvoicesAndSalesCreditAsync()
     {
@@ -300,10 +299,15 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
-
     [RelayCommand]
     private async Task StartPopuliToQbAccountsSync()
     {
+        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Students Sync?");
+        if (result == MessageBoxResult.No)
+        {
+            return;
+        }
+
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -345,6 +349,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartExcelToQbItemsSync()
     {
+        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Students Sync?");
+        if (result == MessageBoxResult.No)
+        {
+            return;
+        }
+
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;

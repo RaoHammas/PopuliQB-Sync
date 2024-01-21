@@ -256,7 +256,7 @@
                                 MinWidth="180"
                                 Margin="10,0,0,0"
                                 materialDesign:HintAssist.FloatingScale="1"
-                                materialDesign:HintAssist.Hint="Tran Number From"
+                                materialDesign:HintAssist.Hint="Trans Number From"
                                 IsEnabled="{Binding ElementName=CheckBoxApplyInvNum, Path=IsChecked}"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                 Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=NumFrom}" />
@@ -453,7 +453,7 @@
                                     VerticalAlignment="Center"
                                     Command="{Binding OpenLogsFolderCommand}"
                                     Style="{DynamicResource MaterialDesignFlatButton}"
-                                    ToolTip="Clear Logs">
+                                    ToolTip="Open logs folder">
                                     <materialDesign:PackIcon Foreground="{DynamicResource MaterialDesignDarkForeground}" Kind="FolderOpen" />
                                 </Button>
 
