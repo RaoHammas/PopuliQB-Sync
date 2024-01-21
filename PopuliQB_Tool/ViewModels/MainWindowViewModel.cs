@@ -26,11 +26,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isStudentsListSynced = false;
 
     private readonly QbItemService _qbItemService;
-    private readonly QbDepositServiceQuick _depositServiceQuick;
-    private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
-    private readonly QbInvoiceServiceQuick _invoiceServiceQuick;
-    private readonly QbPaymentServiceQuick _paymentServiceQuick;
-    private readonly QbRefundServiceQuick _refundServiceQuick;
     private readonly QbService _qbService;
 
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
@@ -60,24 +55,19 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         QbService qbService
     )
     {
-        _messageBoxService = messageBoxService;
+        _qbService = qbService;
         _ioService = ioService;
+        _messageBoxService = messageBoxService;
         _qbCompanyService = qbCompanyService;
+        _qbItemService = qbItemService;
+
         PopuliAccessService = populiAccessService;
         QbCustomerService = qbCustomerService;
         QbAccountsService = qbAccountsService;
-        _qbItemService = qbItemService;
 
-        _depositServiceQuick = depositServiceQuick;
-        _creditMemoServiceQuick = creditMemoServiceQuick;
-        _invoiceServiceQuick = invoiceServiceQuick;
-        _paymentServiceQuick = paymentServiceQuick;
-        _refundServiceQuick = refundServiceQuick;
-        _qbService = qbService;
 
         QbCustomerService.OnSyncStatusChanged += SyncStatusChanged;
         QbCustomerService.OnSyncProgressChanged += SyncProgressChanged;
-
 
         QbAccountsService.OnSyncStatusChanged += SyncStatusChanged;
         QbAccountsService.OnSyncProgressChanged += SyncProgressChanged;
@@ -85,14 +75,21 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _qbItemService.OnSyncStatusChanged += SyncStatusChanged;
         _qbItemService.OnSyncProgressChanged += SyncProgressChanged;
 
-        _depositServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
-        _depositServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
-        _creditMemoServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
-        _creditMemoServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
-        _invoiceServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
-        _invoiceServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
-        _paymentServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
-        _paymentServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
+        depositServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
+        depositServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
+
+        creditMemoServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
+        creditMemoServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
+
+        invoiceServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
+        invoiceServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
+
+        paymentServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
+        paymentServiceQuick.OnSyncProgressChanged += SyncProgressChanged;      
+        
+        refundServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
+        refundServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
+
         _qbService.OnSyncStatusChanged += SyncStatusChanged;
         _qbService.OnSyncProgressChanged += SyncProgressChanged;
 
@@ -145,6 +142,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartPopuliStudentsSync()
     {
+        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Students Sync?");
+        if (result == MessageBoxResult.No)
+        {
+            return;
+        }
+
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -161,7 +164,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
             SetSyncStatusMessage(StatusMessageType.Info, "Fetching Students from QB.");
             await QbCustomerService.SyncAllExistingCustomersAsync();
-            
+
             SetSyncStatusMessage(StatusMessageType.Success,
                 $"Fetched Students from QB: {QbCustomerService.AllExistingCustomersList.Count}");
 
@@ -210,6 +213,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartPopuliQuickInvoicesAndSalesCreditAsync()
     {
+        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Invoices & Sale Credits Sync?");
+        if (result == MessageBoxResult.No)
+        {
+            return;
+        }
+
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -235,6 +244,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartPopuliQuickPaymentsAndCredMemosAsync()
     {
+        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Payments & Credit Memos Sync?");
+        if (result == MessageBoxResult.No)
+        {
+            return;
+        }
+
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -260,6 +275,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartPopuliQuickRefundsAsync()
     {
+        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Refunds Sync?");
+        if (result == MessageBoxResult.No)
+        {
+            return;
+        }
+
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -278,7 +299,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             _logger.Error(ex);
         }
     }
-
 
 
     [RelayCommand]
@@ -360,7 +380,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         SyncStatusMessages.Clear();
     }
-    
+
     [RelayCommand]
     private void OpenLogsFolder()
     {

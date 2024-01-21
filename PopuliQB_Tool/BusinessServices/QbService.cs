@@ -1,6 +1,5 @@
 ﻿using NLog;
 using PopuliQB_Tool.BusinessObjects;
-using PopuliQB_Tool.BusinessObjectsBuilders;
 using PopuliQB_Tool.EventArgs;
 using PopuliQB_Tool.Models;
 using QBFC16Lib;
@@ -187,7 +186,7 @@ public class QbService
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 refund.TransactionId!
                                     .Value);
-                            
+
                             if (QbSettings.Instance.ApplyPostedDateFilter
                                 && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date
                                     || trans.PostedOn!.Value.Date > QbSettings.Instance.PostedTo.Date)
