@@ -80,6 +80,14 @@ public class QbService
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 payment.TransactionId!
                                     .Value);
+                            
+                            if (QbSettings.Instance.ApplyNumFilter
+                                && (trans.Number!.Value < Convert.ToInt32(QbSettings.Instance.NumFrom)
+                                    || trans.Number!.Value > Convert.ToInt32(QbSettings.Instance.NumTo))
+                               )
+                            {
+                                continue;
+                            }
 
                             if (QbSettings.Instance.ApplyPostedDateFilter
                                 && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date
@@ -183,17 +191,26 @@ public class QbService
                     {
                         foreach (var refund in allRefunds)
                         {
+                            await Task.Delay(2000);
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 refund.TransactionId!
                                     .Value);
+                            
+                            if (QbSettings.Instance.ApplyNumFilter
+                                && (trans.Number!.Value < Convert.ToInt32(QbSettings.Instance.NumFrom)
+                                    || trans.Number!.Value > Convert.ToInt32(QbSettings.Instance.NumTo))
+                               )
+                            {
+                                continue;
+                            }
 
-                            if (QbSettings.Instance.ApplyPostedDateFilter
+                            /*if (QbSettings.Instance.ApplyPostedDateFilter
                                 && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date
                                     || trans.PostedOn!.Value.Date > QbSettings.Instance.PostedTo.Date)
                                )
                             {
                                 continue;
-                            }
+                            }*/
 
                             switch (refund.Type)
                             {
@@ -288,9 +305,18 @@ public class QbService
                     {
                         foreach (var invoice in allInvoices)
                         {
+                            await Task.Delay(2000);
                             var trans =
                                 await _populiAccessService.GetTransactionByIdWithLedgerAsync(invoice.TransactionId!
                                     .Value);
+                            
+                            if (QbSettings.Instance.ApplyNumFilter
+                                && (trans.Number!.Value < Convert.ToInt32(QbSettings.Instance.NumFrom)
+                                    || trans.Number!.Value > Convert.ToInt32(QbSettings.Instance.NumTo))
+                               )
+                            {
+                                continue;
+                            }
 
                             if (QbSettings.Instance.ApplyPostedDateFilter
                                 && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date

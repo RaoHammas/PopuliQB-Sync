@@ -248,7 +248,7 @@
                             <CheckBox
                                 x:Name="CheckBoxApplyInvNum"
                                 VerticalAlignment="Center"
-                                IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyInvoiceNumFilter}">
+                                IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyNumFilter}">
                                 Apply
                             </CheckBox>
 
@@ -256,18 +256,18 @@
                                 MinWidth="180"
                                 Margin="10,0,0,0"
                                 materialDesign:HintAssist.FloatingScale="1"
-                                materialDesign:HintAssist.Hint="Invoice Number From"
+                                materialDesign:HintAssist.Hint="Tran Number From"
                                 IsEnabled="{Binding ElementName=CheckBoxApplyInvNum, Path=IsChecked}"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=InvoiceNumFrom}" />
+                                Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=NumFrom}" />
                             <TextBox
                                 MinWidth="180"
                                 Margin="10,0,0,0"
                                 materialDesign:HintAssist.FloatingScale="1"
-                                materialDesign:HintAssist.Hint="Invoice Number To"
+                                materialDesign:HintAssist.Hint="Trans Number To"
                                 IsEnabled="{Binding ElementName=CheckBoxApplyInvNum, Path=IsChecked}"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=InvoiceNumTo}" />
+                                Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=NumTo}" />
                         </StackPanel>
                         <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
                             <CheckBox

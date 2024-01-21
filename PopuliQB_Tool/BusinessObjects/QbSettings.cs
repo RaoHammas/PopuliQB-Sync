@@ -10,12 +10,15 @@ public sealed partial class QbSettings : ObservableObject
     [ObservableProperty] private DateTime _postedFrom = DateTime.UtcNow;
     [ObservableProperty] private DateTime _postedTo = DateTime.UtcNow;
     [ObservableProperty] private bool _applyPostedDateFilter;
+
     [ObservableProperty] private DateTime _addedFrom = DateTime.UtcNow;
     [ObservableProperty] private DateTime _addedTo = DateTime.UtcNow;
     [ObservableProperty] private bool _applyAddedDateFilter;
-    [ObservableProperty] private string _invoiceNumFrom = "";
-    [ObservableProperty] private string _invoiceNumTo = "";
-    [ObservableProperty] private bool _applyInvoiceNumFilter;
+
+    [ObservableProperty] private string _numFrom = "";
+    [ObservableProperty] private string _numTo = "";
+    [ObservableProperty] private bool _applyNumFilter;
+
     [ObservableProperty] private PopPerson? _student;
     [ObservableProperty] private bool _applyStudentFilter;
     [ObservableProperty] private bool _applyIgnoreStartingBalanceFilter = true;
@@ -27,9 +30,7 @@ public sealed partial class QbSettings : ObservableObject
     [ObservableProperty] private string _uniquePopuliIdName = "UniquePopuliId";
 
 
-
     private QbSettings()
     {
     }
-
 }

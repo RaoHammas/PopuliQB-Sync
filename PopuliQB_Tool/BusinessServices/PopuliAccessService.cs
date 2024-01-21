@@ -446,7 +446,7 @@ public class PopuliAccessService
             });
         }
 
-        if (QbSettings.Instance.ApplyInvoiceNumFilter)
+        if (QbSettings.Instance.ApplyNumFilter)
         {
             filter.FilterItems[0].Fields.Add(new PopFilterTypeField
             {
@@ -455,8 +455,8 @@ public class PopuliAccessService
                 Value = new PopFilterValueDateRange
                 {
                     Type = "RANGE",
-                    Start = QbSettings.Instance.InvoiceNumFrom,
-                    End = QbSettings.Instance.InvoiceNumTo,
+                    Start = QbSettings.Instance.NumFrom,
+                    End = QbSettings.Instance.NumTo,
                 }
             });
         }
@@ -555,7 +555,7 @@ public class PopuliAccessService
             });
         }
 
-        if (QbSettings.Instance.ApplyInvoiceNumFilter)
+        /*if (QbSettings.Instance.ApplyNumFilter)
         {
             filter.FilterItems[0].Fields.Add(new PopFilterTypeField
             {
@@ -564,11 +564,11 @@ public class PopuliAccessService
                 Value = new PopFilterValueDateRange
                 {
                     Type = "RANGE",
-                    Start = QbSettings.Instance.InvoiceNumFrom,
-                    End = QbSettings.Instance.InvoiceNumTo,
+                    Start = QbSettings.Instance.NumFrom,
+                    End = QbSettings.Instance.NumTo,
                 }
             });
-        }
+        }*/
 
         var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
