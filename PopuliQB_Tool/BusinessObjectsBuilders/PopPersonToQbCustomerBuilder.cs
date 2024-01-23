@@ -62,12 +62,12 @@ public class PopPersonToQbCustomerBuilder
         PopDegree? degree = null;
         if (person.Degrees is { Count: > 0 })
         {
-            degree = PopuliAccessService.AllPopuliDegrees.FirstOrDefault(x => x.Id == person.Degrees[0].Id)!;
+            degree = PopuliAccessService.AllPopuliDegrees.FirstOrDefault(x => x.Id == person.Degrees[0].DegreeId)!;
         }
 
         if (degree != null)
         {
-            request.CompanyName.SetValue(degree.ReportData!.DepartmentName ?? "Divine Mercy University");
+            request.CompanyName.SetValue(degree.ReportData?.DepartmentName ?? "Divine Mercy University");
         }
         else
         {

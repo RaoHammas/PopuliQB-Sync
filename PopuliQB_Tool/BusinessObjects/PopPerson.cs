@@ -402,5 +402,5 @@ public class PersonDegree
     public string? AnticipatedCompletionDate { get; set; }
 
     [JsonPropertyName("show_on_transcript")]
-    public int? ShowOnTranscript { get; set; }
+    public object? ShowOnTranscript { get; set; }
 }

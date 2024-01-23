@@ -45,7 +45,7 @@ public class PopuliAccessService
         var filter = new PopFilter
         {
             Page = page,
-            Expand = new[] { "addresses", "phone_numbers", "student" },
+            Expand = new[] { "addresses", "phone_numbers", "student", "student_degrees" },
             FilterItems = new List<PopFilterItem>
             {
                 new()
