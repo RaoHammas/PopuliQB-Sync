@@ -19,7 +19,9 @@
     <SignAssembly>False</SignAssembly>
     <PackageProjectUrl>https://github.com/RaoHammas/PopuliQB-Sync</PackageProjectUrl>
   </PropertyGroup>
-
+	<PropertyGroup>   
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	</PropertyGroup>
   <ItemGroup>
     <Compile Remove="BusinessServices\QBInvoiceService.cs" />
     <Compile Remove="BusinessServices\QbPaymentsService.cs" />
