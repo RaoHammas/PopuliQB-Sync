@@ -11,10 +11,13 @@
     <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
     <Title>Populi to QuickBooks Sync</Title>
     <Description>Populi to QuickBooks Sync</Description>
-    <Authors>Populi to QuickBooks Sync</Authors>
-    <Company>Populi to QuickBooks Sync</Company>
+    <Authors>Rao Hammas</Authors>
+    <Company>Rao Hammas</Company>
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>Populi; QuickBooks; Sync;</PackageTags>
+    <Copyright>All Rights Reserevd ©️ Rao Hammas</Copyright>
+    <SignAssembly>False</SignAssembly>
+    <PackageProjectUrl>https://github.com/RaoHammas/PopuliQB-Sync</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -76,6 +79,10 @@
 
   <ItemGroup>
     <Folder Include="Models\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="https:\github.com\RaoHammas\PopuliQB-Sync" />
   </ItemGroup>
 
   <ItemGroup>
