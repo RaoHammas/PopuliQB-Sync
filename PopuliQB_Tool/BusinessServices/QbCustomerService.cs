@@ -45,13 +45,15 @@ public class QbCustomerService
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
             OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, persons.Count));
             
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
                 foreach (var person in persons)
                 {
+                    await Task.Delay(1000);
+
                     if (AllExistingCustomersList
                             .FirstOrDefault(x => x.QbCustomerFName == person.FirstName!.Trim() && x.QbCustomerLName == person.LastName!.Trim()) != null)
                     {
@@ -271,7 +273,12 @@ public class QbCustomerService
             customer.QbListId = customerRet.ListID.GetValue();
             customer.QbCustomerName = customerRet.Name.GetValue();
             var split = customer.QbCustomerName!.Split(",");
-            
+
+            if (split.Length < 2)
+            {
+                return customer;
+            }
+
             if (!string.IsNullOrEmpty(split[1]))
             {
                 customer.QbCustomerFName = split[1].Trim();

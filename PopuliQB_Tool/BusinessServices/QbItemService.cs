@@ -105,13 +105,14 @@ public class QbItemService
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
                 foreach (var excelItem in excelItems)
                 {
+                    await Task.Delay(1000);
                     if (excelItem.Name.Length > 31) //31 is max length for Item name field in QB
                     {
                         var name = excelItem.Name.Substring(0, 31).Trim();
