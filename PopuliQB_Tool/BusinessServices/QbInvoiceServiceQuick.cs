@@ -112,24 +112,16 @@ public class QbInvoiceServiceQuick
 
                 foreach (var invoiceItem in invoice.Items)
                 {
-                    if (invoiceItem.Name!.Length > 31) //31 is max length for Item name field in QB
-                    {
-                        var name = invoiceItem.Name.Substring(0, 31).Trim();
-                        invoiceItem.Name = name.RemoveInvalidUnicodeCharacters();
-                    }
-
-                    var existingItem = _itemService.AllExistingItemsList.FirstOrDefault(x =>
-                        x.QbItemName!.ToLower().Trim() == invoiceItem.Name.ToLower().Trim());
-                    if (existingItem == null)
+                    if (!_itemService.CheckIfItemExists(invoiceItem))
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Error,
                                 $"Invoice.Num = {numb} | Invoice Item {invoiceItem.Name} doesn't exist in QB."));
-
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Warn,
+                                $"Skipped the Invoice.Num: {invoice.Number} for student: {person.DisplayName} due to Item not found issue."));
                         return false;
                     }
-
-                    invoiceItem.ItemQbListId = existingItem!.QbListId;
                 }
             }
 
@@ -280,24 +272,16 @@ public class QbInvoiceServiceQuick
             {
                 foreach (var invoiceItem in invoice.Items)
                 {
-                    if (invoiceItem.Name!.Length > 31) //31 is max length for Item name field in QB
-                    {
-                        var name = invoiceItem.Name.Substring(0, 31).Trim();
-                        invoiceItem.Name = name.RemoveInvalidUnicodeCharacters();
-                    }
-
-                    var existingItem = _itemService.AllExistingItemsList.FirstOrDefault(x =>
-                        x.QbItemName!.ToLower().Trim() == invoiceItem.Name.ToLower().Trim());
-                    if (existingItem == null)
+                    if (!_itemService.CheckIfItemExists(invoiceItem))
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Error,
-                                $"refund.Num = {refund.RefundId} | Item {invoiceItem.Name} doesn't exist in QB."));
-
+                                $"Refund.Num = {refund.RefundId} | Item {invoiceItem.Name} doesn't exist in QB."));
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Warn,
+                                $"Skipped Refund for student {person.DisplayName} due to Item not found issue."));
                         return false;
                     }
-
-                    invoiceItem.ItemQbListId = existingItem!.QbListId;
                 }
             }
 
@@ -386,11 +370,11 @@ public class QbInvoiceServiceQuick
         {
             AllExistingInvoicesList.Clear();
 
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -524,6 +508,7 @@ public class QbInvoiceServiceQuick
             invoice.QbCustomerName = ret.CustomerRef.FullName.GetValue();
 
             var refNum = ret.Memo.GetValue();
+            invoice.UniqueId = "";
             if (!string.IsNullOrEmpty(refNum))
             {
                 var arr = refNum.Split("##");

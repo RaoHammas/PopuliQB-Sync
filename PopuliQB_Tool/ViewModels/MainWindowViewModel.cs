@@ -24,6 +24,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isAccountsListSynced = false;
     [ObservableProperty] private bool _isItemsListSynced = false;
     [ObservableProperty] private bool _isStudentsListSynced = false;
+    [ObservableProperty] private bool _isBusy = false;
 
     private readonly QbItemService _qbItemService;
     private readonly QbService _qbService;
@@ -147,7 +148,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         {
             return;
         }
-
+        
+        IsBusy = true;
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -207,6 +209,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
             _logger.Error(ex);
         }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
@@ -217,7 +223,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         {
             return;
         }
-
+        
+        IsBusy = true;
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -238,6 +245,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
             _logger.Error(ex);
         }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
@@ -248,7 +259,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         {
             return;
         }
-
+        
+        IsBusy = true;
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -269,6 +281,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
             _logger.Error(ex);
         }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
@@ -279,6 +295,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         {
             return;
         }
+
+        IsBusy = true;
 
         SyncStatusMessages.Clear();
         TotalRecords = 0;
@@ -297,92 +315,126 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
             _logger.Error(ex);
         }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
     private async Task StartPopuliToQbAccountsSync()
     {
-        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Students Sync?");
-        if (result == MessageBoxResult.No)
+        try
         {
-            return;
-        }
-
-        SyncStatusMessages.Clear();
-        TotalRecords = 0;
-        ProgressCount = 0;
-
-        SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
-        await Task.Run(async () =>
-        {
-            SetSyncStatusMessage(StatusMessageType.Info, "Synching Accounts From QB.");
-            await QbAccountsService.SyncAllExistingAccountsAsync();
-
-
-            SetSyncStatusMessage(StatusMessageType.Info, "Fetching Accounts From Populi.");
-            await PopuliAccessService.SyncAllAccountsAsync();
-            SetSyncStatusMessage(StatusMessageType.Success,
-                $"Fetched accounts: {PopuliAccessService.AllPopuliAccounts.Count}.");
-
-            foreach (var account in PopuliAccessService.AllPopuliAccounts)
+            var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Students Sync?");
+            if (result == MessageBoxResult.No)
             {
-                var qbAcc = QbAccountsService.AllExistingAccountsList
-                    .FirstOrDefault(x =>
-                        x.Number == account.AccountNumber
-                        || x.Title.Trim().ToLower() == account.Name!.Trim().ToLower());
-                if (qbAcc != null)
-                {
-                    account.QbAccountListId = qbAcc.ListId;
-                }
-                else
-                {
-                    SetSyncStatusMessage(StatusMessageType.Error,
-                        $"Populi Acc No: {account.AccountNumber}  Name: {account.Name} doesn't exist in QB.");
-                }
+                return;
             }
-        });
 
-        IsAccountsListSynced = true;
-        SetSyncStatusMessage(StatusMessageType.Success, $"Accounts List Sync Completed.");
+            IsBusy = true;
+            SyncStatusMessages.Clear();
+            TotalRecords = 0;
+            ProgressCount = 0;
+
+            SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
+            await Task.Run(async () =>
+            {
+                SetSyncStatusMessage(StatusMessageType.Info, "Synching Accounts From QB.");
+                await QbAccountsService.SyncAllExistingAccountsAsync();
+
+
+                SetSyncStatusMessage(StatusMessageType.Info, "Fetching Accounts From Populi.");
+                await PopuliAccessService.SyncAllAccountsAsync();
+                SetSyncStatusMessage(StatusMessageType.Success,
+                    $"Fetched accounts: {PopuliAccessService.AllPopuliAccounts.Count}.");
+
+                foreach (var account in PopuliAccessService.AllPopuliAccounts)
+                {
+                    var qbAcc = QbAccountsService.AllExistingAccountsList
+                        .FirstOrDefault(x =>
+                            x.Number == account.AccountNumber
+                            || x.Title.Trim().ToLower() == account.Name!.Trim().ToLower());
+                    if (qbAcc != null)
+                    {
+                        account.QbAccountListId = qbAcc.ListId;
+                    }
+                    else
+                    {
+                        SetSyncStatusMessage(StatusMessageType.Error,
+                            $"Populi Acc No: {account.AccountNumber}  Name: {account.Name} doesn't exist in QB.");
+                    }
+                }
+            });
+
+            IsAccountsListSynced = true;
+            SetSyncStatusMessage(StatusMessageType.Success, $"Accounts List Sync Completed.");
+        }
+        catch (Exception ex)
+        {
+            SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
+            _logger.Error(ex);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+        
     }
 
     [RelayCommand]
     private async Task StartExcelToQbItemsSync()
     {
-        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Students Sync?");
-        if (result == MessageBoxResult.No)
+        try
         {
-            return;
-        }
-
-        SyncStatusMessages.Clear();
-        TotalRecords = 0;
-        ProgressCount = 0;
-
-        SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
-        await Task.Run(async () =>
-        {
-            SetSyncStatusMessage(StatusMessageType.Info, "Synching Items From QB.");
-            await _qbItemService.SyncAllExistingItemsAsync();
-
-            SetSyncStatusMessage(StatusMessageType.Info, "Synching Items From Excel.");
-            const string path = "QB- Item List.xlsx";
-            var sheetNames = MiniExcel.GetSheetNames(path);
-            List<PopExcelItem> excelItems = new();
-            foreach (var sheetName in sheetNames)
+            var result =
+                _messageBoxService.ShowQuestionWithYesNo("Confirmation Required",
+                    "Do you want to start Students Sync?");
+            if (result == MessageBoxResult.No)
             {
-                excelItems.AddRange(MiniExcel.Query<PopExcelItem>(path, sheetName: sheetName, excelType: ExcelType.XLSX)
-                    .ToList());
+                return;
             }
 
-            TotalRecords = excelItems.Count;
+            IsBusy = true;
+            SyncStatusMessages.Clear();
+            TotalRecords = 0;
             ProgressCount = 0;
 
-            await _qbItemService.AddExcelItemsAsync(excelItems);
-        });
+            SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
+            await Task.Run(async () =>
+            {
+                SetSyncStatusMessage(StatusMessageType.Info, "Synching Items From QB.");
+                await _qbItemService.SyncAllExistingItemsAsync();
 
-        IsItemsListSynced = true;
-        SetSyncStatusMessage(StatusMessageType.Success, $"Items List Sync Completed.");
+                SetSyncStatusMessage(StatusMessageType.Info, "Synching Items From Excel.");
+                const string path = "QB- Item List.xlsx";
+                var sheetNames = MiniExcel.GetSheetNames(path);
+                List<PopExcelItem> excelItems = new();
+                foreach (var sheetName in sheetNames)
+                {
+                    excelItems.AddRange(MiniExcel
+                        .Query<PopExcelItem>(path, sheetName: sheetName, excelType: ExcelType.XLSX)
+                        .ToList());
+                }
+
+                TotalRecords = excelItems.Count;
+                ProgressCount = 0;
+
+                await _qbItemService.AddExcelItemsAsync(excelItems);
+            });
+
+            IsItemsListSynced = true;
+            SetSyncStatusMessage(StatusMessageType.Success, $"Items List Sync Completed.");
+        }
+        catch (Exception ex)
+        {
+            SetSyncStatusMessage(StatusMessageType.Error, $"Failed with error : {ex.Message}.");
+            _logger.Error(ex);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]

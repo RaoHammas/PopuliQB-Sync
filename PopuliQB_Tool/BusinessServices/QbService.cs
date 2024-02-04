@@ -42,11 +42,11 @@ public class QbService
         var isSessionOpen = false;
         try
         {
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -76,11 +76,18 @@ public class QbService
                     {
                         foreach (var payment in allPayments)
                         {
-                            await Task.Delay(2000);
+                            //await Task.Delay(1000);
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 payment.TransactionId!
                                     .Value);
-                            
+                            if (trans.Id == null || trans.Id < 1)
+                            {
+                                OnSyncStatusChanged?.Invoke(this,
+                                    new StatusMessageArgs(StatusMessageType.Warn,
+                                        $"Skipped Payment.Number {payment.Number}. Transaction.Id {payment.TransactionId} is not found for it. Is it Void?"));
+                                continue;
+                            }
+
                             if (QbSettings.Instance.ApplyNumFilter
                                 && (trans.Number!.Value < Convert.ToInt32(QbSettings.Instance.NumFrom)
                                     || trans.Number!.Value > Convert.ToInt32(QbSettings.Instance.NumTo))
@@ -155,11 +162,11 @@ public class QbService
         var isSessionOpen = false;
         try
         {
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -191,7 +198,7 @@ public class QbService
                     {
                         foreach (var refund in allRefunds)
                         {
-                            await Task.Delay(2000);
+                            //await Task.Delay(1000);
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 refund.TransactionId!
                                     .Value);
@@ -270,11 +277,11 @@ public class QbService
         var isSessionOpen = false;
         try
         {
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -305,7 +312,7 @@ public class QbService
                     {
                         foreach (var invoice in allInvoices)
                         {
-                            await Task.Delay(2000);
+                            //await Task.Delay(1000);
                             var trans =
                                 await _populiAccessService.GetTransactionByIdWithLedgerAsync(invoice.TransactionId!
                                     .Value);

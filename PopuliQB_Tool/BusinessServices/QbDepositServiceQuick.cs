@@ -112,11 +112,11 @@ public class QbDepositServiceQuick
         {
             AllExistingDepositsList.Clear();
 
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -246,7 +246,7 @@ public class QbDepositServiceQuick
             if (ret == null) return null;
 
             var deposit = new QbDeposit();
-
+            deposit.UniqueId = "";
             var refNum = ret.Memo.GetValue();
             if (!string.IsNullOrEmpty(refNum))
             {
@@ -259,7 +259,7 @@ public class QbDepositServiceQuick
 
             AllExistingDepositsList.Add(deposit);
             OnSyncStatusChanged?.Invoke(this,
-                new StatusMessageArgs(StatusMessageType.Info, $"Found Deposit: {deposit.PopDepositNumber}"));
+                new StatusMessageArgs(StatusMessageType.Info, $"Found Deposit: {deposit.UniqueId}"));
             return deposit;
         }
         catch (Exception ex)

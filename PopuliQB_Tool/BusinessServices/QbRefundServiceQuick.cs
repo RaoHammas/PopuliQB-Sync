@@ -126,26 +126,17 @@ public class QbRefundServiceQuick
 
                 foreach (var item in refundCheque.Items)
                 {
-                    //31 is max length for Item name field in QB
-                    if (item.Name!.Length > 31)
-                    {
-                        var name = item.Name.Substring(0, 31).Trim();
-                        item.Name = name.RemoveInvalidUnicodeCharacters();
-                    }
-
-                    var existingItem = _itemsService.AllExistingItemsList.FirstOrDefault(x =>
-                        x.QbItemName!.ToLower().Trim() ==
-                        item.Name.ToLower().Trim());
-                    if (existingItem == null)
-                    {
+                    if (!_itemsService.CheckIfItemExists(item))
+                    { 
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Error,
                                 $"refund.Num = {refund.RefundId} | Item {item.Name} doesn't exist in QB."));
-
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Warn,
+                                $"Skipped rest of the Refunds for student {person.DisplayName} due to Item not found issue."));
                         return false;
+                        
                     }
-
-                    item.ItemQbListId = existingItem!.QbListId;
                 }
             }
 
@@ -234,11 +225,11 @@ public class QbRefundServiceQuick
         {
             AllExistingChequesList.Clear();
 
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -371,6 +362,7 @@ public class QbRefundServiceQuick
             cheque.QbCustomerListId = ret.PayeeEntityRef.ListID.GetValue();
             cheque.QbCustomerName = ret.PayeeEntityRef.FullName.GetValue();
             var refNum = ret.Memo.GetValue();
+            cheque.UniqueId = "";
             if (!string.IsNullOrEmpty(refNum))
             {
                 var arr = refNum.Split("##");
@@ -379,6 +371,7 @@ public class QbRefundServiceQuick
                     cheque.UniqueId = arr[0].Trim() + "##";
                 }
             }
+            
 
             AllExistingChequesList.Add(cheque);
             OnSyncStatusChanged?.Invoke(this,

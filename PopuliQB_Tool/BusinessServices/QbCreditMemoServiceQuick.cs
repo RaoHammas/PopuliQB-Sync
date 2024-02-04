@@ -136,25 +136,16 @@ public class QbCreditMemoServiceQuick
 
                 foreach (var credItem in memo.Items)
                 {
-                    //31 is max length for Item name field in QB
-                    if (credItem.Name!.Length > 31)
-                    {
-                        var name = credItem.Name.Substring(0, 31).Trim();
-                        credItem.Name = name.RemoveInvalidUnicodeCharacters();
-                    }
-
-                    var existingItem = _itemsService.AllExistingItemsList.FirstOrDefault(x =>
-                        x.QbItemName!.ToLower().Trim() == credItem.Name.ToLower().Trim());
-                    if (existingItem == null)
+                    if (!_itemsService.CheckIfItemExists(credItem))
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Error,
                                 $"CreditMemo.Num = {payment.Number} | Memo Item {credItem.Name} doesn't exist in QB."));
-
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Warn,
+                                $"Skipped CredMemo.Num:{payment.Number} for student {person.DisplayName} due to Item not found issue."));
                         return false;
                     }
-
-                    credItem.ItemQbListId = existingItem!.QbListId;
                 }
             }
 
@@ -299,25 +290,16 @@ public class QbCreditMemoServiceQuick
 
                 foreach (var credItem in salesCredit.Items)
                 {
-                    //31 is max length for Item name field in QB
-                    if (credItem.Name!.Length > 31)
-                    {
-                        var name = credItem.Name.Substring(0, 31).Trim();
-                        credItem.Name = name.RemoveInvalidUnicodeCharacters();
-                    }
-
-                    var existingItem = _itemsService.AllExistingItemsList.FirstOrDefault(x =>
-                        x.QbItemName!.ToLower().Trim() == credItem.Name.ToLower().Trim());
-                    if (existingItem == null)
+                    if (!_itemsService.CheckIfItemExists(credItem))
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Error,
                                 $"SaleCredit.Num = {numb} | Item {credItem.Name} doesn't exist in QB."));
-
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Warn,
+                                $"Skipped SalesCredit.Num:{numb} for student {person.DisplayName} due to Item not found issue."));
                         return false;
                     }
-
-                    credItem.ItemQbListId = existingItem!.QbListId;
                 }
             }
 
@@ -403,11 +385,11 @@ public class QbCreditMemoServiceQuick
         {
             AllExistingMemosList.Clear();
 
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -541,6 +523,7 @@ public class QbCreditMemoServiceQuick
             memo.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
             memo.QbCustomerName = ret.CustomerRef.FullName.GetValue();
             var refNum = ret.Memo.GetValue();
+            memo.UniqueId = "";
             if (!string.IsNullOrEmpty(refNum))
             {
                 var arr = refNum.Split("##");
@@ -549,6 +532,7 @@ public class QbCreditMemoServiceQuick
                     memo.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
                 }
             }
+
             AllExistingMemosList.Add(memo);
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Info, $"Found Memo: {memo.PopMemoNumber}"));

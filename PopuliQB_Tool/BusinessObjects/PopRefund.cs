@@ -48,13 +48,13 @@ public class PopRefund
 
     [JsonPropertyName("cod_amount")] public double? CodAmount { get; set; }
 
-    [JsonPropertyName("cod_originated")] public bool? CodOriginated { get; set; }
+    [JsonPropertyName("cod_originated")] public object? CodOriginated { get; set; }
 
     [JsonPropertyName("cod_net_amount")] public double? CodNetAmount { get; set; }
 
-    [JsonPropertyName("cod_released")] public bool? CodReleased { get; set; }
+    [JsonPropertyName("cod_released")] public object? CodReleased { get; set; }
 
-    [JsonPropertyName("cod_needs_sync")] public bool? CodNeedsSync { get; set; }
+    [JsonPropertyName("cod_needs_sync")] public object? CodNeedsSync { get; set; }
 
     [JsonPropertyName("cod_enrollment_status")]
     public object? CodEnrollmentStatus { get; set; }
@@ -63,7 +63,7 @@ public class PopRefund
     public object? AutoCalculatedEnrollment { get; set; }
 
     [JsonPropertyName("enrollment_mismatch")]
-    public bool? EnrollmentMismatch { get; set; }
+    public object? EnrollmentMismatch { get; set; }
 
     [JsonPropertyName("cod_program_cip_code")]
     public object? CodProgramCipCode { get; set; }

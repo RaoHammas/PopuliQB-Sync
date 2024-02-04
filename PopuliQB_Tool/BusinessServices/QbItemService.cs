@@ -27,6 +27,25 @@ public class QbItemService
         _qbAccountsService = qbAccountsService;
     }
 
+    public bool CheckIfItemExists(PopItem item)
+    {
+        //31 is max length for Item name field in QB
+        if (item.Name!.Length > 31)
+        {
+            var name = item.Name.Substring(0, 31).Trim();
+            item.Name = name.RemoveInvalidUnicodeCharacters();
+        }
+
+        var existingItem = AllExistingItemsList.FirstOrDefault(x => x.QbItemName!.ToLower().Trim() == item.Name.ToLower().Trim());
+        if (existingItem == null)
+        {
+            return false;
+        }
+
+        item.ItemQbListId = existingItem!.QbListId;
+        return true;
+    }
+
     public async Task AddItemAsync(PopItem item)
     {
         var sessionManager = new QBSessionManager();
@@ -35,11 +54,11 @@ public class QbItemService
 
         try
         {
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -97,11 +116,11 @@ public class QbItemService
 
         try
         {
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -112,7 +131,7 @@ public class QbItemService
 
                 foreach (var excelItem in excelItems)
                 {
-                    await Task.Delay(1000);
+                    //await Task.Delay(1000);
                     if (excelItem.Name.Length > 31) //31 is max length for Item name field in QB
                     {
                         var name = excelItem.Name.Substring(0, 31).Trim();
@@ -246,11 +265,11 @@ public class QbItemService
         try
         {
             AllExistingItemsList.Clear();
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 

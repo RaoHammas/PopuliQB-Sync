@@ -36,11 +36,11 @@ public class QbCustomerService
 
         try
         {
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             IsConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             IsSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
             OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, persons.Count));
@@ -52,7 +52,7 @@ public class QbCustomerService
 
                 foreach (var person in persons)
                 {
-                    await Task.Delay(1000);
+                    //await Task.Delay(1000);
 
                     if (AllExistingCustomersList
                             .FirstOrDefault(x => x.QbCustomerFName == person.FirstName!.Trim() && x.QbCustomerLName == person.LastName!.Trim()) != null)
@@ -178,11 +178,11 @@ public class QbCustomerService
         {
             AllExistingCustomersList.Clear();
 
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             IsConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             IsSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 

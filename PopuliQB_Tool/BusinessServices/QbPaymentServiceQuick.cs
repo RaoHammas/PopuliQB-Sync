@@ -158,11 +158,11 @@ public class QbPaymentServiceQuick
         {
             AllExistingPaymentsList.Clear();
 
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             isSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -294,14 +294,18 @@ public class QbPaymentServiceQuick
             payment.PopPaymentNumber = ret.RefNumber.GetValue();
             payment.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
             payment.QbCustomerName = ret.CustomerRef.FullName.GetValue();
-
+            payment.UniqueId = "";
             var refNum = ret.Memo.GetValue();
             if (!string.IsNullOrEmpty(refNum))
             {
                 var arr = refNum.Split("##");
-                payment.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
+                if (arr.Any())
+                {
+                    payment.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
+                }
+                
             }
-
+            
             AllExistingPaymentsList.Add(payment);
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Info, $"Found Payment: {payment.PopPaymentNumber}"));

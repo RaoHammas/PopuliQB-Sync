@@ -37,7 +37,7 @@ public class PopuliAccessService
 
     public async Task<PopResponse<PopPerson>> GetAllPersonsAsync(int page = 1)
     {
-        await Task.Delay(2000);
+        //await Task.Delay(1000);
         var request = new RestRequest($"{_url}/people/");
         request.AddHeader("Authorization", $"Bearer {_authToken}");
         request.AddHeader("Content-Type", "application/json");
