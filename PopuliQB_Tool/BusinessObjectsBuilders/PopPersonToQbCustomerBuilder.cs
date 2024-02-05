@@ -1,18 +1,19 @@
 ﻿using QBFC16Lib;
 using PopuliQB_Tool.BusinessObjects;
+using PopuliQB_Tool.BusinessServices;
 using PopuliQB_Tool.Helpers;
 
 namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopPersonToQbCustomerBuilder
 {
-    public static string GetFullName(string firstName, string lastName)
+    public static string GetFullName(string? firstName, string? lastName)
     {
         var fullName = "";
         
         if (!string.IsNullOrEmpty(lastName))
         {
-            fullName += $" {lastName}";
+            fullName += $"{lastName}";
         }
 
         if (!string.IsNullOrEmpty(firstName))
@@ -27,22 +28,9 @@ public class PopPersonToQbCustomerBuilder
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendCustomerAddRq();
-
-        request.Fax.SetValue(person.Id.ToString());
-
         var maxLength = Convert.ToInt32(request.Salutation.GetMaxLength());
-        request.Salutation.SetValue(person.Prefix?.Length < maxLength ? person.Prefix : "");
+        //request.Salutation.SetValue(person.Prefix?.Length < maxLength ? person.Prefix : "");
         request.Name.SetValue(GetFullName(person.FirstName, person.LastName));
-
-        maxLength = Convert.ToInt32(request.Name.GetMaxLength());
-        /*if (!string.IsNullOrEmpty(person.DisplayName) && person.DisplayName.Length < maxLength)
-        {
-            request.Name.SetValue(person.DisplayName);
-        }
-        else
-        {
-            request.Name.SetValue(person.DisplayName?.DivideIntoEqualParts(maxLength)[0]);
-        }*/
 
         if (!string.IsNullOrEmpty(person.FirstName))
         {
@@ -70,8 +58,22 @@ public class PopPersonToQbCustomerBuilder
 
         request.Email.SetValue(person.ReportData?.ContactPrimaryEmail ?? "");
         request.IsActive.SetValue(true);
-        request.CompanyName.SetValue("Divine Mercy University");
+        
+        PopDegree? degree = null;
+        if (person.Degrees is { Count: > 0 })
+        {
+            degree = PopuliAccessService.AllPopuliDegrees.FirstOrDefault(x => x.Id == person.Degrees[0].DegreeId)!;
+        }
 
+        if (degree != null)
+        {
+            request.CompanyName.SetValue(degree.ReportData?.DepartmentName ?? "Divine Mercy University");
+        }
+        else
+        {
+            request.CompanyName.SetValue("Divine Mercy University");
+        }
+        
         if (person.Addresses!= null && person.Addresses.Any())
         {
             var add = person.Addresses[0];
@@ -191,7 +193,9 @@ public class PopPersonToQbCustomerBuilder
         }
 
         request.IncludeRetElementList.Add("Name");
-        request.IncludeRetElementList.Add("Fax");
+        request.IncludeRetElementList.Add("FirstName");
+        request.IncludeRetElementList.Add("LastName");
+        //request.IncludeRetElementList.Add("Fax");
         request.IncludeRetElementList.Add("ListID");
     }
 
@@ -201,7 +205,11 @@ public class PopPersonToQbCustomerBuilder
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendCustomerQueryRq();
         request.IncludeRetElementList.Add("Name");
-        request.IncludeRetElementList.Add("Fax");
+        request.IncludeRetElementList.Add("FirstName");
+        request.IncludeRetElementList.Add("LastName");
+        //request.IncludeRetElementList.Add("Fax");
         request.IncludeRetElementList.Add("ListID");
+        //request.IncludeRetElementList.Add("DataExtRet");
+        //request.OwnerIDList.Add("0");
     }
 }

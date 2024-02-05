@@ -12,7 +12,7 @@ public class PopInvoice
 
     [JsonPropertyName("actor_id")] public int? ActorId { get; set; }
 
-    [JsonPropertyName("number")] public int? Number { get; set; }
+    [JsonPropertyName("number")] public object? Number { get; set; }
 
     [JsonPropertyName("description")] public string? Description { get; set; }
 
@@ -27,9 +27,9 @@ public class PopInvoice
     [JsonPropertyName("marked_uncollectible_on")]
     public object? MarkedUncollectibleOn { get; set; }
 
-    [JsonPropertyName("report_data")] public PopInvoiceReportData? ReportData { get; set; }
+    // [JsonPropertyName("report_data")] public PopInvoiceReportData? ReportData { get; set; }
 
-    [JsonPropertyName("posted_on")] public string? PostedOn { get; set; }
+    [JsonPropertyName("posted_on")] public DateTime? PostedOn { get; set; }
 
     [JsonPropertyName("academic_term_id")] public int? AcademicTermId { get; set; }
 
@@ -62,9 +62,9 @@ public class PopItem
 
 public class PopInvoiceReportData
 {
-    [JsonPropertyName("amount_paid")] public double? AmountPaid { get; set; }
+    [JsonPropertyName("amount_paid")] public object? AmountPaid { get; set; }
 
-    [JsonPropertyName("balance")] public double? Balance { get; set; }
+    [JsonPropertyName("balance")] public object? Balance { get; set; }
 
     [JsonPropertyName("overdue")] public object? Overdue { get; set; }
 
@@ -128,7 +128,7 @@ public class PopCredit
 
     [JsonPropertyName("actor_id")] public int? ActorId { get; set; }
 
-    [JsonPropertyName("number")] public int? Number { get; set; }
+    [JsonPropertyName("number")] public object? Number { get; set; }
 
     [JsonPropertyName("description")] public string? Description { get; set; }
 

@@ -2,7 +2,15 @@
 
 namespace PopuliQB_Tool.PopuliFilters;
 
-public class PopFilterValue
+public class PopFilterValueStatusId
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; }
+}
+public class PopFilterValueDisplayName
 {
     [JsonPropertyName("display_text")]
     public string DisplayText { get; set; }
@@ -11,7 +19,7 @@ public class PopFilterValue
     public string Id { get; set; }
 }
 
-public class PopFilterValueTypeText
+public class PopFilterValueText
 {
     [JsonPropertyName("type")]
     public string Type { get; set; }
@@ -19,8 +27,8 @@ public class PopFilterValueTypeText
     [JsonPropertyName("text")]
     public string Text { get; set; }
 }
-
-public class PopFilterValueRange
+ 
+public class PopFilterValueDateRange
 {
     [JsonPropertyName("type")]
     public string Type { get; set; }
@@ -33,10 +41,11 @@ public class PopFilterValueRange
     // public string DaysAgo { get; set; }
 }
 
-public class PopFilterField
+public class PopFilterTypeField
 {
     [JsonPropertyName("name")]
     public string Name { get; set; }
+
     [JsonPropertyName("value")]
     public object Value { get; set; } // Use object type to handle both Value and ValueRange
 
@@ -50,7 +59,7 @@ public class PopFilterItem
     public string Logic { get; set; }
 
     [JsonPropertyName("fields")]
-    public List<PopFilterField> Fields { get; set; }
+    public List<PopFilterTypeField> Fields { get; set; }
 }
 
 public class PopFilter

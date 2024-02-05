@@ -132,10 +132,10 @@ public class PopAidAwards
     [JsonPropertyName("work_study_hours_per_week")]
     public object? WorkStudyHoursPerWeek { get; set; }*/
 
-    [JsonPropertyName("report_data")] public ReportData? ReportData { get; set; }
+    [JsonPropertyName("report_data")] public AidAwardReportData? ReportData { get; set; }
 }
 
-public class ReportData
+public class AidAwardReportData
 {
     [JsonPropertyName("aid_name")] public string? AidName { get; set; }
 

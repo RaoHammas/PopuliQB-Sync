@@ -12,7 +12,7 @@ public class PopPayment
 
     [JsonPropertyName("transaction_id")] public int? TransactionId { get; set; }
 
-    [JsonPropertyName("number")] public int? Number { get; set; }
+    [JsonPropertyName("number")] public object? Number { get; set; }
 
     [JsonPropertyName("amount")] public double? Amount { get; set; }
 

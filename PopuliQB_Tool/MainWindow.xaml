@@ -12,8 +12,8 @@
     xmlns:models="clr-namespace:PopuliQB_Tool.Models"
     xmlns:viewModels="clr-namespace:PopuliQB_Tool.ViewModels"
     Title="{Binding Title}"
-    Width="900"
-    Height="820"
+    Width="950"
+    Height="720"
     d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel,
                                      IsDesignTimeCreatable=False}"
     ResizeMode="CanResize"
@@ -29,15 +29,8 @@
         </b:EventTrigger>
     </b:Interaction.Triggers>
     <Grid>
-        <!--<Grid.Background>
-            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-                <GradientStop Color="#FFD6BCFF"/>
-                <GradientStop Color="White" Offset="1"/>
-            </LinearGradientBrush>
-        </Grid.Background>-->
 
-
-        <Grid Margin="20">
+        <Grid Margin="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -45,304 +38,306 @@
             </Grid.RowDefinitions>
 
             <!--  OPERATIONS SECTION  -->
+
             <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <StackPanel
-                        Grid.Row="0"
-                        Margin="0,0,0,0"
-                        Orientation="Horizontal">
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CompanyName}" Value="">
+                                    <Setter Property="Grid.IsEnabled" Value="False" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+
+                    </Grid.Style>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <GroupBox Grid.Column="0" BorderThickness="0,0,0,1">
+                        <GroupBox.Header>
+                            <StackPanel Orientation="Horizontal" ToolTip="Before performing Invoice related sync operations following operations must be performed in sequence.">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontWeight="Bold"
+                                    Foreground="{StaticResource MaterialDesignDarkForeground}"
+                                    Text="1. Required Operations" />
+                            </StackPanel>
+                        </GroupBox.Header>
+                        <StackPanel Orientation="Vertical">
+                            <Button
+                                Height="40"
+                                Margin="0,0,0,0"
+                                Padding="10"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding StartPopuliToQbAccountsSyncCommand}"
+                                Content="1. Sync Accounts">
+                                <Button.Style>
+                                    <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAccountsListSynced}" Value="True">
+                                                <Setter Property="Background" Value="Green" />
+                                                <Setter Property="BorderBrush" Value="Green" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button
+                                Height="40"
+                                Margin="0,10,0,0"
+                                Padding="10"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding StartExcelToQbItemsSyncCommand}"
+                                Content="2. Sync Items List">
+                                <Button.Style>
+                                    <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsItemsListSynced}" Value="True">
+                                                <Setter Property="Background" Value="Green" />
+                                                <Setter Property="BorderBrush" Value="Green" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button
+                                Height="40"
+                                Margin="0,10,0,0"
+                                Padding="10"
+                                HorizontalContentAlignment="Left"
+                                Command="{Binding StartPopuliStudentsSyncCommand}"
+                                Content="3. Sync Students">
+                                <Button.Style>
+                                    <Style BasedOn="{StaticResource MaterialDesignRaisedButton}" TargetType="Button">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsStudentsListSynced}" Value="True">
+                                                <Setter Property="Background" Value="Green" />
+                                                <Setter Property="BorderBrush" Value="Green" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <CheckBox
+                                x:Name="CheckBoxApplyStudentsIdFilter"
+                                Margin="0,20,0,0"
+                                VerticalAlignment="Center"
+                                IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplySyncStudentIdsFilter}">
+                                Apply
+                            </CheckBox>
+                            <TextBox
+                                MinWidth="180"
+                                MaxWidth="100"
+                                Margin="0,8,0,0"
+                                materialDesign:HintAssist.FloatingScale="1"
+                                materialDesign:HintAssist.Hint="Student Ids"
+                                AcceptsReturn="True"
+                                IsEnabled="{Binding ElementName=CheckBoxApplyStudentsIdFilter, Path=IsChecked}"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=SyncStudentIds}"
+                                TextWrapping="Wrap" />
+
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Grid.Column="1" BorderThickness="1,0,0,1">
+                        <GroupBox.Header>
+                            <StackPanel Orientation="Horizontal" ToolTip="Before performing Invoice related sync operations following operations must be performed in sequence.">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontWeight="Bold"
+                                    Foreground="{StaticResource MaterialDesignDarkForeground}"
+                                    Text="2. Sync Operations" />
+                            </StackPanel>
+                        </GroupBox.Header>
+                        <GroupBox.Style>
+                            <Style BasedOn="{StaticResource MaterialDesignGroupBox}" TargetType="GroupBox">
+                                <Setter Property="IsEnabled" Value="False" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CompanyName}" Value="">
-                                        <Setter Property="StackPanel.IsEnabled" Value="False" />
-                                    </DataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsAccountsListSynced}" Value="True" />
+                                            <Condition Binding="{Binding IsStudentsListSynced}" Value="True" />
+                                            <Condition Binding="{Binding IsItemsListSynced}" Value="True" />
+                                        </MultiDataTrigger.Conditions>
+                                        <MultiDataTrigger.Setters>
+                                            <Setter Property="IsEnabled" Value="True" />
+                                        </MultiDataTrigger.Setters>
+                                    </MultiDataTrigger>
                                 </Style.Triggers>
                             </Style>
-
-                        </StackPanel.Style>
-
-                        <GroupBox>
-                            <GroupBox.Header>
-                                <StackPanel Orientation="Horizontal" ToolTip="Before performing Invoice related sync operations following operations must be performed in sequence.">
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontWeight="Bold"
-                                        Foreground="{StaticResource MaterialDesignDarkForeground}"
-                                        Text="1. Required Operations" />
-                                </StackPanel>
-                            </GroupBox.Header>
-                            <StackPanel Orientation="Vertical">
+                        </GroupBox.Style>
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal">
                                 <Button
                                     Height="40"
                                     Margin="0,0,0,0"
                                     Padding="10"
-                                    HorizontalContentAlignment="Left"
-                                    Command="{Binding StartPopuliToQbAccountsSyncCommand}"
-                                    Content="1. Sync Accounts" />
+                                    Command="{Binding StartPopuliQuickInvoicesAndSalesCreditCommand}"
+                                    Content="Sync Invoices &amp; Sales Credits" />
                                 <Button
                                     Height="40"
-                                    Margin="0,10,0,0"
+                                    Margin="10,0,0,0"
                                     Padding="10"
-                                    HorizontalContentAlignment="Left"
-                                    Command="{Binding StartExcelToQbItemsSyncCommand}"
-                                    Content="2. Sync Items List" />
+                                    Command="{Binding StartPopuliQuickPaymentsAndCredMemosCommand}"
+                                    Content="Sync Payments &amp; Memos" />
                                 <Button
                                     Height="40"
-                                    Margin="0,10,0,0"
+                                    Margin="10,0,0,0"
                                     Padding="10"
-                                    HorizontalContentAlignment="Left"
-                                    Command="{Binding StartPopuliStudentsSyncCommand}"
-                                    Content="3. Sync Students" />
+                                    Command="{Binding StartPopuliQuickRefundsCommand}"
+                                    Content="Sync Refunds" />
+                            </StackPanel>
+
+                            <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
+                                <CheckBox
+                                    x:Name="CheckBoxApplyPostedDate"
+                                    VerticalAlignment="Center"
+                                    IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyPostedDateFilter}">
+                                    Apply
+                                </CheckBox>
+                                <DatePicker
+                                    MinWidth="180"
+                                    Margin="10,0,0,0"
+                                    materialDesign:HintAssist.FloatingScale="1"
+                                    materialDesign:HintAssist.Hint="Posted Date From"
+                                    IsEnabled="{Binding ElementName=CheckBoxApplyPostedDate, Path=IsChecked}"
+                                    SelectedDate="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=PostedFrom}"
+                                    Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
+                                <DatePicker
+                                    MinWidth="180"
+                                    Margin="10,0,0,0"
+                                    materialDesign:HintAssist.FloatingScale="1"
+                                    materialDesign:HintAssist.Hint="Posted Date To"
+                                    IsEnabled="{Binding ElementName=CheckBoxApplyPostedDate, Path=IsChecked}"
+                                    SelectedDate="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=PostedTo}"
+                                    Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
+                            </StackPanel>
+                            <StackPanel
+                                Margin="0,20,0,0"
+                                Orientation="Horizontal"
+                                Visibility="Collapsed">
+                                <CheckBox
+                                    x:Name="CheckBoxApplyAddedDate"
+                                    VerticalAlignment="Center"
+                                    IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyAddedDateFilter}">
+                                    Apply
+                                </CheckBox>
+
+                                <DatePicker
+                                    MinWidth="180"
+                                    Margin="10,0,0,0"
+                                    materialDesign:HintAssist.FloatingScale="1"
+                                    materialDesign:HintAssist.Hint="Added Date From"
+                                    IsEnabled="{Binding ElementName=CheckBoxApplyAddedDate, Path=IsChecked}"
+                                    SelectedDate="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=AddedFrom}"
+                                    Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
+                                <DatePicker
+                                    MinWidth="180"
+                                    Margin="10,0,0,0"
+                                    materialDesign:HintAssist.FloatingScale="1"
+                                    materialDesign:HintAssist.Hint="Added Date To"
+                                    IsEnabled="{Binding ElementName=CheckBoxApplyAddedDate, Path=IsChecked}"
+                                    SelectedDate="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=AddedTo}"
+                                    Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
+                            </StackPanel>
+                            <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
+                                <CheckBox
+                                    x:Name="CheckBoxApplyInvNum"
+                                    VerticalAlignment="Center"
+                                    IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyNumFilter}">
+                                    Apply
+                                </CheckBox>
 
                                 <TextBox
                                     MinWidth="180"
-                                    Margin="0,20,0,0"
+                                    Margin="10,0,0,0"
                                     materialDesign:HintAssist.FloatingScale="1"
-                                    materialDesign:HintAssist.Hint="Student Ids"
-                                    AcceptsReturn="True"
+                                    materialDesign:HintAssist.Hint="Trans Number From"
+                                    IsEnabled="{Binding ElementName=CheckBoxApplyInvNum, Path=IsChecked}"
                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                    Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=SyncStudentIds}"
-                                    TextWrapping="Wrap" />
-
+                                    Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=NumFrom}" />
+                                <TextBox
+                                    MinWidth="180"
+                                    Margin="10,0,0,0"
+                                    materialDesign:HintAssist.FloatingScale="1"
+                                    materialDesign:HintAssist.Hint="Trans Number To"
+                                    IsEnabled="{Binding ElementName=CheckBoxApplyInvNum, Path=IsChecked}"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                    Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=NumTo}" />
                             </StackPanel>
-                        </GroupBox>
-
-                        <GroupBox>
-                            <GroupBox.Header>
-                                <StackPanel Orientation="Horizontal" ToolTip="Before performing Invoice related sync operations following operations must be performed in sequence.">
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontWeight="Bold"
-                                        Foreground="{StaticResource MaterialDesignDarkForeground}"
-                                        Text="2. Sync Operations" />
-                                </StackPanel>
-                            </GroupBox.Header>
-                            <GroupBox.Style>
-                                <Style BasedOn="{StaticResource MaterialDesignGroupBox}" TargetType="GroupBox">
-                                    <Setter Property="IsEnabled" Value="False" />
-                                    <Style.Triggers>
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsAccountsListSynced}" Value="True" />
-                                                <Condition Binding="{Binding IsStudentsListListSynced}" Value="True" />
-                                                <Condition Binding="{Binding IsItemsListSynced}" Value="True" />
-                                            </MultiDataTrigger.Conditions>
-                                            <MultiDataTrigger.Setters>
-                                                <Setter Property="IsEnabled" Value="True" />
-                                            </MultiDataTrigger.Setters>
-                                        </MultiDataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </GroupBox.Style>
-                            <StackPanel Orientation="Vertical">
-                                <StackPanel Orientation="Horizontal">
-                                    <Button
-                                        Height="40"
-                                        Margin="0,0,0,0"
-                                        Padding="10"
-                                        Command="{Binding StartPopuliInvoicesSyncCommand}"
-                                        Content="Sync Invoices" />
-                                    <Button
-                                        Height="40"
-                                        Margin="10,0,0,0"
-                                        Padding="10"
-                                        Command="{Binding StartPopuliPaymentsSyncCommand}"
-                                        Content="Sync Payments, Memos &amp; Refunds" />
-                                </StackPanel>
-
-                                <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
-                                    <CheckBox
-                                        x:Name="CheckBoxApplyPostedDate"
-                                        VerticalAlignment="Center"
-                                        IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyPostedDateFilter}">
-                                        Apply
-                                    </CheckBox>
-                                    <DatePicker
-                                        MinWidth="180"
-                                        Margin="10,0,0,0"
-                                        materialDesign:HintAssist.FloatingScale="1"
-                                        materialDesign:HintAssist.Hint="Posted Date From"
-                                        IsEnabled="{Binding ElementName=CheckBoxApplyPostedDate, Path=IsChecked}"
-                                        SelectedDate="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=PostedFrom}"
-                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
-                                    <DatePicker
-                                        MinWidth="180"
-                                        Margin="10,0,0,0"
-                                        materialDesign:HintAssist.FloatingScale="1"
-                                        materialDesign:HintAssist.Hint="Posted Date To"
-                                        IsEnabled="{Binding ElementName=CheckBoxApplyPostedDate, Path=IsChecked}"
-                                        SelectedDate="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=PostedTo}"
-                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
-                                </StackPanel>
-                                <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
-                                    <CheckBox
-                                        x:Name="CheckBoxApplyAddedDate"
-                                        VerticalAlignment="Center"
-                                        IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyAddedDateFilter}">
-                                        Apply
-                                    </CheckBox>
-
-                                    <DatePicker
-                                        MinWidth="180"
-                                        Margin="10,0,0,0"
-                                        materialDesign:HintAssist.FloatingScale="1"
-                                        materialDesign:HintAssist.Hint="Added Date From"
-                                        IsEnabled="{Binding ElementName=CheckBoxApplyAddedDate, Path=IsChecked}"
-                                        SelectedDate="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=AddedFrom}"
-                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
-                                    <DatePicker
-                                        MinWidth="180"
-                                        Margin="10,0,0,0"
-                                        materialDesign:HintAssist.FloatingScale="1"
-                                        materialDesign:HintAssist.Hint="Added Date To"
-                                        IsEnabled="{Binding ElementName=CheckBoxApplyAddedDate, Path=IsChecked}"
-                                        SelectedDate="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=AddedTo}"
-                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
-                                </StackPanel>
-                                <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
-                                    <CheckBox
-                                        x:Name="CheckBoxApplyInvNum"
-                                        VerticalAlignment="Center"
-                                        IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyInvoiceNumFilter}">
-                                        Apply
-                                    </CheckBox>
-
-                                    <TextBox
-                                        MinWidth="180"
-                                        Margin="10,0,0,0"
-                                        materialDesign:HintAssist.FloatingScale="1"
-                                        materialDesign:HintAssist.Hint="Invoice Number From"
-                                        IsEnabled="{Binding ElementName=CheckBoxApplyInvNum, Path=IsChecked}"
-                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                        Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=InvoiceNumFrom}" />
-                                    <TextBox
-                                        MinWidth="180"
-                                        Margin="10,0,0,0"
-                                        materialDesign:HintAssist.FloatingScale="1"
-                                        materialDesign:HintAssist.Hint="Invoice Number To"
-                                        IsEnabled="{Binding ElementName=CheckBoxApplyInvNum, Path=IsChecked}"
-                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                        Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=InvoiceNumTo}" />
-                                </StackPanel>
-                                <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
-                                    <CheckBox
-                                        x:Name="CheckBoxApplyStudent"
-                                        VerticalAlignment="Center"
-                                        IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyStudentFilter}">
-                                        Apply
-                                    </CheckBox>
-                                    <ComboBox
-                                        MinWidth="370"
-                                        Margin="10,0,0,0"
-                                        HorizontalAlignment="Stretch"
-                                        materialDesign:HintAssist.FloatingScale="1"
-                                        materialDesign:HintAssist.Hint="Select Student"
-                                        DisplayMemberPath="DisplayName"
-                                        IsEnabled="{Binding ElementName=CheckBoxApplyStudent, Path=IsChecked}"
-                                        ItemsSource="{Binding PopuliAccessService.AllPopuliPersons}"
-                                        SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=Student}"
-                                        Style="{StaticResource MaterialDesignOutlinedComboBox}" />
-                                </StackPanel>
+                            <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
+                                <CheckBox
+                                    x:Name="CheckBoxApplyStudent"
+                                    VerticalAlignment="Center"
+                                    IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyStudentFilter}">
+                                    Apply
+                                </CheckBox>
+                                <ComboBox
+                                    MinWidth="370"
+                                    Margin="10,0,0,0"
+                                    HorizontalAlignment="Stretch"
+                                    materialDesign:HintAssist.FloatingScale="1"
+                                    materialDesign:HintAssist.Hint="Select Student"
+                                    DisplayMemberPath="DisplayName"
+                                    IsEditable="True"
+                                    IsEnabled="{Binding ElementName=CheckBoxApplyStudent, Path=IsChecked}"
+                                    IsTextSearchEnabled="True"
+                                    ItemsSource="{Binding PopuliAccessService.AllPopuliPersons}"
+                                    SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=Student}"
+                                    StaysOpenOnEdit="True"
+                                    Style="{StaticResource MaterialDesignOutlinedComboBox}" />
                             </StackPanel>
-                        </GroupBox>
-                    </StackPanel>
-                </Grid>
 
-                <GroupBox Grid.Column="1">
-                    <GroupBox.Header>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock
+                            <CheckBox
+                                x:Name="CheckBoxIgnoreStartingBalance"
+                                Margin="0,10,0,0"
                                 VerticalAlignment="Center"
-                                FontWeight="Bold"
-                                Foreground="{StaticResource MaterialDesignDarkForeground}"
-                                Text="Settings" />
+                                IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyIgnoreStartingBalanceFilter}">
+                                Ignore Starting Balance Item ?
+                            </CheckBox>
                         </StackPanel>
-                    </GroupBox.Header>
+                    </GroupBox>
+                </Grid>
+                <Border d:IsHidden="True" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border.Background>
+                        <SolidColorBrush Opacity="0.7" Color="{DynamicResource Primary600}" />
+                    </Border.Background>
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Orientation="Vertical">
 
-                    <StackPanel Margin="0,0,0,0" Orientation="Vertical">
-                        <!--<ComboBox
-                            Margin="0,0,0,0"
-                            HorizontalAlignment="Stretch"
-                            materialDesign:HintAssist.FloatingScale="1"
-                            materialDesign:HintAssist.Hint="Acc Rec. for Invoice"
-                            DisplayMemberPath="Title"
-                            IsEditable="True"
-                            ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
-                            SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ARForInvoice}"
-                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />-->
+                        <ProgressBar
+                            IsIndeterminate="True" Width="40" Foreground="White"  Height="40" 
+                            Style="{StaticResource MaterialDesignCircularProgressBar}" />
 
-                        <!--<ComboBox
-                            Margin="0,15,0,0"
-                            HorizontalAlignment="Stretch"
-                            materialDesign:HintAssist.FloatingScale="1"
-                            materialDesign:HintAssist.Hint="Acc Deposit for Payments"
-                            DisplayMemberPath="Title"
-                            IsEditable="True"
-                            ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
-                            SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ADForPayments}"
-                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />-->
-                        <CheckBox
-                            x:Name="CheckBoxIgnoreStartingBalance"
-                            Margin="0,10,0,0"
-                            VerticalAlignment="Center"
-                            IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyIgnoreStartingBalanceFilter}">
-                            Ignore Starting Balance
-                        </CheckBox>
-                        <CheckBox
-                            x:Name="CheckBoxAidArePayments"
-                            Margin="0,10,0,0"
-                            VerticalAlignment="Center"
-                            IsChecked="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ApplyAidPaymentsAreCreditMemoFilter}">
-                            Aid Payments are Credit Memo?
-                        </CheckBox>
-                        <!--<ComboBox
-                            Margin="0,15,0,0"
-                            HorizontalAlignment="Stretch"
-                            materialDesign:HintAssist.FloatingScale="1"
-                            materialDesign:HintAssist.Hint="Acc Rec. for Credit Memos"
-                            DisplayMemberPath="Title"
-                            IsEditable="True"
-                            ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
-                            SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ARForCreditMemos}"
-                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />
-                        <ComboBox
-                            Margin="0,15,0,0"
-                            HorizontalAlignment="Stretch"
-                            materialDesign:HintAssist.FloatingScale="1"
-                            materialDesign:HintAssist.Hint="Acc Rec. for Payments"
-                            DisplayMemberPath="Title"
-                            IsEditable="True"
-                            ItemsSource="{Binding QbAccountsService.AllExistingAccountsList}"
-                            SelectedItem="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=ARForPayments}"
-                            Style="{StaticResource MaterialDesignOutlinedComboBox}" />
-                        -->
+                        <TextBlock
+                            FontSize="24" Margin="0 10 0 0" FontWeight="ExtraBold"
+                            Foreground="{DynamicResource PrimaryHueDarkForegroundBrush}"
+                            Text="Please wait | Sync In Progress">
+                            <TextBlock.Effect>
+                                <DropShadowEffect BlurRadius="2" Direction="-70" Color="Black" ShadowDepth="2" Opacity="0.8"></DropShadowEffect>
+                            </TextBlock.Effect>
+                        </TextBlock>
                     </StackPanel>
-
-
-                </GroupBox>
+                </Border>
             </Grid>
 
             <!--  PROGRESS SECTION  -->
-            <Grid Grid.Row="1">
+            <Grid Grid.Row="1" Margin="0,0,10,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <ProgressBar
                     Grid.Column="0"
-                    Height="10"
-                    Margin="0,20,10,0"
+                    Height="20"
+                    Margin="0,10,10,10"
                     VerticalAlignment="Center"
                     Maximum="{Binding TotalRecords}"
                     Minimum="0"
@@ -351,7 +346,7 @@
                     Grid.Column="1"
                     Margin="0,0,0,-2"
                     HorizontalAlignment="Right"
-                    VerticalAlignment="Bottom">
+                    VerticalAlignment="Center">
                     <Run Text="{Binding ProgressCount}" />
                     <Run>/</Run>
                     <Run Text="{Binding TotalRecords}" />
@@ -359,16 +354,23 @@
             </Grid>
 
             <!--  LOGS SECTION  -->
-            <Grid Grid.Row="2" Margin="0,20,0,0">
+            <Grid Grid.Row="2" Margin="0,0,0,0">
                 <GroupBox
                     Grid.Column="0"
                     Padding="1"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    materialDesign:ElevationAssist.Elevation="Dp2">
+                    BorderThickness="0,0,0,0">
                     <GroupBox.Header>
                         <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
                             <TextBlock
+                                Grid.Column="0"
                                 Padding="5"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
@@ -376,8 +378,9 @@
                                 Foreground="{StaticResource MaterialDesignDarkForeground}"
                                 Text="Sync Logs" />
                             <StackPanel
-                                Margin="0,0,100,0"
-                                HorizontalAlignment="Right"
+                                Grid.Column="2"
+                                Margin="0,0,0,0"
+                                HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
                                 Orientation="Horizontal">
                                 <RadioButton
@@ -456,14 +459,32 @@
                                     </b:Interaction.Triggers>
                                 </RadioButton>
                             </StackPanel>
-                            <Button
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                Command="{Binding ClearLogsCommand}"
-                                Style="{DynamicResource MaterialDesignFlatButton}"
-                                ToolTip="Clear Logs">
-                                <materialDesign:PackIcon Foreground="{DynamicResource MaterialDesignDarkForeground}" Kind="clear" />
-                            </Button>
+                            <StackPanel
+                                Grid.Column="3"
+                                Margin="20,0,0,0"
+                                HorizontalAlignment="Left"
+                                Orientation="Horizontal">
+                                <Button
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding ClearLogsCommand}"
+                                    Style="{DynamicResource MaterialDesignFlatButton}"
+                                    ToolTip="Clear Logs">
+                                    <materialDesign:PackIcon Foreground="{DynamicResource MaterialDesignDarkForeground}" Kind="clear" />
+                                </Button>
+                                <Button
+                                    Margin="0,0,0,0"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding OpenLogsFolderCommand}"
+                                    Style="{DynamicResource MaterialDesignFlatButton}"
+                                    ToolTip="Open logs folder">
+                                    <materialDesign:PackIcon Foreground="{DynamicResource MaterialDesignDarkForeground}" Kind="FolderOpen" />
+                                </Button>
+
+
+                            </StackPanel>
+
                         </Grid>
                     </GroupBox.Header>
                     <DataGrid
@@ -472,6 +493,7 @@
                         CanUserDeleteRows="False"
                         CanUserResizeRows="False"
                         CanUserSortColumns="True"
+                        HeadersVisibility="Column"
                         HorizontalGridLinesBrush="LightGray"
                         HorizontalScrollBarVisibility="Auto"
                         ItemsSource="{Binding SyncStatusMessages}"

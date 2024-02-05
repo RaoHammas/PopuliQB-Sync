@@ -36,7 +36,7 @@ public class PopItemToQbItemBuilder
             var name = item.Name.Substring(0, 31).Trim();
             item.Name = name.RemoveInvalidUnicodeCharacters();
         }
-        request.Name.SetValue(item.Name);
+        request.Name.SetValue(item.Name.RemoveInvalidUnicodeCharacters());
         request.IsActive.SetValue(true);
         request.ORSalesPurchase.SalesOrPurchase.AccountRef.ListID.SetValue(item.QbAccListId);
         

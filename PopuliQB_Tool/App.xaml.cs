@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System.IO;
+using System.Windows;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PopuliQB_Tool.BusinessObjectsBuilders;
 using PopuliQB_Tool.BusinessServices;
@@ -12,13 +14,13 @@ namespace PopuliQB_Tool;
 /// </summary>
 public partial class App : Application
 {
-    private static IServiceProvider _services => ConfigureServices();
+    private static IServiceProvider Services => ConfigureServices();
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        var vm = _services.GetRequiredService<MainWindowViewModel>();
+        var vm = Services.GetRequiredService<MainWindowViewModel>();
 
         MainWindow mainWin = new()
         {
@@ -41,22 +43,27 @@ public partial class App : Application
 
         services.AddSingleton<QbCustomerService>();
         services.AddSingleton<PopPersonToQbCustomerBuilder>();
-        
-        services.AddSingleton<QBInvoiceService>();
-        services.AddSingleton<PopInvoiceToQbInvoiceBuilder>();        
-        
+        services.AddSingleton<PopInvoiceToQbInvoiceBuilder>();
         services.AddSingleton<QbAccountsService>();
         services.AddSingleton<PopAccountsToQbAccountsBuilder>();
-
         services.AddSingleton<QbItemService>();
         services.AddSingleton<PopItemToQbItemBuilder>();
         services.AddSingleton<PopCreditMemoToQbCreditMemoBuilder>();
-
-        services.AddSingleton<QbPaymentsService>();
         services.AddSingleton<PopPaymentToQbPaymentBuilder>();
         services.AddSingleton<PopRefundToQbChequeBuilder>();
         services.AddSingleton<PopDepositToQbDepositBuilder>();
 
+
+        services.AddSingleton<QbInvoiceServiceQuick>();
+        services.AddSingleton<QbPaymentServiceQuick>();
+        services.AddSingleton<QbDepositServiceQuick>();
+        services.AddSingleton<QbCreditMemoServiceQuick>();
+        services.AddSingleton<QbRefundServiceQuick>();
+        services.AddSingleton<CustomFieldBuilderQuick>();
+        services.AddSingleton<QbService>();
+
+        services.AddSingleton<AppConfiguration>();
+        services.AddSingleton<IOService>();
 
         return services.BuildServiceProvider();
     }
