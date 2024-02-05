@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Web;
 using NLog;
 using PopuliQB_Tool.BusinessObjects;
 using RestSharp;
@@ -96,15 +97,12 @@ public class PopuliAccessService
         var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopResponse<PopPerson>>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopResponse<PopPerson>>(request);
+
+        if (response is { Data: not null })
         {
-            if (response.Data != null)
-            {
-                AllPopuliPersons.AddRange(response.Data.Data);
-                return response.Data;
-            }
+            AllPopuliPersons.AddRange(response.Data);
+            return response;
         }
 
         _logger.Error("Failed to fetch Persons. {@response}", response);
@@ -140,15 +138,12 @@ public class PopuliAccessService
         var body = $@"{{""page"": {page}}}";
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopResponse<PopAccount>>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopResponse<PopAccount>>(request);
+
+        if (response is { Data: not null })
         {
-            if (response.Data != null)
-            {
-                AllPopuliAccounts.AddRange(response.Data.Data!);
-                return response.Data;
-            }
+            AllPopuliAccounts.AddRange(response.Data!);
+            return response;
         }
 
         _logger.Error("Failed to fetch Accounts. {@response}", response);
@@ -189,14 +184,11 @@ public class PopuliAccessService
         var body = $@"{{""page"": {page}}}";
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopResponse<PopDegree>>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopResponse<PopDegree>>(request);
+
+        if (response != null)
         {
-            if (response.Data != null)
-            {
-                return response.Data;
-            }
+            return response;
         }
 
         _logger.Error("Failed to fetch Degrees. {@response}", response);
@@ -263,14 +255,11 @@ public class PopuliAccessService
         var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopResponse<PopAidAwards>>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopResponse<PopAidAwards>>(request);
+
+        if (response != null)
         {
-            if (response.Data != null)
-            {
-                return response.Data;
-            }
+            return response;
         }
 
         _logger.Error("Failed to fetch Aid Awards. {@response}", response);
@@ -312,11 +301,11 @@ public class PopuliAccessService
         var body = $@"{{""page"": {page}}}";
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopResponse<PopPayment>>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null, Data: not null })
+        var response = await ExecuteRequestAsync<PopResponse<PopPayment>>(request);
+
+        if (response != null)
         {
-            return response.Data;
+            return response;
         }
 
         _logger.Error("Failed to fetch Payments. {@response}", response);
@@ -377,14 +366,11 @@ public class PopuliAccessService
         var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopResponse<PopTransaction>>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopResponse<PopTransaction>>(request);
+
+        if (response != null)
         {
-            if (response.Data != null)
-            {
-                return response.Data;
-            }
+            return response;
         }
 
         _logger.Error("Failed to fetch Transactions. {@response}", response);
@@ -478,15 +464,12 @@ public class PopuliAccessService
         var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopResponse<PopInvoice>>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopResponse<PopInvoice>>(request);
+
+        if (response is { Data: not null })
         {
-            if (response.Data != null)
-            {
-                AllPopuliInvoices.AddRange(response.Data.Data!);
-                return response.Data;
-            }
+            AllPopuliInvoices.AddRange(response.Data);
+            return response;
         }
 
         _logger.Error("Failed to fetch Invoices. {@response}", response);
@@ -573,14 +556,11 @@ public class PopuliAccessService
         var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopResponse<PopInvoice>>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopResponse<PopInvoice>>(request);
+
+        if (response != null)
         {
-            if (response.Data != null)
-            {
-                return response.Data;
-            }
+            return response;
         }
 
         _logger.Error("Failed to fetch Invoices. {@response}", response);
@@ -606,14 +586,11 @@ public class PopuliAccessService
         var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopInvoice>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopInvoice>(request);
+
+        if (response != null)
         {
-            if (response.Data != null)
-            {
-                return response.Data!;
-            }
+            return response;
         }
 
         _logger.Error("Failed to fetch Invoice. {@response}", response);
@@ -626,14 +603,11 @@ public class PopuliAccessService
         request.AddHeader("Authorization", $"Bearer {_authToken}");
         request.AddHeader("Content-Type", "application/json");
 
-        var response =
-            await _client.ExecuteAsync<PopPayment>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopPayment>(request);
+
+        if (response != null)
         {
-            if (response.Data != null)
-            {
-                return response.Data!;
-            }
+            return response;
         }
 
         _logger.Error("Failed to fetch Payment. {@response}", response);
@@ -654,14 +628,11 @@ public class PopuliAccessService
 
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopTransaction>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopTransaction>(request);
+
+        if (response != null)
         {
-            if (response.Data != null)
-            {
-                return response.Data;
-            }
+            return response;
         }
 
         _logger.Error("Failed to fetch Transaction. {@response}", response);
@@ -782,14 +753,11 @@ public class PopuliAccessService
         var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
         request.AddStringBody(body, DataFormat.Json);
 
-        var response =
-            await _client.ExecuteAsync<PopResponse<PopRefund>>(request, Method.Get, CancellationToken.None);
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        var response = await ExecuteRequestAsync<PopResponse<PopRefund>>(request);
+
+        if (response != null)
         {
-            if (response.Data != null)
-            {
-                return response.Data;
-            }
+            return response;
         }
 
         _logger.Error("Failed to fetch Refunds. {@response}", response);
@@ -797,4 +765,27 @@ public class PopuliAccessService
     }
 
     #endregion
+
+
+    private async Task<T?> ExecuteRequestAsync<T>(RestRequest request)
+    {
+        var response = await _client.ExecuteAsync(request, Method.Get, CancellationToken.None);
+
+        if (response is { IsSuccessStatusCode: true, Content: not null })
+        {
+            var decodedContent = HttpUtility.HtmlDecode(response.Content);
+            var responseData = JsonSerializer.Deserialize<T>(decodedContent, new JsonSerializerOptions
+            {
+                AllowTrailingCommas = true,
+            });
+
+            if (responseData != null)
+            {
+                return responseData;
+            }
+        }
+
+
+        return default;
+    }
 }

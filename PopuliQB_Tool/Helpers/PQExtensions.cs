@@ -6,7 +6,8 @@ public static class PqExtensions
 {
     public static string RemoveInvalidUnicodeCharacters(this string input)
     {
-        return Regex.Replace(input, @"[^\u0000-\u007F]+", string.Empty).Replace("  ", " ");
+        return Regex.Replace(input, @"[^\u0000-\u007F]+", string.Empty).Replace("  ", " ").Trim();
+        //return input.Replace("  ", " ").Trim();
     }
 
     public static List<string> DivideIntoEqualParts(this string input, int maxLength)

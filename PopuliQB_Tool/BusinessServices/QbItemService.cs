@@ -27,15 +27,22 @@ public class QbItemService
         _qbAccountsService = qbAccountsService;
     }
 
-    public bool CheckIfItemExists(PopItem item)
+    private string FormatItemName(string name)
     {
         //31 is max length for Item name field in QB
-        if (item.Name!.Length > 31)
+        name = name!.RemoveInvalidUnicodeCharacters();
+        if (name.Length > 31) //31 is max length for Item name field in QB
         {
-            var name = item.Name.Substring(0, 31).Trim();
-            item.Name = name.RemoveInvalidUnicodeCharacters();
+            name = name.Substring(0, 31).Trim();
         }
 
+        return name;
+    }
+
+    public bool CheckIfItemExists(PopItem item)
+    {
+
+        item.Name = FormatItemName(item.Name!);
         var existingItem = AllExistingItemsList.FirstOrDefault(x => x.QbItemName!.ToLower().Trim() == item.Name.ToLower().Trim());
         if (existingItem == null)
         {
@@ -132,12 +139,8 @@ public class QbItemService
                 foreach (var excelItem in excelItems)
                 {
                     //await Task.Delay(1000);
-                    if (excelItem.Name.Length > 31) //31 is max length for Item name field in QB
-                    {
-                        var name = excelItem.Name.Substring(0, 31).Trim();
-                        excelItem.Name = name.RemoveInvalidUnicodeCharacters();
-                    }
-
+                    
+                    excelItem.Name = FormatItemName(excelItem.Name);
                     var qbItem = AllExistingItemsList.FirstOrDefault(x =>
                         (x.QbItemName == null ? "" : x.QbItemName.ToLower().Trim()) == excelItem.Name.ToLower().Trim());
 

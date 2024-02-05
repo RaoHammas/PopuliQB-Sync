@@ -375,7 +375,7 @@ public class QbRefundServiceQuick
 
             AllExistingChequesList.Add(cheque);
             OnSyncStatusChanged?.Invoke(this,
-                new StatusMessageArgs(StatusMessageType.Info, $"Found Cheque: {cheque.PopChequeNumber}"));
+                new StatusMessageArgs(StatusMessageType.Info, $"Found Cheque: {cheque.UniqueId}"));
             return cheque;
         }
         catch (Exception ex)
