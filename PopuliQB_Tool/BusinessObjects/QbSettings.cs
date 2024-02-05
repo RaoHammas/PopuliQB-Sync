@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Reflection;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace PopuliQB_Tool.BusinessObjects;
 
@@ -28,6 +29,7 @@ public sealed partial class QbSettings : ObservableObject
     [ObservableProperty] private int _popConvenienceAccId = 74;
     [ObservableProperty] private string _skipStartingBalanceItemName = "Starting Balance";
     [ObservableProperty] private string _uniquePopuliIdName = "UniquePopuliId";
+    [ObservableProperty] private string _appVersion = Assembly.GetExecutingAssembly()!.GetName()!.Version!.ToString();
 
 
     private QbSettings()

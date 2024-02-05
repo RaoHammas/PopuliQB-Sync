@@ -769,20 +769,27 @@ public class PopuliAccessService
 
     private async Task<T?> ExecuteRequestAsync<T>(RestRequest request)
     {
-        var response = await _client.ExecuteAsync(request, Method.Get, CancellationToken.None);
-
-        if (response is { IsSuccessStatusCode: true, Content: not null })
+        try
         {
-            var decodedContent = HttpUtility.HtmlDecode(response.Content);
-            var responseData = JsonSerializer.Deserialize<T>(decodedContent, new JsonSerializerOptions
-            {
-                AllowTrailingCommas = true,
-            });
+            var response = await _client.ExecuteAsync(request, Method.Get, CancellationToken.None);
 
-            if (responseData != null)
+            if (response is { IsSuccessStatusCode: true, Content: not null })
             {
-                return responseData;
+                var decodedContent = HttpUtility.HtmlDecode(response.Content);
+                var responseData = JsonSerializer.Deserialize<T>(decodedContent, new JsonSerializerOptions
+                {
+                    AllowTrailingCommas = true,
+                });
+
+                if (responseData != null)
+                {
+                    return responseData;
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("Failed while executing request. {@message}", ex.Message);
         }
 
 

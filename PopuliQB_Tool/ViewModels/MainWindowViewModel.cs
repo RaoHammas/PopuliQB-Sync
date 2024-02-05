@@ -37,9 +37,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty] private int _totalRecords = 0;
     [ObservableProperty] private int _progressCount = 0;
     [ObservableProperty] private string? _companyName = "";
-    [ObservableProperty] private string? _title = "Populi to QuickBooks Sync";
-    [ObservableProperty] private DateTime _startTransDate = DateTime.Now;
-
+    [ObservableProperty] private string? _title = $"Populi to QuickBooks Sync v{QbSettings.Instance.AppVersion}";
+  
     public MainWindowViewModel(
         MessageBoxService messageBoxService,
         IOService ioService,
@@ -86,8 +85,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         invoiceServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
 
         paymentServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
-        paymentServiceQuick.OnSyncProgressChanged += SyncProgressChanged;      
-        
+        paymentServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
+
         refundServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
         refundServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
 
@@ -143,12 +142,13 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartPopuliStudentsSync()
     {
-        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Students Sync?");
+        var result =
+            _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Students Sync?");
         if (result == MessageBoxResult.No)
         {
             return;
         }
-        
+
         IsBusy = true;
         SyncStatusMessages.Clear();
         TotalRecords = 0;
@@ -218,12 +218,13 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartPopuliQuickInvoicesAndSalesCreditAsync()
     {
-        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Invoices & Sale Credits Sync?");
+        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required",
+            "Do you want to start Invoices & Sale Credits Sync?");
         if (result == MessageBoxResult.No)
         {
             return;
         }
-        
+
         IsBusy = true;
         SyncStatusMessages.Clear();
         TotalRecords = 0;
@@ -254,12 +255,13 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartPopuliQuickPaymentsAndCredMemosAsync()
     {
-        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Payments & Credit Memos Sync?");
+        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required",
+            "Do you want to start Payments & Credit Memos Sync?");
         if (result == MessageBoxResult.No)
         {
             return;
         }
-        
+
         IsBusy = true;
         SyncStatusMessages.Clear();
         TotalRecords = 0;
@@ -290,7 +292,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task StartPopuliQuickRefundsAsync()
     {
-        var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Refunds Sync?");
+        var result =
+            _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Refunds Sync?");
         if (result == MessageBoxResult.No)
         {
             return;
@@ -326,7 +329,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         try
         {
-            var result = _messageBoxService.ShowQuestionWithYesNo("Confirmation Required", "Do you want to start Students Sync?");
+            var result =
+                _messageBoxService.ShowQuestionWithYesNo("Confirmation Required",
+                    "Do you want to start Students Sync?");
             if (result == MessageBoxResult.No)
             {
                 return;
@@ -379,7 +384,6 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         {
             IsBusy = false;
         }
-        
     }
 
     [RelayCommand]

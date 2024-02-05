@@ -20,7 +20,9 @@
     <PackageProjectUrl>https://github.com/RaoHammas/PopuliQB-Sync</PackageProjectUrl>
   </PropertyGroup>
 	<PropertyGroup>   
-		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>   
+		<AssemblyVersion>2.0.0.0</AssemblyVersion>   
+		<FileVersion>2.0.0.0</FileVersion>
 	</PropertyGroup>
   <ItemGroup>
     <Compile Remove="BusinessServices\QBInvoiceService.cs" />
