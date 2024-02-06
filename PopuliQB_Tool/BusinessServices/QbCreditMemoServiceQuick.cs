@@ -250,7 +250,7 @@ public class QbCreditMemoServiceQuick
                 return false;
             }
 
-            var existing =
+            /*var existing =
                 AllExistingMemosList.FirstOrDefault(
                     x => x.UniqueId == key
                          && x.QbCustomerListId == qbStudent.QbListId);
@@ -261,7 +261,7 @@ public class QbCreditMemoServiceQuick
                         $"Skipped SalesCredit: SalesCredit.Num: {numb} already exists as CredMemo for: {person.DisplayName!}"));
 
                 return false;
-            }
+            }*/
 
             if (salesCredit.Items != null)
             {
@@ -275,7 +275,7 @@ public class QbCreditMemoServiceQuick
                         salesCredit.Items.Remove(sbItem);
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn,
-                                $"skipped SalesCredit Item: SalesCredit.Num = {numb} | Item {sbItem.Name}."));
+                                $"skipped SalesCredit Item: SalesCredit.Num = {numb} | Item {sbItem.Name} for Student: {person.DisplayName!}."));
                     }
                 }
 
@@ -283,7 +283,7 @@ public class QbCreditMemoServiceQuick
                 {
                     OnSyncStatusChanged?.Invoke(this,
                         new StatusMessageArgs(StatusMessageType.Warn,
-                            $"Skipped SalesCredit: SalesCredit.Num = {numb}. It has no items."));
+                            $"Skipped SalesCredit: SalesCredit.Num = {numb} for Student: {person.DisplayName!}. It has no items."));
 
                     return false;
                 }
