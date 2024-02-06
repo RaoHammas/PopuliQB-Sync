@@ -33,6 +33,7 @@ public class PopuliAccessService
         _client = new RestClient(new RestClientOptions
         {
             ThrowOnDeserializationError = false,
+            ThrowOnAnyError = false,
         });
     }
 
