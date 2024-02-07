@@ -84,7 +84,7 @@ public class QbService
                             {
                                 OnSyncStatusChanged?.Invoke(this,
                                     new StatusMessageArgs(StatusMessageType.Warn,
-                                        $"Skipped Payment.Number {payment.Number}. Transaction.Id {payment.TransactionId} is not found for it. Is it Void?"));
+                                        $"Skipped Payment.Number {payment.Number}. Transaction.Id {payment.TransactionId} is not found for it. for student: {person.DisplayName!}. Is it Void?"));
                                 continue;
                             }
 
@@ -207,7 +207,7 @@ public class QbService
                             {
                                 OnSyncStatusChanged?.Invoke(this,
                                     new StatusMessageArgs(StatusMessageType.Warn,
-                                        $"Skipped Refund.Number. Transaction.Id {refund.TransactionId} is not found for it. Is it Void?"));
+                                        $"Skipped Refund.Number. Transaction.Id {refund.TransactionId} is not found for it. for student: {person.DisplayName!}. Is it Void?"));
                                 continue;
                             }
 
@@ -328,7 +328,7 @@ public class QbService
                             {
                                 OnSyncStatusChanged?.Invoke(this,
                                     new StatusMessageArgs(StatusMessageType.Warn,
-                                        $"Skipped Invoices.Number {invoice.Number}. Transaction.Id {invoice.TransactionId} is not found for it. Is it Void?"));
+                                        $"Skipped Invoices.Number {invoice.Number}. Transaction.Id {invoice.TransactionId} is not found for it for student: {person.DisplayName!}. Is it Void?"));
                                 continue;
                             }
 

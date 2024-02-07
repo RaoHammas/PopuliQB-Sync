@@ -62,7 +62,7 @@ public class QbPaymentServiceQuick
                 return false;
             }
 
-            var existingPay =
+            /*var existingPay =
                 AllExistingPaymentsList.FirstOrDefault(
                     x => x.UniqueId == key
                          && x.QbCustomerListId == qbStudent.QbListId);
@@ -73,7 +73,7 @@ public class QbPaymentServiceQuick
                         $"Skipped Payment: Payment.Num: {numb} already exists for: {person.DisplayName!}"));
 
                 return false;
-            }
+            }*/
 
             var nonConvEntries = trans.LedgerEntries.Where(x => x.AccountId != QbSettings.Instance.PopConvenienceAccId).ToList();
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList();

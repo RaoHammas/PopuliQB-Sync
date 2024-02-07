@@ -37,14 +37,14 @@ public class QbDepositServiceQuick
     {
         try
         {
-            var existing = AllExistingDepositsList.FirstOrDefault(x => x.UniqueId == key);
+            /*var existing = AllExistingDepositsList.FirstOrDefault(x => x.UniqueId == key);
             if (existing != null)
             {
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Warn,
                         $"Skipped: Deposit: {payment.Number} already exists as Deposit.Num: {payment.Number}."));
                 return false;
-            }
+            }*/
 
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;

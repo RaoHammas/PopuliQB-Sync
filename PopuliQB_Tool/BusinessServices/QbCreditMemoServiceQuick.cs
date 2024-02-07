@@ -62,7 +62,7 @@ public class QbCreditMemoServiceQuick
                 return false;
             }
 
-            var existing =
+            /*var existing =
                 AllExistingMemosList.FirstOrDefault(
                     x => x.UniqueId == key
                          && x.QbCustomerListId == qbStudent.QbListId);
@@ -73,7 +73,7 @@ public class QbCreditMemoServiceQuick
                         $"Skipped Payment: Payment.Num: {payment.Number} already exists as CredMemo for: {person.DisplayName!}"));
 
                 return false;
-            }
+            }*/
 
             //SetUp Student AID Awards
             var aidAwardsList =
@@ -121,7 +121,7 @@ public class QbCreditMemoServiceQuick
                         memo.Items.Remove(sbItem);
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn,
-                                $"skipped Payment Item: Payment.Num = {payment.Number} | Payment Item {sbItem.Name}."));
+                                $"skipped Payment Item: Payment.Num = {payment.Number} | Payment Item {sbItem.Name} for student: {person.DisplayName!}."));
                     }
                 }
 
@@ -129,7 +129,7 @@ public class QbCreditMemoServiceQuick
                 {
                     OnSyncStatusChanged?.Invoke(this,
                         new StatusMessageArgs(StatusMessageType.Warn,
-                            $"Skipped Payment: Payment.Num = {payment.Number}. It has no items."));
+                            $"Skipped Payment: Payment.Num = {payment.Number}. It has no items for student: {person.DisplayName!}."));
 
                     return false;
                 }

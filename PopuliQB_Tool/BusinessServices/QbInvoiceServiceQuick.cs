@@ -73,7 +73,7 @@ public class QbInvoiceServiceQuick
                 await AddCredits(invoice.Credits, person, sessionManager);
             }
 
-            var existingInv =
+            /*var existingInv =
                 AllExistingInvoicesList.FirstOrDefault(x =>
                     x.UniqueId == key
                     && x.QbCustomerListId == qbStudent.QbListId);
@@ -83,7 +83,7 @@ public class QbInvoiceServiceQuick
                     new StatusMessageArgs(StatusMessageType.Warn,
                         $"Skipped: Invoice.Num: {numb} already exists for student: {person.DisplayName}"));
                 return false;
-            }
+            }*/
 
             if (invoice.Items != null)
             {
@@ -97,7 +97,7 @@ public class QbInvoiceServiceQuick
                         invoice.Items.Remove(sbItem);
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn,
-                                $"skipped Invoice Item: Invoice.Num = {numb} | Item {sbItem.Name}."));
+                                $"skipped Invoice Item: Invoice.Num = {numb} | Item {sbItem.Name} for student: {person.DisplayName!}."));
                     }
                 }
 
@@ -105,8 +105,8 @@ public class QbInvoiceServiceQuick
                 {
                     OnSyncStatusChanged?.Invoke(this,
                         new StatusMessageArgs(StatusMessageType.Warn,
-                            $"Skipped Invoice: Invoice.Num = {numb}. It has no items."));
-
+                            $"Skipped Invoice: Invoice.Num = {numb}. It has no items for student: {person.DisplayName!}."));
+                    
                     return false;
                 }
 
@@ -234,7 +234,7 @@ public class QbInvoiceServiceQuick
                 return false;
             }
 
-            var existingInv =
+            /*var existingInv =
                 AllExistingInvoicesList.FirstOrDefault(x =>
                     x.UniqueId == key
                     && x.QbCustomerListId == qbStudent.QbListId);
@@ -244,7 +244,7 @@ public class QbInvoiceServiceQuick
                     new StatusMessageArgs(StatusMessageType.Warn,
                         $"Skipped: RefundToSource: {refund.RefundId} already exists as Invoice.Num: {refund.RefundId} for student: {person.DisplayName}"));
                 return false;
-            }
+            }*/
 
             var invoice = new PopInvoice
             {

@@ -65,7 +65,7 @@ public class QbRefundServiceQuick
                 return false;
             }
 
-            var existing =
+            /*var existing =
                 AllExistingChequesList.FirstOrDefault(
                     x => x.UniqueId == key && x.QbCustomerListId == qbStudent.QbListId);
             if (existing != null)
@@ -75,7 +75,7 @@ public class QbRefundServiceQuick
                         $"Skipped Refund: Refund.Num: {refund.RefundId} already exists as Cheque for: {person.DisplayName!}"));
 
                 return false;
-            }
+            }*/
 
             var refundCheque = new PopCredit
             {
@@ -112,7 +112,7 @@ public class QbRefundServiceQuick
                         refundCheque.Items.Remove(sbItem);
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn,
-                                $"Skipped: refund.Num = {refund.RefundId} | Item {sbItem.Name}."));
+                                $"Skipped: refund.Num = {refund.RefundId} | Item {sbItem.Name} for student: {person.DisplayName!}."));
                     }
                 }
 
@@ -120,7 +120,7 @@ public class QbRefundServiceQuick
                 {
                     OnSyncStatusChanged?.Invoke(this,
                         new StatusMessageArgs(StatusMessageType.Warn,
-                            $"Skipped: refund.Num = {refund.RefundId}. It has no items."));
+                            $"Skipped: refund.Num = {refund.RefundId}. It has no items for student: {person.DisplayName!}."));
                     return false;
                 }
 
