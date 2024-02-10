@@ -76,11 +76,10 @@ public class QbService
                     {
                         foreach (var payment in allPayments)
                         {
-                            //await Task.Delay(1000);
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 payment.TransactionId!
                                     .Value);
-                            if (trans.Id == null || trans.Id < 1)
+                            if (trans.Id is null or < 1)
                             {
                                 OnSyncStatusChanged?.Invoke(this,
                                     new StatusMessageArgs(StatusMessageType.Warn,
@@ -198,7 +197,6 @@ public class QbService
                     {
                         foreach (var refund in allRefunds)
                         {
-                            //await Task.Delay(1000);
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 refund.TransactionId!
                                     .Value);
@@ -207,7 +205,7 @@ public class QbService
                             {
                                 OnSyncStatusChanged?.Invoke(this,
                                     new StatusMessageArgs(StatusMessageType.Warn,
-                                        $"Skipped Refund.Number. Transaction.Id {refund.TransactionId} is not found for it. for student: {person.DisplayName!}. Is it Void?"));
+                                        $"Skipped Refund. Transaction.Id {refund.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?"));
                                 continue;
                             }
 
@@ -320,13 +318,12 @@ public class QbService
                     {
                         foreach (var invoice in allInvoices)
                         {
-                            //await Task.Delay(1000);
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(invoice.TransactionId!.Value);
-                            if (trans.Id == null || trans.Id < 1)
+                            if (trans.Id is null or < 1)
                             {
                                 OnSyncStatusChanged?.Invoke(this,
                                     new StatusMessageArgs(StatusMessageType.Warn,
-                                        $"Skipped Invoices.Number {invoice.Number}. Transaction.Id {invoice.TransactionId} is not found for it for student: {person.DisplayName!}. Is it Void?"));
+                                        $"Skipped Invoices.Number {invoice.Number}. Transaction.Id {invoice.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?"));
                                 continue;
                             }
 
