@@ -47,8 +47,6 @@ public class QbRefundServiceQuick
     {
         try
         {
-            var key = $"R:{refund.RefundId}##";
-
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
@@ -150,7 +148,7 @@ public class QbRefundServiceQuick
             var bankQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == bankAccId).QbAccountListId;
             var recQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == recAccId).QbAccountListId;
 
-            _builder.BuildAddRequest(requestMsgSet, key, refundCheque, qbStudent.QbListId!, bankQbAccListId!,
+            _builder.BuildAddRequest(requestMsgSet, refundCheque, qbStudent.QbListId!, bankQbAccListId!,
                 recQbAccListId!, refund.PostedDate!.Value);
             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedCheque(responseMsgSet))
@@ -178,7 +176,7 @@ public class QbRefundServiceQuick
                     var payment = new PopPayment
                     {
                         Id = refund.Id,
-                        Number = $"Conv:{convEntry.Id}-{key}",
+                        Number = refund.Id,
                         StudentId = person.Id,
                         ConvenienceFeeAmount = convEntry.Credit!.Value,
                         TransactionId = convEntry.TransactionId,
@@ -187,7 +185,7 @@ public class QbRefundServiceQuick
                     var arAcc = convEntry.AccountId!.Value;
                     var adAcc = trans.LedgerEntries.First(x => x.Direction == "debit" && x.Debit!.Value! == convEntry.Credit!.Value).AccountId!.Value;
                     
-                    var resp = _depositServiceQuick.AddDeposit(payment, payment.Number.ToString()!, qbStudent, arAcc, adAcc, trans.PostedOn, sessionManager);
+                    var resp = _depositServiceQuick.AddDeposit(payment, qbStudent, arAcc, adAcc, trans.PostedOn, sessionManager);
                     if (resp)
                     {
                         OnSyncStatusChanged?.Invoke(this,
@@ -361,21 +359,10 @@ public class QbRefundServiceQuick
             var cheque = new QbCheque();
             cheque.QbCustomerListId = ret.PayeeEntityRef.ListID.GetValue();
             cheque.QbCustomerName = ret.PayeeEntityRef.FullName.GetValue();
-            var refNum = ret.Memo.GetValue();
-            cheque.UniqueId = "";
-            if (!string.IsNullOrEmpty(refNum))
-            {
-                var arr = refNum.Split("##");
-                if (arr.Any())
-                {
-                    cheque.UniqueId = arr[0].Trim() + "##";
-                }
-            }
             
-
-            AllExistingChequesList.Add(cheque);
+            //AllExistingChequesList.Add(cheque);
             OnSyncStatusChanged?.Invoke(this,
-                new StatusMessageArgs(StatusMessageType.Info, $"Found Cheque: {cheque.UniqueId}"));
+                new StatusMessageArgs(StatusMessageType.Info, $"Found Cheque."));
             return cheque;
         }
         catch (Exception ex)

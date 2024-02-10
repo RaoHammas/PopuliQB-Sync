@@ -5,7 +5,6 @@ using PopuliQB_Tool.EventArgs;
 using PopuliQB_Tool.Helpers;
 using PopuliQB_Tool.Models;
 using QBFC16Lib;
-using System.Windows.Input;
 
 namespace PopuliQB_Tool.BusinessServices;
 
@@ -32,7 +31,7 @@ public class QbDepositServiceQuick
     }
 
 
-    public bool AddDeposit(PopPayment payment, string key, QBCustomer qbStudent, int arAccId, int adAcc, DateTime? transPostedOn,
+    public bool AddDeposit(PopPayment payment, QBCustomer qbStudent, int arAccId, int adAcc, DateTime? transPostedOn,
         QBSessionManager sessionManager)
     {
         try
@@ -73,7 +72,7 @@ public class QbDepositServiceQuick
                 },
             };
 
-            _builder.BuildAddRequest(requestMsgSet, key, conv, qbStudent.QbListId!, fromQbAccListIdConv!, adQbAccListIdConv!,
+            _builder.BuildAddRequest(requestMsgSet, conv, qbStudent.QbListId!, fromQbAccListIdConv!, adQbAccListIdConv!,
                 transPostedOn!.Value!);
             var responseMsgSetDeposit = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedDeposit(responseMsgSetDeposit))
@@ -246,20 +245,10 @@ public class QbDepositServiceQuick
             if (ret == null) return null;
 
             var deposit = new QbDeposit();
-            deposit.UniqueId = "";
-            var refNum = ret.Memo.GetValue();
-            if (!string.IsNullOrEmpty(refNum))
-            {
-                var arr = refNum.Split("##");
-                if (arr.Any())
-                {
-                    deposit.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
-                }
-            }
-
-            AllExistingDepositsList.Add(deposit);
+            
+            //AllExistingDepositsList.Add(deposit);
             OnSyncStatusChanged?.Invoke(this,
-                new StatusMessageArgs(StatusMessageType.Info, $"Found Deposit: {deposit.UniqueId}"));
+                new StatusMessageArgs(StatusMessageType.Info, $"Found Deposit."));
             return deposit;
         }
         catch (Exception ex)

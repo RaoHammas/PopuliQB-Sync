@@ -45,7 +45,6 @@ public class QbInvoiceServiceQuick
         try
         {
             var numb = invoice.Number;
-            var key = $"I:{invoice.Number}##";
 
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
@@ -133,7 +132,7 @@ public class QbInvoiceServiceQuick
             var arAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
-            _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, key, invoice, qbStudent.QbListId!, arQbAccListId!);
+            _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, qbStudent.QbListId!, arQbAccListId!);
             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedInvoice(responseMsgSet))
             {
@@ -162,7 +161,6 @@ public class QbInvoiceServiceQuick
                     var payment = new PopPayment
                     {
                         Id = invoice.Id,
-                        Number = $"Conv:{convEntry.Id}-{key}",
                         StudentId = person.Id,
                         ConvenienceFeeAmount = convEntry.Credit!.Value,
                         TransactionId = convEntry.TransactionId,
@@ -173,8 +171,7 @@ public class QbInvoiceServiceQuick
                         .First(x => x.Direction == "debit" && x.Debit!.Value! == convEntry.Credit!.Value).AccountId!
                         .Value;
 
-                    var resp = _depositServiceQuick.AddDeposit(payment, payment.Number.ToString(), qbStudent, arAcc,
-                        adAcc, trans.PostedOn, sessionManager);
+                    var resp = _depositServiceQuick.AddDeposit(payment, qbStudent, arAcc, adAcc, trans.PostedOn, sessionManager);
                     if (resp)
                     {
                         OnSyncStatusChanged?.Invoke(this,
@@ -215,7 +212,7 @@ public class QbInvoiceServiceQuick
     {
         try
         {
-            var key = $"RS:{refund.RefundId}##";
+         
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
@@ -293,7 +290,7 @@ public class QbInvoiceServiceQuick
             var arAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
-            _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, key, invoice, qbStudent.QbListId!, arQbAccListId!);
+            _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, qbStudent.QbListId!, arQbAccListId!);
             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedInvoice(responseMsgSet))
             {
@@ -320,7 +317,6 @@ public class QbInvoiceServiceQuick
                     var payment = new PopPayment
                     {
                         Id = invoice.Id,
-                        Number = $"Conv:{convEntry.Id}-{key}",
                         StudentId = person.Id,
                         ConvenienceFeeAmount = convEntry.Credit!.Value,
                         TransactionId = convEntry.TransactionId,
@@ -331,7 +327,7 @@ public class QbInvoiceServiceQuick
                         .First(x => x.Direction == "debit" && x.Debit!.Value! == convEntry.Credit!.Value).AccountId!
                         .Value;
 
-                    var resp = _depositServiceQuick.AddDeposit(payment, key, qbStudent, arAcc, adAcc, trans.PostedOn,
+                    var resp = _depositServiceQuick.AddDeposit(payment, qbStudent, arAcc, adAcc, trans.PostedOn,
                         sessionManager);
                     if (resp)
                     {
@@ -507,18 +503,7 @@ public class QbInvoiceServiceQuick
             invoice.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
             invoice.QbCustomerName = ret.CustomerRef.FullName.GetValue();
 
-            var refNum = ret.Memo.GetValue();
-            invoice.UniqueId = "";
-            if (!string.IsNullOrEmpty(refNum))
-            {
-                var arr = refNum.Split("##");
-                if (arr.Any())
-                {
-                    invoice.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
-                }
-            }
-
-            AllExistingInvoicesList.Add(invoice);
+            //AllExistingInvoicesList.Add(invoice);
 
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Info, $"Found Invoice: {invoice.PopInvoiceNumber}"));

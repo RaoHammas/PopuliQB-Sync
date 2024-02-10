@@ -5,7 +5,7 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopPaymentToQbPaymentBuilder
 {
-    public void BuildAddRequest(IMsgSetRequest requestMsgSet, string key, PopPayment payment, string qbCustomerListId,
+    public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopPayment payment, string qbCustomerListId,
         string arListId, string adListId, DateTime transPostedOn)
     {
         requestMsgSet.ClearRequests();
@@ -18,8 +18,6 @@ public class PopPaymentToQbPaymentBuilder
         
         request.TotalAmount.SetValue(payment.Amount ?? 0);
         request.ORApplyPayment.IsAutoApply.SetValue(true);
-
-        request.Memo.SetValue(key);
 
         request.IncludeRetElementList.Add("CustomerRef");
         request.IncludeRetElementList.Add("RefNumber");

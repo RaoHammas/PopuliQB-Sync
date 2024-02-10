@@ -5,14 +5,13 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopDepositToQbDepositBuilder
 {
-    public void BuildAddRequest(IMsgSetRequest requestMsgSet, string key, PopCredit memo, string qbCustomerListId,
+    public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopCredit memo, string qbCustomerListId,
         string fromAccListId, string depositAccListId, DateTime transDate)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendDepositAddRq();
         request.TxnDate.SetValue(transDate);
         request.DepositToAccountRef.ListID.SetValue(depositAccListId);
-        request.Memo.SetValue(key);
 
         if (memo.Items != null)
         {

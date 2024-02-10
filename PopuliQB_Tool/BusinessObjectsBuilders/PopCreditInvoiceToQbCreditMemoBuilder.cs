@@ -5,7 +5,7 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopCreditMemoToQbCreditMemoBuilder
 {
-    public void BuildAddRequest(IMsgSetRequest requestMsgSet, string key, PopCredit memo, string qbCustomerListId, string arListId)
+    public void BuildAddRequest(IMsgSetRequest requestMsgSet, PopCredit memo, string qbCustomerListId, string arListId)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendCreditMemoAddRq();
@@ -32,8 +32,7 @@ public class PopCreditMemoToQbCreditMemoBuilder
 
         request.IsToBePrinted.SetValue(false);
         request.IsToBeEmailed.SetValue(false);
-        request.Memo.SetValue(key);
-
+        
         if (memo.Items != null)
         {
             foreach (var item in memo.Items)

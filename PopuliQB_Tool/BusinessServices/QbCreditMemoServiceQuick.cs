@@ -44,8 +44,6 @@ public class QbCreditMemoServiceQuick
     {
         try
         {
-            var key = $"M:{payment.Number}##";
-
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
@@ -152,7 +150,7 @@ public class QbCreditMemoServiceQuick
             var arAccId = nonConvEntries.First(x => x.Direction == "credit").AccountId!;
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
-            _builder.BuildAddRequest(requestMsgSet, key, memo, qbStudent.QbListId!, arQbAccListId!);
+            _builder.BuildAddRequest(requestMsgSet, memo, qbStudent.QbListId!, arQbAccListId!);
             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedMemo(responseMsgSet))
             {
@@ -179,7 +177,6 @@ public class QbCreditMemoServiceQuick
                     var convPayment = new PopPayment
                     {
                         Id = payment.Id,
-                        Number = $"Conv:{convEntry.Id}-{key}",
                         StudentId = person.Id,
                         ConvenienceFeeAmount = convEntry.Credit!.Value,
                         TransactionId = convEntry.TransactionId,
@@ -190,8 +187,7 @@ public class QbCreditMemoServiceQuick
                         .First(x => x.Direction == "debit" && x.Debit!.Value! == convEntry.Credit!.Value).AccountId!
                         .Value;
 
-                    var resp = _depositServiceQuick.AddDeposit(convPayment, convPayment.Number.ToString(), qbStudent, arAcc, adAcc, trans.PostedOn,
-                        sessionManager);
+                    var resp = _depositServiceQuick.AddDeposit(convPayment, qbStudent, arAcc, adAcc, trans.PostedOn, sessionManager);
                     if (resp)
                     {
                         OnSyncStatusChanged?.Invoke(this,
@@ -223,8 +219,7 @@ public class QbCreditMemoServiceQuick
         try
         {
             var numb = salesCredit.Number;
-            var key = $"MS:{salesCredit.Number}##";
-          
+            
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
@@ -309,7 +304,7 @@ public class QbCreditMemoServiceQuick
             var arAccId = nonConvEntries.First(x => x.Direction == "credit").AccountId!;
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
-            _builder.BuildAddRequest(requestMsgSet, key, salesCredit, qbStudent.QbListId!, arQbAccListId!);
+            _builder.BuildAddRequest(requestMsgSet, salesCredit, qbStudent.QbListId!, arQbAccListId!);
             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedMemo(responseMsgSet))
             {
@@ -335,7 +330,6 @@ public class QbCreditMemoServiceQuick
                     var convPayment = new PopPayment
                     {
                         Id = salesCredit.Id,
-                        Number = $"Conv:{convEntry.Id}-{key}",
                         StudentId = person.Id,
                         ConvenienceFeeAmount = convEntry.Credit!.Value,
                         TransactionId = convEntry.TransactionId,
@@ -346,8 +340,7 @@ public class QbCreditMemoServiceQuick
                         .First(x => x.Direction == "debit" && x.Debit!.Value! == convEntry.Credit!.Value).AccountId!
                         .Value;
 
-                    var resp = _depositServiceQuick.AddDeposit(convPayment, convPayment.Number.ToString(), qbStudent, arAcc, adAcc, trans.PostedOn,
-                        sessionManager);
+                    var resp = _depositServiceQuick.AddDeposit(convPayment, qbStudent, arAcc, adAcc, trans.PostedOn, sessionManager);
                     if (resp)
                     {
                         OnSyncStatusChanged?.Invoke(this,
@@ -522,18 +515,8 @@ public class QbCreditMemoServiceQuick
             memo.PopMemoNumber = ret.RefNumber.GetValue();
             memo.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
             memo.QbCustomerName = ret.CustomerRef.FullName.GetValue();
-            var refNum = ret.Memo.GetValue();
-            memo.UniqueId = "";
-            if (!string.IsNullOrEmpty(refNum))
-            {
-                var arr = refNum.Split("##");
-                if (arr.Any())
-                {
-                    memo.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
-                }
-            }
-
-            AllExistingMemosList.Add(memo);
+            
+            //AllExistingMemosList.Add(memo);
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Info, $"Found Memo: {memo.PopMemoNumber}"));
             return memo;
