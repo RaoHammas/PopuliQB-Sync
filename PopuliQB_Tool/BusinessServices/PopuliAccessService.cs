@@ -9,14 +9,10 @@ namespace PopuliQB_Tool.BusinessServices;
 
 public class PopuliAccessService
 {
-    private readonly AppConfiguration _appConfiguration;
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-    // private const string? DevUrl = "https://divinemercyedu-validation.populi.co/api2";
-    private readonly string? _url = "https://divinemercyedu.populiweb.com/api2";
-
-    private readonly string? _authToken =
-        "sk_y75vZUhN4fP14zXrGcnl8ThHDiLf0xAdGVLWekgcbvgKN8KJHcEw7y0JOp8YlrZ4ZtNSRahQGnkK8dhHFsHNyG";
+    private readonly int _reqDelayMs;
+    private readonly string? _url;
+    private readonly string? _authToken;
 
     private readonly RestClient _client;
     public List<PopPerson> AllPopuliPersons { get; set; } = new();
@@ -26,9 +22,9 @@ public class PopuliAccessService
 
     public PopuliAccessService(AppConfiguration appConfiguration)
     {
-        _appConfiguration = appConfiguration;
         _url = appConfiguration["API_URL"];
         _authToken = appConfiguration["TOKEN"];
+        _reqDelayMs = Convert.ToInt32(appConfiguration["RequestDelayMs"]);
 
         _client = new RestClient(new RestClientOptions
         {
@@ -37,9 +33,10 @@ public class PopuliAccessService
         });
     }
 
+    #region STUDENTS
+
     public async Task<PopResponse<PopPerson>> GetAllPersonsAsync(int page = 1)
     {
-        //await Task.Delay(1000);
         var request = new RestRequest($"{_url}/people/");
         request.AddHeader("Authorization", $"Bearer {_authToken}");
         request.AddHeader("Content-Type", "application/json");
@@ -109,6 +106,8 @@ public class PopuliAccessService
         _logger.Error("Failed to fetch Persons. {@response}", response);
         return new();
     }
+
+    #endregion
 
     #region ACCOUNTS
 
@@ -320,16 +319,20 @@ public class PopuliAccessService
     public async Task<List<PopTransaction>> GetAllStudentTransactionsAsync(int personId, string displayName)
     {
         var page = 0;
-        var transList = new List<PopTransaction>();
+        var allData = new List<PopTransaction>();
         var hasMore = true;
         while (hasMore)
         {
             var data = await FetchAllStudentTransactionsAsync(personId, displayName, ++page);
-            transList.AddRange(data.Data!);
-            hasMore = data.HasMore!.Value;
+            if (data.Data != null)
+            {
+                allData.AddRange(data.Data);
+            }
+
+            hasMore = data.HasMore ?? false;
         }
 
-        return transList;
+        return allData;
     }
 
     private async Task<PopResponse<PopTransaction>> FetchAllStudentTransactionsAsync(int personId, string displayName,
@@ -485,8 +488,12 @@ public class PopuliAccessService
         while (hasMore)
         {
             var data = await FetchAllStudentInvoicesAsync(personId, displayName, ++page);
-            allData.AddRange(data.Data!);
-            hasMore = data.HasMore!.Value;
+            if (data.Data != null)
+            {
+                allData.AddRange(data.Data);
+            }
+
+            hasMore = data.HasMore ?? false;
         }
 
         return allData;
@@ -565,7 +572,7 @@ public class PopuliAccessService
         }
 
         _logger.Error("Failed to fetch Invoices. {@response}", response);
-        return new();
+        return new PopResponse<PopInvoice>();
     }
 
     #endregion
@@ -652,8 +659,12 @@ public class PopuliAccessService
         while (hasMore)
         {
             var data = await FetchAllStudentRefundsAsync(personId, displayName, ++page);
-            allData.AddRange(data.Data!);
-            hasMore = data.HasMore!.Value;
+            if (data.Data != null)
+            {
+                allData.AddRange(data.Data);
+            }
+
+            hasMore = data.HasMore ?? false;
         }
 
         return allData;
@@ -772,6 +783,8 @@ public class PopuliAccessService
     {
         try
         {
+            await Task.Delay(_reqDelayMs);
+
             var response = await _client.ExecuteAsync(request, Method.Get, CancellationToken.None);
 
             if (response is { IsSuccessStatusCode: true, Content: not null })

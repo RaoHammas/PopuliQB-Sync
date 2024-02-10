@@ -321,9 +321,7 @@ public class QbService
                         foreach (var invoice in allInvoices)
                         {
                             //await Task.Delay(1000);
-                            var trans =
-                                await _populiAccessService.GetTransactionByIdWithLedgerAsync(invoice.TransactionId!
-                                    .Value);
+                            var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(invoice.TransactionId!.Value);
                             if (trans.Id == null || trans.Id < 1)
                             {
                                 OnSyncStatusChanged?.Invoke(this,

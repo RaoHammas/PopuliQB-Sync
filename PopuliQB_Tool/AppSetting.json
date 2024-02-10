@@ -1,4 +1,5 @@
 ﻿{
+  "API_URL": "https://divinemercyedu.populiweb.com/api2",
   "TOKEN": "sk_y75vZUhN4fP14zXrGcnl8ThHDiLf0xAdGVLWekgcbvgKN8KJHcEw7y0JOp8YlrZ4ZtNSRahQGnkK8dhHFsHNyG",
-  "API_URL": "https://divinemercyedu.populiweb.com/api2"
+  "RequestDelayMs": "2000"
 }

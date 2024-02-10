@@ -276,6 +276,8 @@ public class QbCustomerService
 
             if (split.Length < 2)
             {
+                OnSyncStatusChanged?.Invoke(this,
+                    new StatusMessageArgs(StatusMessageType.Warn, $"Skipped Customer from QB: {customer.QbCustomerName}. The name is not valid."));
                 return customer;
             }
 
