@@ -21,7 +21,7 @@ public class QbInvoiceServiceQuick
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
     public List<QbInvoice> AllExistingInvoicesList { get; set; } = new();
-
+    
     public QbInvoiceServiceQuick(
         PopInvoiceToQbInvoiceBuilder invoiceBuilder,
         QbCustomerService customerService,
@@ -45,7 +45,6 @@ public class QbInvoiceServiceQuick
         try
         {
             var numb = invoice.Number;
-
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
@@ -63,14 +62,14 @@ public class QbInvoiceServiceQuick
                 return false;
             }
 
-            if (invoice.Credits != null && invoice.Credits.Any())
+            /*if (invoice.Credits != null && invoice.Credits.Any())
             {
                 OnSyncStatusChanged?.Invoke(this,
                     new StatusMessageArgs(StatusMessageType.Info,
                         $"Sales Credit found for student: {person.DisplayName!}"));
 
                 await AddCredits(invoice.Credits, person, sessionManager);
-            }
+            }*/
 
             /*var existingInv =
                 AllExistingInvoicesList.FirstOrDefault(x =>
@@ -201,6 +200,7 @@ public class QbInvoiceServiceQuick
     {
         foreach (var invoiceCredit in credits)
         {
+            
             var resp = await _creditMemoServiceQuick.AddCreditMemoForSalesCredit(person, invoiceCredit,
                 sessionManager);
         }

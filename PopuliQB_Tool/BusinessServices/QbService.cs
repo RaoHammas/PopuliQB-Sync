@@ -81,9 +81,10 @@ public class QbService
                                     .Value);
                             if (trans.Id is null or < 1)
                             {
-                                OnSyncStatusChanged?.Invoke(this,
+                                /*OnSyncStatusChanged?.Invoke(this,
                                     new StatusMessageArgs(StatusMessageType.Warn,
-                                        $"Skipped Payment.Number {payment.Number}. Transaction.Id {payment.TransactionId} is not found for it. for student: {person.DisplayName!}. Is it Void?"));
+                                        $"Skipped Payment.Number {payment.Number}. Transaction.Id {payment.TransactionId} is not found for it. for student: {person.DisplayName!}. Is it Void?"));*/
+                                _logger.Warn($"Skipped Payment.Number {payment.Number}. Transaction.Id {payment.TransactionId} is not found for it. for student: {person.DisplayName!}. Is it Void?");
                                 continue;
                             }
 
@@ -203,9 +204,10 @@ public class QbService
 
                             if (trans.Id == null || trans.Id < 1)
                             {
-                                OnSyncStatusChanged?.Invoke(this,
+                                /*OnSyncStatusChanged?.Invoke(this,
                                     new StatusMessageArgs(StatusMessageType.Warn,
-                                        $"Skipped Refund. Transaction.Id {refund.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?"));
+                                        $"Skipped Refund. Transaction.Id {refund.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?"));*/
+                                _logger.Warn($"Skipped Refund. Transaction.Id {refund.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?");
                                 continue;
                             }
 
@@ -316,14 +318,43 @@ public class QbService
 
                     if (allInvoices.Any())
                     {
+                        var credits = allInvoices.Where(x => x.Credits != null && x.Credits.Any()).Select(x=>x.Credits).ToList();
+                        if (credits.Any())
+                        {
+                            OnSyncStatusChanged?.Invoke(this,
+                                new StatusMessageArgs(StatusMessageType.Info,
+                                    $"Sales Credit found for student: {person.DisplayName!}"));
+                            
+                            var creditsSynced = new List<int>();
+                            foreach (var invoiceCredits in credits)
+                            {
+                                if (invoiceCredits != null)
+                                {
+                                    foreach (var popCredit in invoiceCredits)
+                                    {
+                                        if (creditsSynced.Contains(popCredit.Id!.Value))
+                                        {
+                                            continue;
+                                        }
+
+                                        var resp = await _creditMemoServiceQuick.AddCreditMemoForSalesCredit(person, popCredit, sessionManager);
+                                        creditsSynced.Add(popCredit.Id!.Value);
+                                    }
+
+                                }
+                            }
+                        }
+
                         foreach (var invoice in allInvoices)
                         {
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(invoice.TransactionId!.Value);
                             if (trans.Id is null or < 1)
                             {
-                                OnSyncStatusChanged?.Invoke(this,
+                                /*OnSyncStatusChanged?.Invoke(this,
                                     new StatusMessageArgs(StatusMessageType.Warn,
-                                        $"Skipped Invoices.Number {invoice.Number}. Transaction.Id {invoice.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?"));
+                                        $"Skipped Invoices.Number {invoice.Number}. Transaction.Id {invoice.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?"));*/
+                                
+                                _logger.Warn($"Skipped Invoices.Number {invoice.Number}. Transaction.Id {invoice.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?");
                                 continue;
                             }
 

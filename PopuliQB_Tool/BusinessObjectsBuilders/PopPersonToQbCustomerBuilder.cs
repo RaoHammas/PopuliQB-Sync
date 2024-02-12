@@ -56,7 +56,11 @@ public class PopPersonToQbCustomerBuilder
             }
         }
 
-        request.Email.SetValue(person.ReportData?.ContactPrimaryEmail ?? "");
+        if (person.ReportData?.ContactPrimaryEmail != null)
+        {
+            request.Email.SetValue(person.ReportData?.ContactPrimaryEmail);
+        }
+
         request.IsActive.SetValue(true);
         
         PopDegree? degree = null;

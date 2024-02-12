@@ -1,7 +1,9 @@
 ﻿using System.IO;
+using System.Reflection;
 using System.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NLog;
 using PopuliQB_Tool.BusinessObjectsBuilders;
 using PopuliQB_Tool.BusinessServices;
 using PopuliQB_Tool.Services;
@@ -14,11 +16,17 @@ namespace PopuliQB_Tool;
 /// </summary>
 public partial class App : Application
 {
+    private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
     private static IServiceProvider Services => ConfigureServices();
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        _logger.Info("-------------------------------------------------");
+        _logger.Info("STARTING THE SYNC TOOL");
+        _logger.Info("-------------------------------------------------");
         base.OnStartup(e);
+        SetupExceptionHandling();
 
         var vm = Services.GetRequiredService<MainWindowViewModel>();
 
@@ -30,6 +38,13 @@ public partial class App : Application
         mainWin.Show();
     }
 
+    protected override void OnExit(ExitEventArgs e)
+    {
+        base.OnExit(e);
+        _logger.Info("-------------------------------------------------");
+        _logger.Info("EXITING THE SYNC TOOL");
+        _logger.Info("-------------------------------------------------");
+    }
 
     private static IServiceProvider ConfigureServices()
     {
@@ -66,5 +81,41 @@ public partial class App : Application
         services.AddSingleton<IOService>();
 
         return services.BuildServiceProvider();
+    }
+    
+    private void SetupExceptionHandling()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            LogUnhandledException((Exception)e.ExceptionObject, "AppDomain.CurrentDomain.UnhandledException");
+
+        DispatcherUnhandledException += (s, e) =>
+        {
+            LogUnhandledException(e.Exception, "Application.Current.DispatcherUnhandledException");
+            e.Handled = true;
+        };
+
+        TaskScheduler.UnobservedTaskException += (s, e) =>
+        {
+            LogUnhandledException(e.Exception, "TaskScheduler.UnobservedTaskException");
+            e.SetObserved();
+        };
+    }
+
+    private void LogUnhandledException(Exception exception, string source)
+    {
+        var message = $"Unhandled exception ({source})";
+        try
+        {
+            var assemblyName = Assembly.GetExecutingAssembly().GetName();
+            message = $"Unhandled exception in {assemblyName.Name} v{assemblyName.Version}";
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Exception in LogUnhandledException");
+        }
+        finally
+        {
+            _logger.Error(exception, message);
+        }
     }
 }
