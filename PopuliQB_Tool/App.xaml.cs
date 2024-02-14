@@ -55,6 +55,7 @@ public partial class App : Application
 
         services.AddSingleton<QBCompanyService>();
         services.AddSingleton<PopuliAccessService>();
+        services.AddSingleton<OldPopuliAccessService>();
 
         services.AddSingleton<QbCustomerService>();
         services.AddSingleton<PopPersonToQbCustomerBuilder>();

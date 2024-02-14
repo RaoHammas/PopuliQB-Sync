@@ -18,9 +18,11 @@ public class QbService
     private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
     private readonly QbRefundServiceQuick _refundServiceQuick;
     private readonly PopuliAccessService _populiAccessService;
+    private readonly OldPopuliAccessService _oldPopuliAccessService;
 
     public QbService(
         PopuliAccessService populiAccessService,
+        OldPopuliAccessService oldPopuliAccessService,
         QbInvoiceServiceQuick invoiceServiceQuick,
         QbPaymentServiceQuick paymentServiceQuick,
         QbCreditMemoServiceQuick creditMemoServiceQuick,
@@ -28,6 +30,7 @@ public class QbService
     )
     {
         _populiAccessService = populiAccessService;
+        _oldPopuliAccessService = oldPopuliAccessService;
         _invoiceServiceQuick = invoiceServiceQuick;
         _paymentServiceQuick = paymentServiceQuick;
         _creditMemoServiceQuick = creditMemoServiceQuick;
@@ -306,6 +309,13 @@ public class QbService
                 }
 
                 OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, allPersons.Count));
+                
+                var token = await _oldPopuliAccessService.GetAccessToken();
+                if (string.IsNullOrEmpty(token))
+                {
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Info, $"Old api access token get failed. Credits will not sync"));
+                }
 
                 foreach (var person in allPersons)
                 {
@@ -313,12 +323,68 @@ public class QbService
                         new StatusMessageArgs(StatusMessageType.Info,
                             $"Syncing Invoices & Sale Credits for student: {person.DisplayName}."));
 
+                    var allCredits = await _oldPopuliAccessService.GetSalesCreditsAsync(person.Id!.Value);
+                    if (allCredits != null && allCredits.Invoices.Any())
+                    {
+                        foreach (var invoiceCredit in allCredits.Invoices)
+                        {
+                            if (invoiceCredit != null)
+                            {
+                                if (QbSettings.Instance.ApplyPostedDateFilter
+                                    && (Convert.ToDateTime(invoiceCredit.PostedDate)!.Date < QbSettings.Instance.PostedFrom.Date
+                                                           || Convert.ToDateTime(invoiceCredit.PostedDate)!.Date > QbSettings.Instance.PostedTo.Date)
+                                   )
+                                {
+                                    continue;
+                                }
+
+                                var popCred = new PopCredit
+                                {
+                                    Id = invoiceCredit.Id,
+                                    AcademicTermId = invoiceCredit.TermId,
+                                    ActorId = invoiceCredit.StudentId,
+                                    Amount = invoiceCredit.Amount,
+                                    PostedOn = Convert.ToDateTime(invoiceCredit.PostedDate),
+                                    Status = Convert.ToString(invoiceCredit.Status),
+                                    TransactionId = invoiceCredit.TransactionId,
+                                    Number = invoiceCredit.InvoiceNumber,
+                                    Description = Convert.ToString(invoiceCredit.Description),
+                                    DueOn = Convert.ToDateTime(invoiceCredit.DueDate),
+                                    Items = new List<PopItem>()
+                                };
+
+                                if (invoiceCredit.Charges != null)
+                                {
+                                    foreach (var charge in invoiceCredit.Charges.Charges!)
+                                    {
+                                        popCred.Items.Add(new PopItem
+                                        {
+                                            Id = charge.InvoiceItemId,
+                                            Description = charge.Description,
+                                            Amount = charge.Amount,
+                                            InvoiceId = invoiceCredit.Id,
+                                            Name = charge.ItemName,
+                                            ItemId = charge.InvoiceItemId,
+                                            ItemType = charge.ItemType,
+                                        });
+                                    }
+
+                                }
+                                
+                                
+                                var resp = await _creditMemoServiceQuick.AddCreditMemoForSalesCredit(person, popCred, sessionManager);
+
+                            }
+                        }
+
+                    }
+
                     var allInvoices =
                         await _populiAccessService.GetAllStudentInvoicesAsync(person.Id!.Value, person.DisplayName!);
 
                     if (allInvoices.Any())
                     {
-                        var credits = allInvoices.Where(x => x.Credits != null && x.Credits.Any()).Select(x=>x.Credits).ToList();
+                        /*var credits = allInvoices.Where(x => x.Credits != null && x.Credits.Any()).Select(x=>x.Credits).ToList();
                         if (credits.Any())
                         {
                             OnSyncStatusChanged?.Invoke(this,
@@ -343,7 +409,7 @@ public class QbService
 
                                 }
                             }
-                        }
+                        }*/
 
                         foreach (var invoice in allInvoices)
                         {
