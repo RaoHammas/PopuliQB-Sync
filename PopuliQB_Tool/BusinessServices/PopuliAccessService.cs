@@ -778,6 +778,104 @@ public class PopuliAccessService
 
     #endregion
 
+    #region CREDITS
+
+    public async Task<List<PopCredit>> GetAllStudentCreditsAsync(int personId, string displayName)
+    {
+        var page = 0;
+        var allData = new List<PopCredit>();
+        var hasMore = true;
+        while (hasMore)
+        {
+            var data = await FetchAllStudentCreditsAsync(personId, displayName, ++page);
+            if (data.Data != null)
+            {
+                allData.AddRange(data.Data);
+            }
+
+            hasMore = data.HasMore ?? false;
+        }
+
+        return allData;
+    }
+
+    private async Task<PopResponse<PopCredit>> FetchAllStudentCreditsAsync(int personId, string displayName, int page)
+    {
+        var request = new RestRequest($"{_url}/credits");
+        request.AddHeader("Authorization", $"Bearer {_authToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        var filter = new PopFilter
+        {
+            Page = page,
+            //Expand = new[] { "credits" },
+            FilterItems = new List<PopFilterItem>
+            {
+                new()
+                {
+                    Logic = "ALL",
+                    Fields = new List<PopFilterTypeField>
+                    {
+                        new()
+                        {
+                            Name = "student",
+                            Positive = "1",
+                            Value = new PopFilterValueDisplayName
+                            {
+                                DisplayText = displayName,
+                                Id = personId.ToString()
+                            }
+                        }
+                    },
+                }
+            }
+        };
+
+        if (QbSettings.Instance.ApplyPostedDateFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
+            {
+                Name = "posted_date",
+                Positive = "1",
+                Value = new PopFilterValueDateRange
+                {
+                    Type = "RANGE",
+                    Start = QbSettings.Instance.PostedFrom.Date.ToString("yyyy-MM-dd"),
+                    End = QbSettings.Instance.PostedTo.Date.ToString("yyyy-MM-dd"),
+                }
+            });
+        }
+
+        /*if (QbSettings.Instance.ApplyNumFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
+            {
+                Name = "invoice_number",
+                Positive = "1",
+                Value = new PopFilterValueDateRange
+                {
+                    Type = "RANGE",
+                    Start = QbSettings.Instance.NumFrom,
+                    End = QbSettings.Instance.NumTo,
+                }
+            });
+        }*/
+
+        var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
+        request.AddStringBody(body, DataFormat.Json);
+
+        var response = await ExecuteRequestAsync<PopResponse<PopCredit>>(request);
+
+        if (response != null)
+        {
+            return response;
+        }
+
+        _logger.Error("Failed to fetch Credits. {@response}", response);
+        return new PopResponse<PopCredit>();
+    }
+
+    #endregion
 
     private async Task<T?> ExecuteRequestAsync<T>(RestRequest request)
     {

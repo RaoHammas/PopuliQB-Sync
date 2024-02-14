@@ -456,13 +456,20 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void SetSelectedLogType(StatusMessageType type)
     {
-        if (type == StatusMessageType.All)
+        try
         {
-            FilteredLogs.Filter = null; // Show all items
+            if (type == StatusMessageType.All)
+            {
+                FilteredLogs.Filter = null; // Show all items
+            }
+            else
+            {
+                FilteredLogs.Filter = item => ((StatusMessage)item).MessageType == type;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            FilteredLogs.Filter = item => ((StatusMessage)item).MessageType == type;
+            _logger.Error(ex.Message);
         }
     }
 

@@ -66,10 +66,17 @@ public class OldPopuliAccessService
         if (response is { IsSuccessful: true, Content: not null })
         {
             var dotNetXmlDeserializer = new DotNetXmlDeserializer();
-            var data = dotNetXmlDeserializer.Deserialize<OldInvoiceResponse>(response);
-            if (data != null)
+            try
             {
-                return data.Invoices;
+                var data = dotNetXmlDeserializer.Deserialize<OldInvoiceResponse>(response);
+                if (data != null)
+                {
+                    return data.Invoices;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
 
@@ -104,18 +111,18 @@ public class OldCharge
     public string? ItemType { get; set; }
 
     [XmlElement(ElementName = "invoice_item_id")]
-    public int? InvoiceItemId { get; set; }
+    public string? InvoiceItemId { get; set; }
 
     [XmlElement(ElementName = "description")]
     public string? Description { get; set; }
 
-    [XmlElement(ElementName = "amount")] public double? Amount { get; set; }
+    [XmlElement(ElementName = "amount")] public string? Amount { get; set; }
 
     [XmlElement(ElementName = "item_name")]
     public string? ItemName { get; set; }
 
     [XmlElement(ElementName = "finaid_applies")]
-    public int? FinaidApplies { get; set; }
+    public string? FinaidApplies { get; set; }
 }
 
 [XmlRoot(ElementName = "charges")]
@@ -127,20 +134,20 @@ public class OldCharges
 [XmlRoot(ElementName = "invoice")]
 public class OldInvoice
 {
-    [XmlElement(ElementName = "id")] public int? Id { get; set; }
+    [XmlElement(ElementName = "id")] public string? Id { get; set; }
 
     [XmlElement(ElementName = "type")] public string? Type { get; set; }
 
     [XmlElement(ElementName = "status")] public string? Status { get; set; }
 
     [XmlElement(ElementName = "invoice_number")]
-    public int? InvoiceNumber { get; set; }
+    public string? InvoiceNumber { get; set; }
 
     [XmlElement(ElementName = "description")]
     public string? Description { get; set; }
 
     [XmlElement(ElementName = "person_id")]
-    public int? PersonId { get; set; }
+    public string? PersonId { get; set; }
 
     [XmlElement(ElementName = "firstname")]
     public string? Firstname { get; set; }
@@ -148,33 +155,33 @@ public class OldInvoice
     [XmlElement(ElementName = "lastname")] public string? Lastname { get; set; }
 
     [XmlElement(ElementName = "preferred_name")]
-    public object? PreferredName { get; set; }
+    public string? PreferredName { get; set; }
 
     [XmlElement(ElementName = "middlename")]
     public string? Middlename { get; set; }
 
-    [XmlElement(ElementName = "amount")] public double? Amount { get; set; }
+    [XmlElement(ElementName = "amount")] public string? Amount { get; set; }
 
     [XmlElement(ElementName = "due_date")] public string? DueDate { get; set; }
 
-    [XmlElement(ElementName = "term_id")] public int? TermId { get; set; }
+    [XmlElement(ElementName = "term_id")] public string? TermId { get; set; }
 
     [XmlElement(ElementName = "term_name")]
     public string? TermName { get; set; }
 
     [XmlElement(ElementName = "student_id")]
-    public int? StudentId { get; set; }
+    public string? StudentId { get; set; }
 
     [XmlElement(ElementName = "transaction_id")]
-    public int? TransactionId { get; set; }
+    public string? TransactionId { get; set; }
 
     [XmlElement(ElementName = "transaction_number")]
-    public int? TransactionNumber { get; set; }
+    public string? TransactionNumber { get; set; }
 
     [XmlElement(ElementName = "posted_date")]
     public string? PostedDate { get; set; }
 
-    [XmlElement(ElementName = "added_by")] public object? AddedBy { get; set; }
+    [XmlElement(ElementName = "added_by")] public string? AddedBy { get; set; }
 
     [XmlElement(ElementName = "added_time")]
     public string? AddedTime { get; set; }
@@ -183,24 +190,24 @@ public class OldInvoice
     public string? TransactionStatus { get; set; }
 
     [XmlElement(ElementName = "payment_plan_id")]
-    public object? PaymentPlanId { get; set; }
+    public string? PaymentPlanId { get; set; }
 
     [XmlElement(ElementName = "payment_plan_applied_at")]
-    public object? PaymentPlanAppliedAt { get; set; }
+    public string? PaymentPlanAppliedAt { get; set; }
 
     [XmlElement(ElementName = "payment_plan_name")]
-    public object? PaymentPlanName { get; set; }
+    public string? PaymentPlanName { get; set; }
 
     [XmlElement(ElementName = "total_fin_aid_charges")]
-    public double? TotalFinAidCharges { get; set; }
+    public string? TotalFinAidCharges { get; set; }
 
     [XmlElement(ElementName = "total_non_fin_aid_charges")]
-    public int? TotalNonFinAidCharges { get; set; }
+    public string? TotalNonFinAidCharges { get; set; }
 
     [XmlElement(ElementName = "charges")] public OldCharges? Charges { get; set; }
 
     [XmlElement(ElementName = "credit_refunds")]
-    public object? CreditRefunds { get; set; }
+    public string? CreditRefunds { get; set; }
 }
 
 [XmlRoot(ElementName = "invoices")]
