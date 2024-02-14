@@ -18,11 +18,9 @@ public class QbService
     private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
     private readonly QbRefundServiceQuick _refundServiceQuick;
     private readonly PopuliAccessService _populiAccessService;
-    private readonly OldPopuliAccessService _oldPopuliAccessService;
 
     public QbService(
         PopuliAccessService populiAccessService,
-        OldPopuliAccessService oldPopuliAccessService,
         QbInvoiceServiceQuick invoiceServiceQuick,
         QbPaymentServiceQuick paymentServiceQuick,
         QbCreditMemoServiceQuick creditMemoServiceQuick,
@@ -30,7 +28,6 @@ public class QbService
     )
     {
         _populiAccessService = populiAccessService;
-        _oldPopuliAccessService = oldPopuliAccessService;
         _invoiceServiceQuick = invoiceServiceQuick;
         _paymentServiceQuick = paymentServiceQuick;
         _creditMemoServiceQuick = creditMemoServiceQuick;

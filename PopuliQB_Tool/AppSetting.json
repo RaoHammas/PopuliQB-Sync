@@ -1,8 +1,5 @@
 ﻿{
   "API_URL": "https://divinemercyedu.populiweb.com/api2",
   "TOKEN": "sk_y75vZUhN4fP14zXrGcnl8ThHDiLf0xAdGVLWekgcbvgKN8KJHcEw7y0JOp8YlrZ4ZtNSRahQGnkK8dhHFsHNyG",
-  "RequestDelayMs": "2000",
-  "API_URL_OLD": "https://divinemercyedu.populiweb.com/api/",
-  "USER_NAME": "it-admin",
-  "USER_PASS": "58ED<$kJAx6e6a@ONCH9"
+  "RequestDelayMs": "1200"
 }
