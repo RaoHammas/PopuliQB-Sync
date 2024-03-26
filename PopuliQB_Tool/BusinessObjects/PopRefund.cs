@@ -40,7 +40,7 @@ public class PopRefund
     [JsonPropertyName("transaction_id")] public int? TransactionId { get; set; }
 
     [JsonPropertyName("disbursement_number")]
-    public int? DisbursementNumber { get; set; }
+    public object? DisbursementNumber { get; set; }
 
     [JsonPropertyName("sequence_number")] public object? SequenceNumber { get; set; }
 
