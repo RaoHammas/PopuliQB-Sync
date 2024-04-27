@@ -12,7 +12,7 @@ public class PopInvoice
 
     [JsonPropertyName("actor_id")] public int? ActorId { get; set; }
 
-    [JsonPropertyName("number")] public object? Number { get; set; }
+    [JsonPropertyName("number")] public int? Number { get; set; }
 
     [JsonPropertyName("description")] public string? Description { get; set; }
 
@@ -106,7 +106,7 @@ public class PopCredit
 
     [JsonPropertyName("actor_id")] public int? ActorId { get; set; }
 
-    [JsonPropertyName("number")] public object? Number { get; set; }
+    [JsonPropertyName("number")] public int? Number { get; set; }
 
     [JsonPropertyName("description")] public string? Description { get; set; }
 

@@ -12,8 +12,10 @@
     xmlns:models="clr-namespace:PopuliQB_Tool.Models"
     xmlns:viewModels="clr-namespace:PopuliQB_Tool.ViewModels"
     Title="{Binding Title}"
-    Width="950" MinWidth="820" MinHeight="500"
-    Height="720" 
+    Width="950"
+    Height="720"
+    MinWidth="820"
+    MinHeight="500"
     d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel,
                                      IsDesignTimeCreatable=False}"
     ResizeMode="CanResize"
@@ -551,10 +553,11 @@
             </Grid>
 
             <Grid Grid.Row="3" Background="LightGray">
-                <TextBlock FontSize="11"
+                <TextBlock
                     Margin="0,3,0,3"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
+                    VerticalAlignment="Center"
+                    FontSize="11">
                     <Run Text="QuickBooks Sync v" />
                     <Run Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=AppVersion}" />
                     <Run Text=" | " />

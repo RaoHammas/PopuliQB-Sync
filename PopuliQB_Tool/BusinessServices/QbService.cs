@@ -131,18 +131,26 @@ public class QbService
 
                             if (trans.ReversedById != null)
                             {
-                                var aid = await _populiAccessService.GetAidTypeByIdAsync(payment.AidTypeId!.Value);
-
                                 var transRev = await _populiAccessService.GetTransactionByIdWithLedgerAsync(trans.ReversedById!.Value);
 
-                                if (aid.IsScholarship is true)
-                                {
-                                    var respRefundToSource = _invoiceServiceQuick.AddInvoiceForPaymentAsync(person, transRev, payment, aid, sessionManager);
-                                }
-                                else
+                                if (payment.AidTypeId == null && trans.Type == "customer_payment")
                                 {
                                     _qbJournalServiceQuick.AddJournalEntry(person, transRev, Convert.ToInt32(payment.Number), sessionManager);
                                 }
+                                else
+                                {
+                                    var aid = await _populiAccessService.GetAidTypeByIdAsync(payment.AidTypeId!.Value);
+
+                                    if (aid.IsScholarship is true)
+                                    {
+                                        var respRefundToSource = _invoiceServiceQuick.AddInvoiceForPaymentAsync(person, transRev, payment, aid, sessionManager);
+                                    }
+                                    else
+                                    {
+                                        _qbJournalServiceQuick.AddJournalEntry(person, transRev, Convert.ToInt32(payment.Number), sessionManager);
+                                    }
+                                }
+                              
                             }
                         }
                     }

@@ -103,7 +103,7 @@ public class RefundReportData
 
     [JsonPropertyName("term_name")] public string? TermName { get; set; }
 
-    [JsonPropertyName("aid_year_id")] public int? AidYearId { get; set; }
+    [JsonPropertyName("aid_year_id")] public object? AidYearId { get; set; }
 
     [JsonPropertyName("aid_year_name")] public string? AidYearName { get; set; }
 }
@@ -120,7 +120,7 @@ public class PopCustomerRefund
 
     [JsonPropertyName("number")] public int? Number { get; set; }
 
-    [JsonPropertyName("amount")] public int? Amount { get; set; }
+    [JsonPropertyName("amount")] public double? Amount { get; set; }
 
     [JsonPropertyName("online_payment_id")]
     public object? OnlinePaymentId { get; set; }
@@ -136,18 +136,18 @@ public class PopCustomerRefund
     [JsonPropertyName("exchange_rate")] public object? ExchangeRate { get; set; }
 
     [JsonPropertyName("home_currency_amount")]
-    public int? HomeCurrencyAmount { get; set; }
+    public object? HomeCurrencyAmount { get; set; }
 
-    [JsonPropertyName("treat_as_aid")] public bool? TreatAsAid { get; set; }
+    [JsonPropertyName("treat_as_aid")] public object? TreatAsAid { get; set; }
 
     [JsonPropertyName("organization_name")]
     public object? OrganizationName { get; set; }
 
-    [JsonPropertyName("method")] public string? Method { get; set; }
+    [JsonPropertyName("method")] public object? Method { get; set; }
 
-    [JsonPropertyName("paid_to_type")] public string? PaidToType { get; set; }
+    [JsonPropertyName("paid_to_type")] public object? PaidToType { get; set; }
 
-    [JsonPropertyName("paid_to_id")] public int? PaidToId { get; set; }
+    [JsonPropertyName("paid_to_id")] public object? PaidToId { get; set; }
 
-    [JsonPropertyName("sandbox")] public bool? Sandbox { get; set; }
+    [JsonPropertyName("sandbox")] public object? Sandbox { get; set; }
 }
