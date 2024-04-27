@@ -580,6 +580,40 @@ public class PopuliAccessService
 
     #region GET BY ID METHODS
 
+    public async Task<PopCustomerRefund> GetCustomerRefundByPaymentIdAsync(int paymentId)
+    {
+        var request = new RestRequest($"{_url}/refunds/{paymentId}");
+        request.AddHeader("Authorization", $"Bearer {_authToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        var response = await ExecuteRequestAsync<PopCustomerRefund>(request);
+
+        if (response != null)
+        {
+            return response;
+        }
+
+        _logger.Error("Failed to fetch Customer refund. {@response}", response);
+        return new();
+    }
+
+    public async Task<PopAidType> GetAidTypeByIdAsync(int aidTypeId)
+    {
+        var request = new RestRequest($"{_url}/aidtypes/{aidTypeId}");
+        request.AddHeader("Authorization", $"Bearer {_authToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        var response = await ExecuteRequestAsync<PopAidType>(request);
+
+        if (response != null)
+        {
+            return response;
+        }
+
+        _logger.Error("Failed to fetch AidType. {@response}", response);
+        return new();
+    }
+
     public async Task<PopInvoice> GetInvoiceByIdAsync(int invoiceId)
     {
         var request = new RestRequest($"{_url}/invoices/{invoiceId}");

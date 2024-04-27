@@ -17,6 +17,7 @@ public class QbService
     private readonly QbPaymentServiceQuick _paymentServiceQuick;
     private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
     private readonly QbRefundServiceQuick _refundServiceQuick;
+    private readonly QbJournalServiceQuick _qbJournalServiceQuick;
     private readonly PopuliAccessService _populiAccessService;
 
     public QbService(
@@ -24,7 +25,8 @@ public class QbService
         QbInvoiceServiceQuick invoiceServiceQuick,
         QbPaymentServiceQuick paymentServiceQuick,
         QbCreditMemoServiceQuick creditMemoServiceQuick,
-        QbRefundServiceQuick refundServiceQuick
+        QbRefundServiceQuick refundServiceQuick,
+        QbJournalServiceQuick qbJournalServiceQuick
     )
     {
         _populiAccessService = populiAccessService;
@@ -32,6 +34,7 @@ public class QbService
         _paymentServiceQuick = paymentServiceQuick;
         _creditMemoServiceQuick = creditMemoServiceQuick;
         _refundServiceQuick = refundServiceQuick;
+        _qbJournalServiceQuick = qbJournalServiceQuick;
     }
 
 
@@ -104,19 +107,46 @@ public class QbService
                                 continue;
                             }
 
+                            bool resp = false;
                             switch (trans.Type)
                             {
                                 case "aid_payment":
-                                    var respAid =
+                                    resp =
                                         await _creditMemoServiceQuick.AddCreditMemo(person, trans, payment,
                                             sessionManager);
+                                  
                                     break;
                                 case "customer_payment":
-                                    var respPay =
+                                    resp =
                                         _paymentServiceQuick.AddPaymentAsync(person, trans, payment, sessionManager);
                                     break;
                                 default:
                                     break;
+                            }
+
+                            if (payment.RefundSource != null)
+                            {
+                                var refund = await _populiAccessService.GetCustomerRefundByPaymentIdAsync(payment.Id!.Value);
+                                var transRef = await _populiAccessService.GetTransactionByIdWithLedgerAsync(refund.TransactionId!.Value);
+
+                                resp = _refundServiceQuick.AddCustomerRefund(person, transRef, refund, sessionManager);
+
+                            }
+
+                            if (trans.ReversedById != null)
+                            {
+                                var aid = await _populiAccessService.GetAidTypeByIdAsync(payment.AidTypeId!.Value);
+
+                                var transRev = await _populiAccessService.GetTransactionByIdWithLedgerAsync(trans.ReversedById!.Value);
+
+                                if (aid.IsScholarship is true)
+                                {
+                                    var respRefundToSource = _invoiceServiceQuick.AddInvoiceForPaymentAsync(person, transRev, payment, aid, sessionManager);
+                                }
+                                else
+                                {
+                                    _qbJournalServiceQuick.AddJournalEntry(person, transRev, Convert.ToInt32(payment.Number), sessionManager);
+                                }
                             }
                         }
                     }
@@ -219,27 +249,23 @@ public class QbService
                                 continue;
                             }
 
-                            /*if (QbSettings.Instance.ApplyPostedDateFilter
-                                && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date
-                                    || trans.PostedOn!.Value.Date > QbSettings.Instance.PostedTo.Date)
-                               )
-                            {
-                                continue;
-                            }*/
-
+                            var resp = false;
                             switch (refund.Type)
                             {
                                 case "refund_to_student":
-                                    var respRefund =
-                                        _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
+                                    resp = _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
                                     break;
                                 case "refund_to_source":
-                                    var respRefundToSource =
-                                        _invoiceServiceQuick.AddInvoiceForRefundToSourceAsync(person, trans,
-                                            refund, sessionManager);
+                                    resp = _invoiceServiceQuick.AddInvoiceForRefundToSourceAsync(person, trans, refund, sessionManager);
                                     break;
                                 default:
                                     break;
+                            }
+
+                            if (resp && refund.Status == "void")
+                            {
+                                var transRev = await _populiAccessService.GetTransactionByIdWithLedgerAsync(trans.ReversedById!.Value);
+                                _qbJournalServiceQuick.AddJournalEntry(person, transRev, refund.RefundId!.Value, sessionManager);
                             }
                         }
                     }

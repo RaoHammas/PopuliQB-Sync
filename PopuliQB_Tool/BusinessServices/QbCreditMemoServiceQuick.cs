@@ -74,15 +74,16 @@ public class QbCreditMemoServiceQuick
             }*/
 
             //SetUp Student AID Awards
-            var aidAwardsList =
-                await _populiAccessService.GetAllStudentAwardsAsync(person.Id!.Value, person.DisplayName!);
+            /*var aidAwardsList =
+                await _populiAccessService.GetAllStudentAwardsAsync(person.Id!.Value, person.DisplayName!);*/
 
             var nonConvEntries = trans.LedgerEntries.Where(x => x.AccountId != QbSettings.Instance.PopConvenienceAccId)
                 .ToList();
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId)
                 .ToList();
 
-            var aid = aidAwardsList.First(x => x.AidTypeId == payment.AidTypeId!.Value);
+            //var aid = aidAwardsList.First(x => x.AidTypeId == payment.AidTypeId!.Value);
+            var aid = await _populiAccessService.GetAidTypeByIdAsync(payment.AidTypeId!.Value);
             var memo = new PopCredit
             {
                 Id = payment.Id,
@@ -97,12 +98,12 @@ public class QbCreditMemoServiceQuick
                 {
                     new()
                     {
-                        Name = aid.ReportData!.AidName,
+                        Name = aid.Name,
                         Id = aid.Id,
-                        ItemType = "aid_provider",
+                        ItemType = aid.Type,
                         Amount = payment.Amount,
                         Description = "",
-                        ItemId = aid.AidTypeId,
+                        ItemId = aid.Id,
                         Object = "AidPayment_Item",
                     }
                 },

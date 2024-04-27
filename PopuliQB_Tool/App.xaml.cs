@@ -67,6 +67,7 @@ public partial class App : Application
         services.AddSingleton<PopPaymentToQbPaymentBuilder>();
         services.AddSingleton<PopRefundToQbChequeBuilder>();
         services.AddSingleton<PopDepositToQbDepositBuilder>();
+        services.AddSingleton<PopReversalToJournalBuilder>();
 
 
         services.AddSingleton<QbInvoiceServiceQuick>();
@@ -75,6 +76,8 @@ public partial class App : Application
         services.AddSingleton<QbCreditMemoServiceQuick>();
         services.AddSingleton<QbRefundServiceQuick>();
         services.AddSingleton<CustomFieldBuilderQuick>();
+        services.AddSingleton<QbJournalServiceQuick>();
+
         services.AddSingleton<QbService>();
 
         services.AddSingleton<AppConfiguration>();

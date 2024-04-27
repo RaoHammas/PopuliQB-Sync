@@ -34,6 +34,11 @@ public class QbCheque
     public int? QbListId { get; set; }
 }
 
+public class QbJournal
+{
+    public string? RefNumber { get; set; }
+}
+
 public class QbDeposit
 {
     public object? PopDepositNumber { get; set; }
