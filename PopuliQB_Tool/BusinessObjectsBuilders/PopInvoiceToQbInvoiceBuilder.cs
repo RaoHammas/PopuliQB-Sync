@@ -5,7 +5,7 @@ namespace PopuliQB_Tool.BusinessObjectsBuilders;
 
 public class PopInvoiceToQbInvoiceBuilder
 {
-    public void BuildInvoiceAddRequest(IMsgSetRequest requestMsgSet, string key, PopInvoice invoice, string qbCustomerListId, string qbArListId)
+    public void BuildInvoiceAddRequest(IMsgSetRequest requestMsgSet, PopInvoice invoice, string qbCustomerListId, string qbArListId)
     {
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendInvoiceAddRq();
@@ -30,7 +30,6 @@ public class PopInvoiceToQbInvoiceBuilder
             request.TxnDate.SetValue(postedDate);
         }
         
-        request.Memo.SetValue(key);
         
         if (invoice.Items != null)
         {

@@ -36,28 +36,6 @@ public class PopInvoice
     [JsonPropertyName("items")] public List<PopItem>? Items { get; set; }
     [JsonPropertyName("credits")] public List<PopCredit>? Credits { get; set; }
     [JsonPropertyName("payments")] public List<PopPayment>? Payments { get; set; }
-
-}
-
-public class PopItem
-{
-    [JsonPropertyName("object")] public string? Object { get; set; }
-
-    [JsonPropertyName("id")] public int? Id { get; set; }
-
-    [JsonPropertyName("invoice_id")] public int? InvoiceId { get; set; }
-
-    [JsonPropertyName("item_type")] public string? ItemType { get; set; }
-
-    [JsonPropertyName("item_id")] public int? ItemId { get; set; }
-
-    [JsonPropertyName("name")] public string? Name { get; set; }
-
-    [JsonPropertyName("amount")] public double? Amount { get; set; }
-
-    [JsonPropertyName("description")] public string? Description { get; set; }
-    
-    public string? ItemQbListId { get; set; }
 }
 
 public class PopInvoiceReportData
@@ -140,9 +118,54 @@ public class PopCredit
 
     [JsonPropertyName("status")] public string? Status { get; set; }
 
+    [JsonPropertyName("report_data")] public PopCreditReportData? ReportData { get; set; }
+
     [JsonPropertyName("posted_on")] public DateTime? PostedOn { get; set; }
 
-    [JsonPropertyName("academic_term_id")] public object? AcademicTermId { get; set; }
 
     [JsonPropertyName("items")] public List<PopItem>? Items { get; set; }
+}
+
+public class PopItem
+{
+    [JsonPropertyName("object")] public string? Object { get; set; }
+
+    [JsonPropertyName("id")] public int? Id { get; set; }
+
+    [JsonPropertyName("invoice_id")] public int? InvoiceId { get; set; }
+
+    [JsonPropertyName("item_type")] public string? ItemType { get; set; }
+
+    [JsonPropertyName("item_id")] public int? ItemId { get; set; }
+
+    [JsonPropertyName("name")] public string? Name { get; set; }
+
+    [JsonPropertyName("amount")] public double? Amount { get; set; }
+
+    [JsonPropertyName("description")] public string? Description { get; set; }
+
+    public string? ItemQbListId { get; set; }
+}
+
+public class PopCreditReportData
+{
+    [JsonPropertyName("term_name")] public string? TermName { get; set; }
+
+    [JsonPropertyName("term_start_date")] public string? TermStartDate { get; set; }
+
+    [JsonPropertyName("firstname")] public string? Firstname { get; set; }
+
+    [JsonPropertyName("lastname")] public string? Lastname { get; set; }
+
+    [JsonPropertyName("preferred_name")] public string? PreferredName { get; set; }
+
+    [JsonPropertyName("display_name")] public string? DisplayName { get; set; }
+
+    [JsonPropertyName("personid")] public int? Personid { get; set; }
+
+    [JsonPropertyName("studentid")] public int? Studentid { get; set; }
+
+    [JsonPropertyName("posted_date")] public DateTime? PostedDate { get; set; }
+
+    [JsonPropertyName("dummyid")] public string? Dummyid { get; set; }
 }

@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Runtime.InteropServices.ComTypes;
 using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -52,6 +51,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         QbInvoiceServiceQuick invoiceServiceQuick,
         QbPaymentServiceQuick paymentServiceQuick,
         QbRefundServiceQuick refundServiceQuick,
+        QbJournalServiceQuick journalServiceQuick,
         QbService qbService
     )
     {
@@ -89,6 +89,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         refundServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
         refundServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
+
+        journalServiceQuick.OnSyncStatusChanged += SyncStatusChanged;
+        journalServiceQuick.OnSyncProgressChanged += SyncProgressChanged;
 
         _qbService.OnSyncStatusChanged += SyncStatusChanged;
         _qbService.OnSyncProgressChanged += SyncProgressChanged;
@@ -456,13 +459,20 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void SetSelectedLogType(StatusMessageType type)
     {
-        if (type == StatusMessageType.All)
+        try
         {
-            FilteredLogs.Filter = null; // Show all items
+            if (type == StatusMessageType.All)
+            {
+                FilteredLogs.Filter = null; // Show all items
+            }
+            else
+            {
+                FilteredLogs.Filter = item => ((StatusMessage)item).MessageType == type;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            FilteredLogs.Filter = item => ((StatusMessage)item).MessageType == type;
+            _logger.Error(ex.Message);
         }
     }
 

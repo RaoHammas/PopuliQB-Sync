@@ -9,14 +9,10 @@ namespace PopuliQB_Tool.BusinessServices;
 
 public class PopuliAccessService
 {
-    private readonly AppConfiguration _appConfiguration;
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-    // private const string? DevUrl = "https://divinemercyedu-validation.populi.co/api2";
-    private readonly string? _url = "https://divinemercyedu.populiweb.com/api2";
-
-    private readonly string? _authToken =
-        "sk_y75vZUhN4fP14zXrGcnl8ThHDiLf0xAdGVLWekgcbvgKN8KJHcEw7y0JOp8YlrZ4ZtNSRahQGnkK8dhHFsHNyG";
+    private readonly int _reqDelayMs;
+    private readonly string? _url;
+    private readonly string? _authToken;
 
     private readonly RestClient _client;
     public List<PopPerson> AllPopuliPersons { get; set; } = new();
@@ -26,19 +22,21 @@ public class PopuliAccessService
 
     public PopuliAccessService(AppConfiguration appConfiguration)
     {
-        _appConfiguration = appConfiguration;
         _url = appConfiguration["API_URL"];
         _authToken = appConfiguration["TOKEN"];
+        _reqDelayMs = Convert.ToInt32(appConfiguration["RequestDelayMs"]);
 
         _client = new RestClient(new RestClientOptions
         {
             ThrowOnDeserializationError = false,
+            ThrowOnAnyError = false,
         });
     }
 
+    #region STUDENTS
+
     public async Task<PopResponse<PopPerson>> GetAllPersonsAsync(int page = 1)
     {
-        //await Task.Delay(1000);
         var request = new RestRequest($"{_url}/people/");
         request.AddHeader("Authorization", $"Bearer {_authToken}");
         request.AddHeader("Content-Type", "application/json");
@@ -108,6 +106,8 @@ public class PopuliAccessService
         _logger.Error("Failed to fetch Persons. {@response}", response);
         return new();
     }
+
+    #endregion
 
     #region ACCOUNTS
 
@@ -319,16 +319,20 @@ public class PopuliAccessService
     public async Task<List<PopTransaction>> GetAllStudentTransactionsAsync(int personId, string displayName)
     {
         var page = 0;
-        var transList = new List<PopTransaction>();
+        var allData = new List<PopTransaction>();
         var hasMore = true;
         while (hasMore)
         {
             var data = await FetchAllStudentTransactionsAsync(personId, displayName, ++page);
-            transList.AddRange(data.Data!);
-            hasMore = data.HasMore!.Value;
+            if (data.Data != null)
+            {
+                allData.AddRange(data.Data);
+            }
+
+            hasMore = data.HasMore ?? false;
         }
 
-        return transList;
+        return allData;
     }
 
     private async Task<PopResponse<PopTransaction>> FetchAllStudentTransactionsAsync(int personId, string displayName,
@@ -484,8 +488,12 @@ public class PopuliAccessService
         while (hasMore)
         {
             var data = await FetchAllStudentInvoicesAsync(personId, displayName, ++page);
-            allData.AddRange(data.Data!);
-            hasMore = data.HasMore!.Value;
+            if (data.Data != null)
+            {
+                allData.AddRange(data.Data);
+            }
+
+            hasMore = data.HasMore ?? false;
         }
 
         return allData;
@@ -564,13 +572,47 @@ public class PopuliAccessService
         }
 
         _logger.Error("Failed to fetch Invoices. {@response}", response);
-        return new();
+        return new PopResponse<PopInvoice>();
     }
 
     #endregion
 
 
     #region GET BY ID METHODS
+
+    public async Task<PopCustomerRefund> GetCustomerRefundByPaymentIdAsync(int paymentId)
+    {
+        var request = new RestRequest($"{_url}/refunds/{paymentId}");
+        request.AddHeader("Authorization", $"Bearer {_authToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        var response = await ExecuteRequestAsync<PopCustomerRefund>(request);
+
+        if (response != null)
+        {
+            return response;
+        }
+
+        _logger.Error("Failed to fetch Customer refund. {@response}", response);
+        return new();
+    }
+
+    public async Task<PopAidType> GetAidTypeByIdAsync(int aidTypeId)
+    {
+        var request = new RestRequest($"{_url}/aidtypes/{aidTypeId}");
+        request.AddHeader("Authorization", $"Bearer {_authToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        var response = await ExecuteRequestAsync<PopAidType>(request);
+
+        if (response != null)
+        {
+            return response;
+        }
+
+        _logger.Error("Failed to fetch AidType. {@response}", response);
+        return new();
+    }
 
     public async Task<PopInvoice> GetInvoiceByIdAsync(int invoiceId)
     {
@@ -651,8 +693,12 @@ public class PopuliAccessService
         while (hasMore)
         {
             var data = await FetchAllStudentRefundsAsync(personId, displayName, ++page);
-            allData.AddRange(data.Data!);
-            hasMore = data.HasMore!.Value;
+            if (data.Data != null)
+            {
+                allData.AddRange(data.Data);
+            }
+
+            hasMore = data.HasMore ?? false;
         }
 
         return allData;
@@ -766,11 +812,111 @@ public class PopuliAccessService
 
     #endregion
 
+    #region CREDITS
+
+    public async Task<List<PopCredit>> GetAllStudentCreditsAsync(int personId, string displayName)
+    {
+        var page = 0;
+        var allData = new List<PopCredit>();
+        var hasMore = true;
+        while (hasMore)
+        {
+            var data = await FetchAllStudentCreditsAsync(personId, displayName, ++page);
+            if (data.Data != null)
+            {
+                allData.AddRange(data.Data);
+            }
+
+            hasMore = data.HasMore ?? false;
+        }
+
+        return allData;
+    }
+
+    private async Task<PopResponse<PopCredit>> FetchAllStudentCreditsAsync(int personId, string displayName, int page)
+    {
+        var request = new RestRequest($"{_url}/credits");
+        request.AddHeader("Authorization", $"Bearer {_authToken}");
+        request.AddHeader("Content-Type", "application/json");
+
+        var filter = new PopFilter
+        {
+            Page = page,
+            //Expand = new[] { "credits" },
+            FilterItems = new List<PopFilterItem>
+            {
+                new()
+                {
+                    Logic = "ALL",
+                    Fields = new List<PopFilterTypeField>
+                    {
+                        new()
+                        {
+                            Name = "student",
+                            Positive = "1",
+                            Value = new PopFilterValueDisplayName
+                            {
+                                DisplayText = displayName,
+                                Id = personId.ToString()
+                            }
+                        }
+                    },
+                }
+            }
+        };
+
+        if (QbSettings.Instance.ApplyPostedDateFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
+            {
+                Name = "posted_date",
+                Positive = "1",
+                Value = new PopFilterValueDateRange
+                {
+                    Type = "RANGE",
+                    Start = QbSettings.Instance.PostedFrom.Date.ToString("yyyy-MM-dd"),
+                    End = QbSettings.Instance.PostedTo.Date.ToString("yyyy-MM-dd"),
+                }
+            });
+        }
+
+        /*if (QbSettings.Instance.ApplyNumFilter)
+        {
+            filter.FilterItems[0].Fields.Add(new PopFilterTypeField
+            {
+                Name = "invoice_number",
+                Positive = "1",
+                Value = new PopFilterValueDateRange
+                {
+                    Type = "RANGE",
+                    Start = QbSettings.Instance.NumFrom,
+                    End = QbSettings.Instance.NumTo,
+                }
+            });
+        }*/
+
+        var body = JsonSerializer.Serialize(filter, new JsonSerializerOptions { WriteIndented = true });
+        request.AddStringBody(body, DataFormat.Json);
+
+        var response = await ExecuteRequestAsync<PopResponse<PopCredit>>(request);
+
+        if (response != null)
+        {
+            return response;
+        }
+
+        _logger.Error("Failed to fetch Credits. {@response}", response);
+        return new PopResponse<PopCredit>();
+    }
+
+    #endregion
 
     private async Task<T?> ExecuteRequestAsync<T>(RestRequest request)
     {
         try
         {
+            await Task.Delay(_reqDelayMs);
+
             var response = await _client.ExecuteAsync(request, Method.Get, CancellationToken.None);
 
             if (response is { IsSuccessStatusCode: true, Content: not null })

@@ -8,108 +8,94 @@ using QBFC16Lib;
 
 namespace PopuliQB_Tool.BusinessServices;
 
-public class QbDepositServiceQuick
+public class QbJournalServiceQuick
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly PopuliAccessService _populiAccessService;
-    private readonly PopDepositToQbDepositBuilder _builder;
-
+    private readonly PopReversalToJournalBuilder _builder;
+    private readonly QbCustomerService _customerService;
+    private readonly QbDepositServiceQuick _depositServiceQuick;
+    private readonly QbItemService _itemsService;
+    
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
-    public List<QbDeposit> AllExistingDepositsList { get; set; } = new();
+    public List<QbJournal> AllExistingJournalsList { get; set; } = new();
 
 
-    public QbDepositServiceQuick(
-        PopDepositToQbDepositBuilder builder,
+    public QbJournalServiceQuick(
+        PopReversalToJournalBuilder builder,
         PopuliAccessService populiAccessService,
-        PopDepositToQbDepositBuilder depositBuilder
+        QbCustomerService customerService,
+        QbDepositServiceQuick depositServiceQuick,
+        QbItemService itemsService
     )
     {
         _builder = builder;
         _populiAccessService = populiAccessService;
-        _builder = depositBuilder;
+
+        _customerService = customerService;
+        _depositServiceQuick = depositServiceQuick;
+        _itemsService = itemsService;
     }
 
 
-    public bool AddDeposit(PopPayment payment, QBCustomer qbStudent, int arAccId, int adAcc, DateTime? transPostedOn,
-        QBSessionManager sessionManager)
+    public bool AddJournalEntry(PopPerson person, PopTransaction trans, int id, QBSessionManager sessionManager)
     {
         try
         {
-            /*var existing = AllExistingDepositsList.FirstOrDefault(x => x.UniqueId == key);
-            if (existing != null)
-            {
-                OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Warn,
-                        $"Skipped: Deposit: {payment.Number} already exists as Deposit.Num: {payment.Number}."));
-                return false;
-            }*/
-
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-            var fromQbAccListIdConv =
-                _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
-            var adQbAccListIdConv =
-                _populiAccessService.AllPopuliAccounts.First(x => x.Id == adAcc).QbAccountListId;
-
-            var conv = new PopCredit
+            var qbStudent = _customerService.AllExistingCustomersList
+                .FirstOrDefault(x =>
+                    x.QbCustomerFName == person.FirstName!.Trim() 
+                    && x.QbCustomerLName == person.LastName!.Trim());
+            if (qbStudent == null)
             {
-                Id = payment.Id,
-                TransactionId = payment.TransactionId,
-                PostedOn = transPostedOn!.Value,
-                Object = "deposit",
-                ActorType = "person",
-                ActorId = payment.StudentId!,
-                Amount = payment.ConvenienceFeeAmount,
-                Items = new List<PopItem>
-                {
-                    new()
-                    {
-                        Amount = payment.ConvenienceFeeAmount,
-                        Description = "",
-                    }
-                },
-            };
-
-            _builder.BuildAddRequest(requestMsgSet, conv, qbStudent.QbListId!, fromQbAccListIdConv!, adQbAccListIdConv!,
-                transPostedOn!.Value!);
-            var responseMsgSetDeposit = sessionManager.DoRequests(requestMsgSet);
-            if (!ReadAddedDeposit(responseMsgSetDeposit))
-            {
-                var xmResp = responseMsgSetDeposit.ToXMLString();
-                var msg = PqExtensions.GetXmlNodeValue(xmResp);
                 OnSyncStatusChanged?.Invoke(this,
-                    new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+                    new StatusMessageArgs(StatusMessageType.Error,
+                        $"Student: {person.DisplayName!} | Id: {person.Id!} not found in QB."));
 
                 return false;
             }
 
-            OnSyncStatusChanged?.Invoke(this,
-                new StatusMessageArgs(StatusMessageType.Success,
-                    $"Added Deposit.Num: {payment.Number} for {qbStudent.QbCustomerName}"));
+           
+            _builder.BuildAddRequest(requestMsgSet, id!.ToString(), trans, person.DisplayName!, qbStudent.QbListId!, trans.PostedOn!.Value);
+            
+            var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
+            if (!ReadAddedJournal(responseMsgSet))
+            {
+                var xmResp = responseMsgSet.ToXMLString();
+                var msg = PqExtensions.GetXmlNodeValue(xmResp);
+                OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, $"{msg}"));
+
+                return false;
+            }
+
+            
+            OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Success, $"Added a Journal entry num: {id} for student: {person.DisplayName}."));
+
             return true;
         }
         catch (Exception ex)
         {
             _logger.Error(ex);
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Error, ex.Message));
-
             return false;
         }
     }
 
 
-    #region DEPOSITS
+    #region JOURNALS
 
-    public async Task SyncAllExistingDepositsAsync()
+    public async Task SyncAllExistingJournalsAsync()
     {
         var sessionManager = new QBSessionManager();
         var isConnected = false;
         var isSessionOpen = false;
         try
         {
-            AllExistingDepositsList.Clear();
+            AllExistingJournalsList.Clear();
 
             sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             isConnected = true;
@@ -126,7 +112,7 @@ public class QbDepositServiceQuick
 
                 _builder.BuildGetAllRequest(requestMsgSet);
                 var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-                if (!ReadFetchedDeposits(responseMsgSet))
+                if (!ReadFetchedJournals(responseMsgSet))
                 {
                     var xmResp = responseMsgSet.ToXMLString();
                     var msg = PqExtensions.GetXmlNodeValue(xmResp);
@@ -139,7 +125,7 @@ public class QbDepositServiceQuick
 
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Success,
-                    $"Completed: Found Deposits in QB {AllExistingDepositsList.Count}"));
+                    $"Completed: Found Journals in QB {AllExistingJournalsList.Count}"));
         }
         catch (Exception ex)
         {
@@ -163,7 +149,7 @@ public class QbDepositServiceQuick
         }
     }
 
-    private bool ReadFetchedDeposits(IMsgSetResponse? responseMsgSet)
+    private bool ReadFetchedJournals(IMsgSetResponse? responseMsgSet)
     {
         if (responseMsgSet == null) return false;
         var responseList = responseMsgSet.ResponseList;
@@ -178,14 +164,14 @@ public class QbDepositServiceQuick
                 if (response.Detail != null)
                 {
                     var responseType = (ENResponseType)response.Type.GetValue();
-                    if (responseType == ENResponseType.rtDepositQueryRs)
+                    if (responseType == ENResponseType.rtJournalEntryQueryRs)
                     {
-                        var retList = (IDepositRetList)response.Detail;
+                        var retList = (IJournalEntryRetList)response.Detail;
                         OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, retList.Count));
 
                         for (var x = 0; x < retList.Count; x++)
                         {
-                            ReadPropertiesDeposit(retList.GetAt(x));
+                            ReadPropertiesJournal(retList.GetAt(x));
                             OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
                         }
 
@@ -198,7 +184,7 @@ public class QbDepositServiceQuick
         return false;
     }
 
-    private bool ReadAddedDeposit(IMsgSetResponse? responseMsgSet)
+    private bool ReadAddedJournal(IMsgSetResponse? responseMsgSet)
     {
         if (responseMsgSet == null)
         {
@@ -220,12 +206,12 @@ public class QbDepositServiceQuick
                 if (response.Detail != null)
                 {
                     var responseType = (ENResponseType)response.Type.GetValue();
-                    if (responseType == ENResponseType.rtDepositAddRs)
+                    if (responseType == ENResponseType.rtJournalEntryAddRs)
                     {
-                        var ret = (IDepositRet)response.Detail;
+                        var ret = (IJournalEntryRet)response.Detail;
                         if (ret != null)
                         {
-                            ReadPropertiesDeposit(ret);
+                            ReadPropertiesJournal(ret);
                             return true;
                         }
 
@@ -238,18 +224,18 @@ public class QbDepositServiceQuick
         return false;
     }
 
-    private QbDeposit? ReadPropertiesDeposit(IDepositRet? ret)
+    private QbJournal? ReadPropertiesJournal(IJournalEntryRet? ret)
     {
         try
         {
             if (ret == null) return null;
 
-            var deposit = new QbDeposit();
-            
-            //AllExistingDepositsList.Add(deposit);
+            var journal = new QbJournal();
+            journal.RefNumber = ret.RefNumber.GetValue();
             OnSyncStatusChanged?.Invoke(this,
-                new StatusMessageArgs(StatusMessageType.Info, $"Found Deposit."));
-            return deposit;
+                new StatusMessageArgs(StatusMessageType.Info, $"Found Journal."));
+
+            return journal;
         }
         catch (Exception ex)
         {

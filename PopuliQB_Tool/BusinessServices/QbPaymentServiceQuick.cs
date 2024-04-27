@@ -43,8 +43,7 @@ public class QbPaymentServiceQuick
         try
         {
             var numb = payment.Number;
-            var key = $"P:{payment.Number}##";
-
+            
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
@@ -62,7 +61,7 @@ public class QbPaymentServiceQuick
                 return false;
             }
 
-            var existingPay =
+            /*var existingPay =
                 AllExistingPaymentsList.FirstOrDefault(
                     x => x.UniqueId == key
                          && x.QbCustomerListId == qbStudent.QbListId);
@@ -73,7 +72,7 @@ public class QbPaymentServiceQuick
                         $"Skipped Payment: Payment.Num: {numb} already exists for: {person.DisplayName!}"));
 
                 return false;
-            }
+            }*/
 
             var nonConvEntries = trans.LedgerEntries.Where(x => x.AccountId != QbSettings.Instance.PopConvenienceAccId).ToList();
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList();
@@ -83,7 +82,7 @@ public class QbPaymentServiceQuick
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
             var adQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == adAccId).QbAccountListId;
 
-            _builder.BuildAddRequest(requestMsgSet, key, payment, qbStudent.QbListId!, arQbAccListId!, adQbAccListId!,
+            _builder.BuildAddRequest(requestMsgSet, payment, qbStudent.QbListId!, arQbAccListId!, adQbAccListId!,
                 trans.PostedOn!.Value!);
             var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
             if (!ReadAddedPayments(responseMsgSet))
@@ -111,7 +110,6 @@ public class QbPaymentServiceQuick
                     var convPayment = new PopPayment
                     {
                         Id = payment.Id,
-                        Number = $"Conv:{convEntry.Id}-{key}",
                         StudentId = person.Id,
                         ConvenienceFeeAmount = convEntry.Credit!.Value,
                         TransactionId = convEntry.TransactionId,
@@ -120,7 +118,7 @@ public class QbPaymentServiceQuick
                     var arAcc = convEntry.AccountId!.Value;
                     var adAcc = trans.LedgerEntries.First(x => x.Direction == "debit" && x.Debit!.Value! == convEntry.Credit!.Value).AccountId!.Value;
                     
-                    var resp = _depositServiceQuick.AddDeposit(convPayment, convPayment.Number.ToString()!, qbStudent, arAcc, adAcc, trans.PostedOn, sessionManager);
+                    var resp = _depositServiceQuick.AddDeposit(convPayment, qbStudent, arAcc, adAcc, trans.PostedOn, sessionManager);
                     if (resp)
                     {
                         OnSyncStatusChanged?.Invoke(this,
@@ -294,19 +292,8 @@ public class QbPaymentServiceQuick
             payment.PopPaymentNumber = ret.RefNumber.GetValue();
             payment.QbCustomerListId = ret.CustomerRef.ListID.GetValue();
             payment.QbCustomerName = ret.CustomerRef.FullName.GetValue();
-            payment.UniqueId = "";
-            var refNum = ret.Memo.GetValue();
-            if (!string.IsNullOrEmpty(refNum))
-            {
-                var arr = refNum.Split("##");
-                if (arr.Any())
-                {
-                    payment.UniqueId = Convert.ToString(arr[0].Trim()) + "##";
-                }
-                
-            }
             
-            AllExistingPaymentsList.Add(payment);
+            //AllExistingPaymentsList.Add(payment);
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Info, $"Found Payment: {payment.PopPaymentNumber}"));
             return payment;

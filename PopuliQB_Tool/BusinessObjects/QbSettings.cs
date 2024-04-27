@@ -25,7 +25,7 @@ public sealed partial class QbSettings : ObservableObject
     [ObservableProperty] private bool _applyIgnoreStartingBalanceFilter = true;
     [ObservableProperty] private bool _applyAidPaymentsAreCreditMemoFilter = true;
     [ObservableProperty] private string _syncStudentIds = "97113, 35196, 96420, 93831";
-    [ObservableProperty] private bool _applySyncStudentIdsFilter = true;
+    [ObservableProperty] private bool _applySyncStudentIdsFilter = false;
     [ObservableProperty] private int _popConvenienceAccId = 74;
     [ObservableProperty] private string _skipStartingBalanceItemName = "Starting Balance";
     [ObservableProperty] private string _uniquePopuliIdName = "UniquePopuliId";

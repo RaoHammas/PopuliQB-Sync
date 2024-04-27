@@ -40,7 +40,7 @@ public class PopRefund
     [JsonPropertyName("transaction_id")] public int? TransactionId { get; set; }
 
     [JsonPropertyName("disbursement_number")]
-    public int? DisbursementNumber { get; set; }
+    public object? DisbursementNumber { get; set; }
 
     [JsonPropertyName("sequence_number")] public object? SequenceNumber { get; set; }
 
@@ -106,4 +106,48 @@ public class RefundReportData
     [JsonPropertyName("aid_year_id")] public int? AidYearId { get; set; }
 
     [JsonPropertyName("aid_year_name")] public string? AidYearName { get; set; }
+}
+
+public class PopCustomerRefund
+{
+    [JsonPropertyName("object")] public string? Object { get; set; }
+
+    [JsonPropertyName("id")] public int? Id { get; set; }
+
+    [JsonPropertyName("student_id")] public int? StudentId { get; set; }
+
+    [JsonPropertyName("transaction_id")] public int? TransactionId { get; set; }
+
+    [JsonPropertyName("number")] public int? Number { get; set; }
+
+    [JsonPropertyName("amount")] public int? Amount { get; set; }
+
+    [JsonPropertyName("online_payment_id")]
+    public object? OnlinePaymentId { get; set; }
+
+    [JsonPropertyName("refund_source")] public string? RefundSource { get; set; }
+
+    [JsonPropertyName("reference_number")] public string? ReferenceNumber { get; set; }
+
+    [JsonPropertyName("receipt_number")] public string? ReceiptNumber { get; set; }
+
+    [JsonPropertyName("currency")] public string? Currency { get; set; }
+
+    [JsonPropertyName("exchange_rate")] public object? ExchangeRate { get; set; }
+
+    [JsonPropertyName("home_currency_amount")]
+    public int? HomeCurrencyAmount { get; set; }
+
+    [JsonPropertyName("treat_as_aid")] public bool? TreatAsAid { get; set; }
+
+    [JsonPropertyName("organization_name")]
+    public object? OrganizationName { get; set; }
+
+    [JsonPropertyName("method")] public string? Method { get; set; }
+
+    [JsonPropertyName("paid_to_type")] public string? PaidToType { get; set; }
+
+    [JsonPropertyName("paid_to_id")] public int? PaidToId { get; set; }
+
+    [JsonPropertyName("sandbox")] public bool? Sandbox { get; set; }
 }

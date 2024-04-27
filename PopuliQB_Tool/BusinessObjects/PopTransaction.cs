@@ -64,7 +64,7 @@ public class PopTransaction
 
     [JsonPropertyName("reverses")] public object? Reverses { get; set; }
 
-    [JsonPropertyName("reversed_by_id")] public object? ReversedById { get; set; }
+    [JsonPropertyName("reversed_by_id")] public int? ReversedById { get; set; }
 
     [JsonPropertyName("reposts")] public object? Reposts { get; set; }
 

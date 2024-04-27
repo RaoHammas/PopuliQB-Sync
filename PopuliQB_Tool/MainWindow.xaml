@@ -313,15 +313,25 @@
                         Orientation="Vertical">
 
                         <ProgressBar
-                            IsIndeterminate="True" Width="40" Foreground="White"  Height="40" 
+                            Width="40"
+                            Height="40"
+                            Foreground="White"
+                            IsIndeterminate="True"
                             Style="{StaticResource MaterialDesignCircularProgressBar}" />
 
                         <TextBlock
-                            FontSize="24" Margin="0 10 0 0" FontWeight="ExtraBold"
+                            Margin="0,10,0,0"
+                            FontSize="24"
+                            FontWeight="ExtraBold"
                             Foreground="{DynamicResource PrimaryHueDarkForegroundBrush}"
                             Text="Please wait | Sync In Progress">
                             <TextBlock.Effect>
-                                <DropShadowEffect BlurRadius="2" Direction="-70" Color="Black" ShadowDepth="2" Opacity="0.8"></DropShadowEffect>
+                                <DropShadowEffect
+                                    BlurRadius="2"
+                                    Direction="-70"
+                                    Opacity="0.8"
+                                    ShadowDepth="2"
+                                    Color="Black" />
                             </TextBlock.Effect>
                         </TextBlock>
                     </StackPanel>

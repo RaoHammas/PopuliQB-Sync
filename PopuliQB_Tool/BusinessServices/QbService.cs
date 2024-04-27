@@ -17,6 +17,7 @@ public class QbService
     private readonly QbPaymentServiceQuick _paymentServiceQuick;
     private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
     private readonly QbRefundServiceQuick _refundServiceQuick;
+    private readonly QbJournalServiceQuick _qbJournalServiceQuick;
     private readonly PopuliAccessService _populiAccessService;
 
     public QbService(
@@ -24,7 +25,8 @@ public class QbService
         QbInvoiceServiceQuick invoiceServiceQuick,
         QbPaymentServiceQuick paymentServiceQuick,
         QbCreditMemoServiceQuick creditMemoServiceQuick,
-        QbRefundServiceQuick refundServiceQuick
+        QbRefundServiceQuick refundServiceQuick,
+        QbJournalServiceQuick qbJournalServiceQuick
     )
     {
         _populiAccessService = populiAccessService;
@@ -32,6 +34,7 @@ public class QbService
         _paymentServiceQuick = paymentServiceQuick;
         _creditMemoServiceQuick = creditMemoServiceQuick;
         _refundServiceQuick = refundServiceQuick;
+        _qbJournalServiceQuick = qbJournalServiceQuick;
     }
 
 
@@ -76,15 +79,15 @@ public class QbService
                     {
                         foreach (var payment in allPayments)
                         {
-                            //await Task.Delay(1000);
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 payment.TransactionId!
                                     .Value);
-                            if (trans.Id == null || trans.Id < 1)
+                            if (trans.Id is null or < 1)
                             {
-                                OnSyncStatusChanged?.Invoke(this,
+                                /*OnSyncStatusChanged?.Invoke(this,
                                     new StatusMessageArgs(StatusMessageType.Warn,
-                                        $"Skipped Payment.Number {payment.Number}. Transaction.Id {payment.TransactionId} is not found for it. Is it Void?"));
+                                        $"Skipped Payment.Number {payment.Number}. Transaction.Id {payment.TransactionId} is not found for it. for student: {person.DisplayName!}. Is it Void?"));*/
+                                _logger.Warn($"Skipped Payment.Number {payment.Number}. Transaction.Id {payment.TransactionId} is not found for it. for student: {person.DisplayName!}. Is it Void?");
                                 continue;
                             }
 
@@ -104,19 +107,46 @@ public class QbService
                                 continue;
                             }
 
+                            bool resp = false;
                             switch (trans.Type)
                             {
                                 case "aid_payment":
-                                    var respAid =
+                                    resp =
                                         await _creditMemoServiceQuick.AddCreditMemo(person, trans, payment,
                                             sessionManager);
+                                  
                                     break;
                                 case "customer_payment":
-                                    var respPay =
+                                    resp =
                                         _paymentServiceQuick.AddPaymentAsync(person, trans, payment, sessionManager);
                                     break;
                                 default:
                                     break;
+                            }
+
+                            if (payment.RefundSource != null)
+                            {
+                                var refund = await _populiAccessService.GetCustomerRefundByPaymentIdAsync(payment.Id!.Value);
+                                var transRef = await _populiAccessService.GetTransactionByIdWithLedgerAsync(refund.TransactionId!.Value);
+
+                                resp = _refundServiceQuick.AddCustomerRefund(person, transRef, refund, sessionManager);
+
+                            }
+
+                            if (trans.ReversedById != null)
+                            {
+                                var aid = await _populiAccessService.GetAidTypeByIdAsync(payment.AidTypeId!.Value);
+
+                                var transRev = await _populiAccessService.GetTransactionByIdWithLedgerAsync(trans.ReversedById!.Value);
+
+                                if (aid.IsScholarship is true)
+                                {
+                                    var respRefundToSource = _invoiceServiceQuick.AddInvoiceForPaymentAsync(person, transRev, payment, aid, sessionManager);
+                                }
+                                else
+                                {
+                                    _qbJournalServiceQuick.AddJournalEntry(person, transRev, Convert.ToInt32(payment.Number), sessionManager);
+                                }
                             }
                         }
                     }
@@ -198,11 +228,19 @@ public class QbService
                     {
                         foreach (var refund in allRefunds)
                         {
-                            //await Task.Delay(1000);
                             var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 refund.TransactionId!
                                     .Value);
-                            
+
+                            if (trans.Id == null || trans.Id < 1)
+                            {
+                                /*OnSyncStatusChanged?.Invoke(this,
+                                    new StatusMessageArgs(StatusMessageType.Warn,
+                                        $"Skipped Refund. Transaction.Id {refund.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?"));*/
+                                _logger.Warn($"Skipped Refund. Transaction.Id {refund.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?");
+                                continue;
+                            }
+
                             if (QbSettings.Instance.ApplyNumFilter
                                 && (trans.Number!.Value < Convert.ToInt32(QbSettings.Instance.NumFrom)
                                     || trans.Number!.Value > Convert.ToInt32(QbSettings.Instance.NumTo))
@@ -211,27 +249,23 @@ public class QbService
                                 continue;
                             }
 
-                            /*if (QbSettings.Instance.ApplyPostedDateFilter
-                                && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date
-                                    || trans.PostedOn!.Value.Date > QbSettings.Instance.PostedTo.Date)
-                               )
-                            {
-                                continue;
-                            }*/
-
+                            var resp = false;
                             switch (refund.Type)
                             {
                                 case "refund_to_student":
-                                    var respRefund =
-                                        _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
+                                    resp = _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
                                     break;
                                 case "refund_to_source":
-                                    var respRefundToSource =
-                                        _invoiceServiceQuick.AddInvoiceForRefundToSourceAsync(person, trans,
-                                            refund, sessionManager);
+                                    resp = _invoiceServiceQuick.AddInvoiceForRefundToSourceAsync(person, trans, refund, sessionManager);
                                     break;
                                 default:
                                     break;
+                            }
+
+                            if (resp && refund.Status == "void")
+                            {
+                                var transRev = await _populiAccessService.GetTransactionByIdWithLedgerAsync(trans.ReversedById!.Value);
+                                _qbJournalServiceQuick.AddJournalEntry(person, transRev, refund.RefundId!.Value, sessionManager);
                             }
                         }
                     }
@@ -298,25 +332,30 @@ public class QbService
                 }
 
                 OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, allPersons.Count));
-
+                
                 foreach (var person in allPersons)
                 {
                     OnSyncStatusChanged?.Invoke(this,
                         new StatusMessageArgs(StatusMessageType.Info,
                             $"Syncing Invoices & Sale Credits for student: {person.DisplayName}."));
-
-                    var allInvoices =
-                        await _populiAccessService.GetAllStudentInvoicesAsync(person.Id!.Value, person.DisplayName!);
-
-                    if (allInvoices.Any())
+                    
+                    var allCredits =
+                        await _populiAccessService.GetAllStudentCreditsAsync(person.Id!.Value, person.DisplayName!);
+                    if (allCredits.Any())
                     {
-                        foreach (var invoice in allInvoices)
+                        foreach (var credit in allCredits)
                         {
-                            //await Task.Delay(1000);
-                            var trans =
-                                await _populiAccessService.GetTransactionByIdWithLedgerAsync(invoice.TransactionId!
-                                    .Value);
-                            
+                            var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(credit.TransactionId!.Value);
+                            if (trans.Id is null or < 1)
+                            {
+                                /*OnSyncStatusChanged?.Invoke(this,
+                                    new StatusMessageArgs(StatusMessageType.Warn,
+                                        $"Skipped Invoices.Number {invoice.Number}. Transaction.Id {invoice.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?"));*/
+                                
+                                _logger.Warn($"Skipped Invoices.Number {credit.Number}. Transaction.Id {credit.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?");
+                                continue;
+                            }
+
                             if (QbSettings.Instance.ApplyNumFilter
                                 && (trans.Number!.Value < Convert.ToInt32(QbSettings.Instance.NumFrom)
                                     || trans.Number!.Value > Convert.ToInt32(QbSettings.Instance.NumTo))
@@ -325,13 +364,58 @@ public class QbService
                                 continue;
                             }
 
-                            if (QbSettings.Instance.ApplyPostedDateFilter
+                            /*if (QbSettings.Instance.ApplyPostedDateFilter
                                 && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date
                                     || trans.PostedOn!.Value.Date > QbSettings.Instance.PostedTo.Date)
                                )
                             {
                                 continue;
+                            }*/
+
+                            var resp = await _creditMemoServiceQuick.AddCreditMemoForSalesCredit(person, credit, sessionManager);
+                        }
+                    }
+                    else
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Warn,
+                                $"Credits not found for student: {person.DisplayName} in Populi."));
+                    }
+
+
+                    var allInvoices =
+                        await _populiAccessService.GetAllStudentInvoicesAsync(person.Id!.Value, person.DisplayName!);
+
+                    if (allInvoices.Any())
+                    {
+                        foreach (var invoice in allInvoices)
+                        {
+                            var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(invoice.TransactionId!.Value);
+                            if (trans.Id is null or < 1)
+                            {
+                                /*OnSyncStatusChanged?.Invoke(this,
+                                    new StatusMessageArgs(StatusMessageType.Warn,
+                                        $"Skipped Invoices.Number {invoice.Number}. Transaction.Id {invoice.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?"));*/
+                                
+                                _logger.Warn($"Skipped Invoices.Number {invoice.Number}. Transaction.Id {invoice.TransactionId} is not found for it. For student: {person.DisplayName!}. Is it Void?");
+                                continue;
                             }
+
+                            if (QbSettings.Instance.ApplyNumFilter
+                                && (trans.Number!.Value < Convert.ToInt32(QbSettings.Instance.NumFrom)
+                                    || trans.Number!.Value > Convert.ToInt32(QbSettings.Instance.NumTo))
+                               )
+                            {
+                                continue;
+                            }
+
+                            /*if (QbSettings.Instance.ApplyPostedDateFilter
+                                && (trans.PostedOn!.Value.Date < QbSettings.Instance.PostedFrom.Date
+                                    || trans.PostedOn!.Value.Date > QbSettings.Instance.PostedTo.Date)
+                               )
+                            {
+                                continue;
+                            }*/
 
                             var respInv =
                                 await _invoiceServiceQuick.AddInvoiceAsync(person, trans, invoice, sessionManager);
