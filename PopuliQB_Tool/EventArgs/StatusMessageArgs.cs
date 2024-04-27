@@ -25,3 +25,15 @@ public class ProgressArgs : System.EventArgs
     public int ProgressValue { get; set; }
     public int? Total { get; set; }
 }
+
+public class ErrorMessage
+{
+    public Exception Ex { get; }
+    public string Message { get; }
+
+    public ErrorMessage(Exception ex, string message)
+    {
+        Ex = ex;
+        Message = message;
+    }
+}

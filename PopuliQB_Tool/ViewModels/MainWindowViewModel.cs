@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using MiniExcelLibs;
 using NLog;
 using PopuliQB_Tool.BusinessObjects;
@@ -98,6 +99,21 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         FilteredLogs = CollectionViewSource.GetDefaultView(SyncStatusMessages);
         FilteredLogs.Filter = null;
+
+        ListenForMessages();
+    }
+
+    private void ListenForMessages()
+    {
+        WeakReferenceMessenger.Default.Register<ErrorMessage>(this, (o, m) =>
+        {
+            MessageBox.Show($"{m.Message}\n\n" +
+                            $"This is an error related to data type conversion.\n" +
+                            "Please copy the log file from the Logs folder and send it to the developer along with the ScreenShot.", 
+                "Critical Error", 
+                MessageBoxButton.OK, 
+                MessageBoxImage.Error);
+        });
     }
 
     private void SyncProgressChanged(object? sender, ProgressArgs e)
