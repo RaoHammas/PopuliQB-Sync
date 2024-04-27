@@ -21,8 +21,8 @@
   </PropertyGroup>
 	<PropertyGroup>   
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>   
-		<AssemblyVersion>6.0.0.0</AssemblyVersion>   
-		<FileVersion>6.0.0.0</FileVersion>
+		<AssemblyVersion>7.0.0.0</AssemblyVersion>   
+		<FileVersion>7.0.0.0</FileVersion>
 	</PropertyGroup>
   <ItemGroup>
     <Compile Remove="BusinessServices\QBInvoiceService.cs" />

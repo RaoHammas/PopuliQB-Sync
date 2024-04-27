@@ -1,9 +1,12 @@
 ﻿using System.Text.Json;
 using System.Web;
+using CommunityToolkit.Mvvm.Messaging;
 using NLog;
 using PopuliQB_Tool.BusinessObjects;
 using RestSharp;
 using PopuliQB_Tool.PopuliFilters;
+using PopuliQB_Tool.EventArgs;
+using QBFC16Lib;
 
 namespace PopuliQB_Tool.BusinessServices;
 
@@ -935,7 +938,8 @@ public class PopuliAccessService
         }
         catch (Exception ex)
         {
-            _logger.Error("Failed while executing request. {@message}", ex.Message);
+            _logger.Error("Failed while executing request. {@ex}", ex.ToString());
+            WeakReferenceMessenger.Default.Send(new ErrorMessage(ex, ex.Message));
         }
 
 

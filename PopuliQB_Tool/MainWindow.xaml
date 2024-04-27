@@ -13,7 +13,7 @@
     xmlns:viewModels="clr-namespace:PopuliQB_Tool.ViewModels"
     Title="{Binding Title}"
     Width="950"
-    Height="720"
+    Height="720" 
     d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel,
                                      IsDesignTimeCreatable=False}"
     ResizeMode="CanResize"
@@ -35,10 +35,10 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!--  OPERATIONS SECTION  -->
-
             <Grid Grid.Row="0">
                 <Grid>
                     <Grid.Style>
@@ -548,6 +548,18 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </GroupBox>
+            </Grid>
+
+            <Grid Grid.Row="3" Background="LightGray">
+                <TextBlock FontSize="11"
+                    Margin="0,3,0,3"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                    <Run Text="QuickBooks Sync v" />
+                    <Run Text="{Binding Source={x:Static businessObjects:QbSettings.Instance}, Path=AppVersion}" />
+                    <Run Text=" | " />
+                    <Run Text="Contact: hammas143@gmail.com" />
+                </TextBlock>
             </Grid>
         </Grid>
 

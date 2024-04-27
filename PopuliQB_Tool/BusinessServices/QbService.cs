@@ -107,18 +107,15 @@ public class QbService
                                 continue;
                             }
 
-                            bool resp = false;
                             switch (trans.Type)
                             {
                                 case "aid_payment":
-                                    resp =
-                                        await _creditMemoServiceQuick.AddCreditMemo(person, trans, payment,
-                                            sessionManager);
+                                    await _creditMemoServiceQuick.AddCreditMemo(person, trans, payment,
+                                        sessionManager);
                                   
                                     break;
                                 case "customer_payment":
-                                    resp =
-                                        _paymentServiceQuick.AddPaymentAsync(person, trans, payment, sessionManager);
+                                    _paymentServiceQuick.AddPaymentAsync(person, trans, payment, sessionManager);
                                     break;
                                 default:
                                     break;
@@ -129,8 +126,7 @@ public class QbService
                                 var refund = await _populiAccessService.GetCustomerRefundByPaymentIdAsync(payment.Id!.Value);
                                 var transRef = await _populiAccessService.GetTransactionByIdWithLedgerAsync(refund.TransactionId!.Value);
 
-                                resp = _refundServiceQuick.AddCustomerRefund(person, transRef, refund, sessionManager);
-
+                                _refundServiceQuick.AddCustomerRefund(person, transRef, refund, sessionManager);
                             }
 
                             if (trans.ReversedById != null)
@@ -262,7 +258,7 @@ public class QbService
                                     break;
                             }
 
-                            if (resp && refund.Status == "void")
+                            if (refund.Status != null && refund.Status.ToLower() == "void")
                             {
                                 var transRev = await _populiAccessService.GetTransactionByIdWithLedgerAsync(trans.ReversedById!.Value);
                                 _qbJournalServiceQuick.AddJournalEntry(person, transRev, refund.RefundId!.Value, sessionManager);
