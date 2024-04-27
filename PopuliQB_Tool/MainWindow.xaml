@@ -12,7 +12,7 @@
     xmlns:models="clr-namespace:PopuliQB_Tool.Models"
     xmlns:viewModels="clr-namespace:PopuliQB_Tool.ViewModels"
     Title="{Binding Title}"
-    Width="950"
+    Width="950" MinWidth="820" MinHeight="500"
     Height="720" 
     d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel,
                                      IsDesignTimeCreatable=False}"
