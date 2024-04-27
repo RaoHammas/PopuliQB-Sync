@@ -12,7 +12,7 @@ public class PopPayment
 
     [JsonPropertyName("transaction_id")] public int? TransactionId { get; set; }
 
-    [JsonPropertyName("number")] public int? Number { get; set; }
+    [JsonPropertyName("number")] public object? Number { get; set; }
 
     [JsonPropertyName("amount")] public double? Amount { get; set; }
 
@@ -28,7 +28,7 @@ public class PopPayment
 
     [JsonPropertyName("aid_type_id")] public int? AidTypeId { get; set; }
 
-    [JsonPropertyName("refund_source")] public object? RefundSource { get; set; }
+    [JsonPropertyName("refund_source")] public string? RefundSource { get; set; }
 
     [JsonPropertyName("reference_number")] public object? ReferenceNumber { get; set; }
 

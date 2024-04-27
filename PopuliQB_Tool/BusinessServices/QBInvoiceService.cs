@@ -64,7 +64,7 @@ public class QBInvoiceService
 
                     var existingCustomer =
                         _customerService.AllExistingCustomersList.FirstOrDefault(x =>
-                            x.PopPersonId == invoice.ReportData?.PersonId);
+                            x.UniquePopuliId == invoice.ReportData?.PersonId);
 
                     if (existingCustomer != null)
                     {
@@ -105,7 +105,7 @@ public class QBInvoiceService
                                 }
                             }
 
-                            var trans = await _populiAccessService.GetTransactionWithLedgerAsync(
+                            var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(
                                 invoice.TransactionId!.Value);
 
                             if (trans == null)

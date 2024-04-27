@@ -12,16 +12,20 @@ public class QbCustomerService
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly PopPersonToQbCustomerBuilder _customerBuilder;
+    private readonly CustomFieldBuilderQuick _customFieldBuilderQuick;
 
     public bool IsConnected { get; set; }
     public bool IsSessionOpen { get; set; }
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
     public List<QBCustomer> AllExistingCustomersList { get; set; } = new();
+    
 
-    public QbCustomerService(PopPersonToQbCustomerBuilder customerBuilder)
+    public QbCustomerService(PopPersonToQbCustomerBuilder customerBuilder,
+        CustomFieldBuilderQuick customFieldBuilderQuick)
     {
         _customerBuilder = customerBuilder;
+        _customFieldBuilderQuick = customFieldBuilderQuick;
     }
 
     #region ADD NEW CUSTOMER
@@ -32,47 +36,58 @@ public class QbCustomerService
 
         try
         {
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             IsConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             IsSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
-
-            await Task.Run(() =>
+            OnSyncProgressChanged?.Invoke(this, new ProgressArgs(0, persons.Count));
+            
+            await Task.Run(async () =>
             {
                 var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
                 foreach (var person in persons)
                 {
-                    if (AllExistingCustomersList.FirstOrDefault(x => x.PopPersonId == person.Id) != null)
+                    //await Task.Delay(1000);
+
+                    if (AllExistingCustomersList
+                            .FirstOrDefault(x => x.QbCustomerFName == person.FirstName!.Trim() && x.QbCustomerLName == person.LastName!.Trim()) != null)
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn,
                                 $"{person.DisplayName} | Id = {person.Id} already exists."));
-                        continue;
-                    }
-
-                    OnSyncStatusChanged?.Invoke(this,
-                        new StatusMessageArgs(StatusMessageType.Info,
-                            $"Adding student: {person.DisplayName} | Id = {person.Id}"));
-                    _customerBuilder.BuildQbCustomerAddRequest(requestMsgSet, person);
-                    var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
-                    if (ReadAddedCustomer(responseMsgSet))
-                    {
-                        OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Success,
-                                $"Added student: {person.DisplayName} | Id = {person.Id}"));
                     }
                     else
                     {
-                        var xmResp = responseMsgSet.ToXMLString();
-                        var msg = PqExtensions.GetXmlNodeValue(xmResp);
                         OnSyncStatusChanged?.Invoke(this,
-                            new StatusMessageArgs(StatusMessageType.Error,
-                                $"Failed to Add: {person.DisplayName} | Id = {person.Id} | {msg}"));
+                            new StatusMessageArgs(StatusMessageType.Info,
+                                $"Adding student: {person.DisplayName} | Id = {person.Id}"));
+
+                        _customerBuilder.BuildQbCustomerAddRequest(requestMsgSet, person);
+                        var responseMsgSet = sessionManager.DoRequests(requestMsgSet);
+                        if (ReadAddedCustomer(responseMsgSet))
+                        {
+                            /*var added = AllExistingCustomersList.Last();
+                            _customFieldBuilderQuick.AddCustomField(sessionManager, ENAssignToObject.atoCustomer,
+                                added.QbListId!, QbSettings.Instance.UniquePopuliIdName, person.Id!.Value.ToString());
+                            added.UniquePopuliId = person.Id.Value;*/
+
+                            OnSyncStatusChanged?.Invoke(this,
+                                new StatusMessageArgs(StatusMessageType.Success,
+                                    $"Added student: {person.DisplayName} | Id = {person.Id}"));
+                        }
+                        else
+                        {
+                            var xmResp = responseMsgSet.ToXMLString();
+                            var msg = PqExtensions.GetXmlNodeValue(xmResp);
+                            OnSyncStatusChanged?.Invoke(this,
+                                new StatusMessageArgs(StatusMessageType.Error,
+                                    $"Failed to Add: {person.DisplayName} | Id = {person.Id} | {msg}"));
+                        }
                     }
 
                     OnSyncProgressChanged?.Invoke(this, new ProgressArgs(1));
@@ -163,11 +178,11 @@ public class QbCustomerService
         {
             AllExistingCustomersList.Clear();
 
-            sessionManager.OpenConnection(QBCompanyService.AppId, QBCompanyService.AppName);
+            sessionManager.OpenConnection2(QBCompanyService.AppId, QBCompanyService.AppName, ENConnectionType.ctLocalQBD);
             IsConnected = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Connected to QB."));
 
-            sessionManager.BeginSession("", ENOpenMode.omDontCare);
+            sessionManager.BeginSession(QBCompanyService.CompanyFileName, ENOpenMode.omDontCare);
             IsSessionOpen = true;
             OnSyncStatusChanged?.Invoke(this, new StatusMessageArgs(StatusMessageType.Info, "Session Started."));
 
@@ -256,10 +271,47 @@ public class QbCustomerService
 
             var customer = new QBCustomer();
             customer.QbListId = customerRet.ListID.GetValue();
-            customer.PopPersonId = Convert.ToInt32(customerRet.Fax.GetValue());
             customer.QbCustomerName = customerRet.Name.GetValue();
+            var split = customer.QbCustomerName!.Split(",");
+
+            if (split.Length < 2)
+            {
+                OnSyncStatusChanged?.Invoke(this,
+                    new StatusMessageArgs(StatusMessageType.Warn, $"Skipped Customer from QB: {customer.QbCustomerName}. The name is not valid."));
+                return customer;
+            }
+
+            if (!string.IsNullOrEmpty(split[1]))
+            {
+                customer.QbCustomerFName = split[1].Trim();
+            }
+            else
+            {
+                customer.QbCustomerFName = "";
+            }
+
+            if (!string.IsNullOrEmpty(split[0]))
+            {
+                customer.QbCustomerLName = split[0].Trim();
+            }
+            else
+            {
+                customer.QbCustomerLName = "";
+            }
+
+            /*
+            if (customerRet.DataExtRetList != null)
+            {
+                var value = _customFieldBuilderQuick.GetFieldValue(customerRet.DataExtRetList,
+                    QbSettings.Instance.UniquePopuliIdName);
+
+                customer.UniquePopuliId = Convert.ToInt32(value);
+            }*/
+
+
             OnSyncStatusChanged?.Invoke(this,
                 new StatusMessageArgs(StatusMessageType.Info, $"Found Customer: {customer.QbCustomerName}"));
+
             AllExistingCustomersList.Add(customer);
         }
         catch (Exception ex)

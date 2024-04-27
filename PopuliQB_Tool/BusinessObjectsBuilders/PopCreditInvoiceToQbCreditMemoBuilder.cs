@@ -11,7 +11,7 @@ public class PopCreditMemoToQbCreditMemoBuilder
         var request = requestMsgSet.AppendCreditMemoAddRq();
         request.CustomerRef.ListID.SetValue(qbCustomerListId);
         request.PONumber.SetValue(memo.Id.ToString());
-        request.RefNumber.SetValue(memo.Number.ToString());
+        request.RefNumber.SetValue(memo.Number!.ToString());
         request.ARAccountRef.ListID.SetValue(arListId);
 
         request.IsPending.SetValue(false);
@@ -32,8 +32,7 @@ public class PopCreditMemoToQbCreditMemoBuilder
 
         request.IsToBePrinted.SetValue(false);
         request.IsToBeEmailed.SetValue(false);
-        request.Memo.SetValue($"Trans#{memo.TransactionId}");
-
+        
         if (memo.Items != null)
         {
             foreach (var item in memo.Items)
@@ -43,6 +42,7 @@ public class PopCreditMemoToQbCreditMemoBuilder
                 invItem.CreditMemoLineAdd.ItemRef.ListID.SetValue(item.ItemQbListId);
                 invItem.CreditMemoLineAdd.Desc.SetValue(item.Description);
                 invItem.CreditMemoLineAdd.Quantity.SetValue(1);
+                item.Amount = Math.Abs(item.Amount ?? 0);
                 invItem.CreditMemoLineAdd.ORRatePriceLevel.Rate.SetValue(item.Amount!.Value);
                 invItem.CreditMemoLineAdd.Amount.SetValue(item.Amount!.Value);
                 invItem.CreditMemoLineAdd.TaxAmount.SetValue(0);
@@ -54,6 +54,7 @@ public class PopCreditMemoToQbCreditMemoBuilder
         request.IncludeRetElementList.Add("RefNumber");
         request.IncludeRetElementList.Add("PONumber");
         request.IncludeRetElementList.Add("FullName");
+        request.IncludeRetElementList.Add("Memo");
     }
 
     public void BuildGetAllRequest(IMsgSetRequest requestMsgSet)
@@ -64,5 +65,7 @@ public class PopCreditMemoToQbCreditMemoBuilder
         request.IncludeRetElementList.Add("RefNumber");
         request.IncludeRetElementList.Add("PONumber");
         request.IncludeRetElementList.Add("FullName");
+        request.IncludeRetElementList.Add("Memo");
+
     }
 }

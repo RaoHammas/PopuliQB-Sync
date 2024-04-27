@@ -12,12 +12,10 @@ public class PopRefundToQbChequeBuilder
         var request = requestMsgSet.AppendCheckAddRq();
 
         request.PayeeEntityRef.ListID.SetValue(qbCustomerListId);
-        request.RefNumber.SetValue(refund.Number.ToString());
+        request.RefNumber.SetValue(refund.Number!.ToString());
         request.TxnDate.SetValue(transPostedOn);
 
         request.AccountRef.ListID.SetValue(bankAccListId);
-
-        request.Memo.SetValue($"Ref#{refund.Number}");
 
         if (refund.Items != null)
         {
@@ -25,6 +23,7 @@ public class PopRefundToQbChequeBuilder
             {
                 var orItem = request.ExpenseLineAddList.Append();
                 orItem.AccountRef.ListID.SetValue(recAccListId);
+                item.Amount = Math.Abs(item.Amount ?? 0);
                 orItem.Amount.SetValue(item.Amount ?? 0);
                 orItem.Memo.SetValue(item.Name);
                 // orItem.BillableStatus.SetValue(ENBillableStatus.bsNotBillable);

@@ -14,18 +14,18 @@ public class MessageBoxService
         MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
-    public void ShowQuestionWithYesNoCancel(string title, string message)
+    public MessageBoxResult ShowQuestionWithYesNoCancel(string title, string message)
     {
-        MessageBox.Show(message, title, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+        return MessageBox.Show(message, title, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
     }
 
-    public void ShowQuestionWithYesNo(string title, string message)
+    public MessageBoxResult ShowQuestionWithYesNo(string title, string message)
     {
-        MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
+        return MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
     }
 
-    public void ShowQuestionWithOkCancel(string title, string message)
+    public MessageBoxResult ShowQuestionWithOkCancel(string title, string message)
     {
-        MessageBox.Show(message, title, MessageBoxButton.OKCancel, MessageBoxImage.Question);
+        return MessageBox.Show(message, title, MessageBoxButton.OKCancel, MessageBoxImage.Question);
     }
 }

@@ -11,7 +11,7 @@ public class PopPaymentToQbPaymentBuilder
         requestMsgSet.ClearRequests();
         var request = requestMsgSet.AppendReceivePaymentAddRq();
         request.CustomerRef.ListID.SetValue(qbCustomerListId);
-        request.RefNumber.SetValue(payment.Number.ToString());
+        request.RefNumber.SetValue(payment.Number!.ToString());
         request.TxnDate.SetValue(transPostedOn);
         request.ARAccountRef.ListID.SetValue(arListId);
         request.DepositToAccountRef.ListID.SetValue(adListId);
@@ -19,13 +19,10 @@ public class PopPaymentToQbPaymentBuilder
         request.TotalAmount.SetValue(payment.Amount ?? 0);
         request.ORApplyPayment.IsAutoApply.SetValue(true);
 
-        request.Memo.SetValue(
-            $"PaidType# {payment.PaidByType} Trans#{payment.TransactionId} Receipt#{payment.ReceiptNumber} Id#{payment.Id.ToString()}");
-
-
         request.IncludeRetElementList.Add("CustomerRef");
         request.IncludeRetElementList.Add("RefNumber");
         request.IncludeRetElementList.Add("FullName");
+        request.IncludeRetElementList.Add("Memo");
     }
 
     public void BuildGetAllRequest(IMsgSetRequest requestMsgSet)
@@ -35,5 +32,7 @@ public class PopPaymentToQbPaymentBuilder
         request.IncludeRetElementList.Add("CustomerRef");
         request.IncludeRetElementList.Add("RefNumber");
         request.IncludeRetElementList.Add("FullName");
+        request.IncludeRetElementList.Add("Memo");
+
     }
 }

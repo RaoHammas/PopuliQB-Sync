@@ -15,6 +15,7 @@ public class QbPaymentsService
     private readonly QbCustomerService _customerService;
     private readonly QbAccountsService _accountsService;
     private readonly PopuliAccessService _populiAccessService;
+    private readonly QBInvoiceService _qbInvoiceService;
     private readonly PopPaymentToQbPaymentBuilder _paymentBuilder;
     private readonly PopCreditMemoToQbCreditMemoBuilder _memoBuilder;
     private readonly PopDepositToQbDepositBuilder _depositBuilder;
@@ -34,6 +35,7 @@ public class QbPaymentsService
         PopDepositToQbDepositBuilder depositBuilder,
         PopRefundToQbChequeBuilder chequeBuilder,
         PopuliAccessService populiAccessService,
+        QBInvoiceService qbInvoiceService,
         QbItemService itemService,
         QbCustomerService customerService,
         QbAccountsService accountsService
@@ -44,6 +46,7 @@ public class QbPaymentsService
         _depositBuilder = depositBuilder;
         _chequeBuilder = chequeBuilder;
         _populiAccessService = populiAccessService;
+        _qbInvoiceService = qbInvoiceService;
         _itemService = itemService;
         _customerService = customerService;
         _accountsService = accountsService;
@@ -86,7 +89,7 @@ public class QbPaymentsService
                 foreach (var person in allPersons)
                 {
                     var qbCustomer =
-                        _customerService.AllExistingCustomersList.First(x => x.PopPersonId == person.Id!.Value);
+                        _customerService.AllExistingCustomersList.First(x => x.UniquePopuliId == person.Id!.Value);
 
                     var popPaymentsAndCredits = await _populiAccessService.GetAllStudentPaymentsAsync(person.Id!.Value);
 
@@ -103,7 +106,7 @@ public class QbPaymentsService
                     {
                         foreach (var payment in paymentsOnly)
                         {
-                            var trans = await _populiAccessService.GetTransactionWithLedgerAsync(payment.TransactionId!
+                            var trans = await _populiAccessService.GetTransactionByIdWithLedgerAsync(payment.TransactionId!
                                 .Value);
 
                             if (trans == null)
@@ -197,8 +200,6 @@ public class QbPaymentsService
                                                 $"Added Deposit.Num: {payment.Number} for {person.DisplayName}"));
                                     }
                                 }
-
-
                             }
 
                             var arAccId = trans.LedgerEntries.First(x => x.Direction == "credit").AccountId!;
@@ -242,11 +243,11 @@ public class QbPaymentsService
                             $"Syncing credit memos for student: {person.DisplayName}."));
 
                     //SetUp Student AID Awards
-                    var studentAwards =
+                    var aidAwardsList =
                         await _populiAccessService.GetAllStudentAwardsAsync(person.Id!.Value, person.DisplayName!);
-
+                    
                     var creditPaymentsOnly = popPaymentsAndCredits.Where(x =>
-                        x is { PaidByType: "aid_provider", RefundSource: null, AidTypeId: not null }).ToList();
+                        x is { PaidByType: "aid_provider", RefundSource: null, AidTypeId: not null } && x.AidTypeId != 47178).ToList();
 
                     if (creditPaymentsOnly.Any())
                     {
@@ -254,7 +255,7 @@ public class QbPaymentsService
                         {
                             var trans =
                                 await _populiAccessService
-                                    .GetTransactionWithLedgerAsync(creditPayment.TransactionId!.Value);
+                                    .GetTransactionByIdWithLedgerAsync(creditPayment.TransactionId!.Value);
 
                             if (trans == null)
                             {
@@ -281,7 +282,7 @@ public class QbPaymentsService
                             }
 
 
-                            var aid = studentAwards.First(x => x.AidTypeId == creditPayment.AidTypeId!.Value);
+                            var aid = aidAwardsList.First(x => x.AidTypeId == creditPayment.AidTypeId!.Value);
                             var memo = new PopCredit
                             {
                                 Id = creditPayment.Id,
@@ -456,7 +457,62 @@ public class QbPaymentsService
                                 $"No Credit memos found for student: {person.DisplayName}."));
                     }
 
+                    //-------------------------------REFUNDS RETURNS------------------------------------------------------
+                    OnSyncStatusChanged?.Invoke(this,
+                        new StatusMessageArgs(StatusMessageType.Info,
+                            $"Syncing refund returns for student: {person.DisplayName}."));
+
+                    var refundsReturnsOnly = popPaymentsAndCredits.Where(x =>
+                        x is { PaidByType: "aid_provider", RefundSource: null, AidTypeId: 47178 }).ToList();
+
+                    if (refundsReturnsOnly.Any())
+                    {
+                        var invoicesList = new List<PopInvoice>();
+                        foreach (var refundReturn in refundsReturnsOnly)
+                        {
+                            var trans =
+                                await _populiAccessService
+                                    .GetTransactionByIdWithLedgerAsync(refundReturn.TransactionId!.Value);
+
+                            if (trans == null)
+                            {
+                                OnSyncStatusChanged?.Invoke(this,
+                                    new StatusMessageArgs(StatusMessageType.Error,
+                                        $"Transaction not found for refundReturn no: {refundReturn.Number}"));
+                                continue;
+                            }
+
+                            var item = aidAwardsList.First(x => x.AidTypeId == refundReturn.AidTypeId).ReportData!.AidName!;
+                            var popInvoice = new PopInvoice
+                            {
+                                PostedOn = trans.PostedOn.Value,
+                                ActorId = refundReturn.StudentId,
+                                TransactionId = trans.Id,
+                                Number = refundReturn.Number,
+                                Description = "refund return converted to invoice.",
+                                Items = new List<PopItem>
+                                {
+                                    new PopItem
+                                    {
+                                        Description = item,
+                                        Amount = refundReturn.Amount,
+                                        Name = item,
+                                    }
+                                }
+                            };
+                        }
+
+                        await _qbInvoiceService.AddInvoicesAsync(invoicesList);
+
+                    }
+                    else
+                    {
+                        OnSyncStatusChanged?.Invoke(this,
+                            new StatusMessageArgs(StatusMessageType.Info,
+                                $"No refund returns found for student: {person.DisplayName}."));
+                    }
                     
+
                     //-------------------------------REFUNDS------------------------------------------------------
                     OnSyncStatusChanged?.Invoke(this,
                         new StatusMessageArgs(StatusMessageType.Info,
@@ -471,7 +527,7 @@ public class QbPaymentsService
                         {
                             var trans =
                                 await _populiAccessService
-                                    .GetTransactionWithLedgerAsync(refund.TransactionId!.Value);
+                                    .GetTransactionByIdWithLedgerAsync(refund.TransactionId!.Value);
 
                             if (trans == null)
                             {
@@ -498,7 +554,7 @@ public class QbPaymentsService
                             }
 
 
-                            var aid = studentAwards.First(x => x.AidTypeId == refund.AidTypeId!.Value);
+                            var aid = aidAwardsList.First(x => x.AidTypeId == refund.AidTypeId!.Value);
                             var refundCheque = new PopCredit
                             {
                                 Id = refund.Id,
@@ -596,8 +652,6 @@ public class QbPaymentsService
 
 
                             }
-
-
 
                             if (refundCheque.Items != null)
                             {
@@ -1036,7 +1090,7 @@ public class QbPaymentsService
 
     #endregion
 
-    #region MEMOS
+    #region CHEQUES
 
     public async Task SyncAllExistingChequesAsync()
     {

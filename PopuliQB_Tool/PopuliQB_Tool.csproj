@@ -11,13 +11,26 @@
     <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
     <Title>Populi to QuickBooks Sync</Title>
     <Description>Populi to QuickBooks Sync</Description>
-    <Authors>Populi to QuickBooks Sync</Authors>
-    <Company>Populi to QuickBooks Sync</Company>
+    <Authors>Rao Hammas</Authors>
+    <Company>Rao Hammas</Company>
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>Populi; QuickBooks; Sync;</PackageTags>
+    <Copyright>All Rights Reserevd Rao Hammas</Copyright>
+    <SignAssembly>False</SignAssembly>
+    <PackageProjectUrl>https://github.com/RaoHammas/PopuliQB-Sync</PackageProjectUrl>
   </PropertyGroup>
+	<PropertyGroup>   
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>   
+		<AssemblyVersion>7.0.0.0</AssemblyVersion>   
+		<FileVersion>7.0.0.0</FileVersion>
+	</PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="BusinessServices\QBInvoiceService.cs" />
+    <Compile Remove="BusinessServices\QbPaymentsService.cs" />
+  </ItemGroup>
 
   <ItemGroup>
+    <None Remove="AppSetting.json" />
     <None Remove="nLog.config" />
     <None Remove="QB- Item List.xlsx" />
   </ItemGroup>
@@ -44,11 +57,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="AppSetting.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="NLog.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="QB- Item List.xlsx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\icon.ico" />
   </ItemGroup>
@@ -56,22 +72,24 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
     <PackageReference Include="MiniExcel" Version="1.31.2" />
     <PackageReference Include="NLog" Version="5.2.7" />
     <PackageReference Include="NLog.Extensions.Logging" Version="5.3.7" />
     <PackageReference Include="RestSharp" Version="110.2.0" />
+    <PackageReference Include="RestSharp.Serializers.Xml" Version="110.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Models\" />
   </ItemGroup>
 
+
   <ItemGroup>
     <None Update="Resources\icon.png">
       <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 
