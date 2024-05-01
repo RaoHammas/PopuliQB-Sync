@@ -148,6 +148,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             await Task.Run(() => { CompanyName = _qbCompanyService.GetCompanyName(); });
             Title += $" [ Connected to {CompanyName} ]";
             SetSyncStatusMessage(StatusMessageType.Success, $"Connected to QuickBooks {CompanyName}.");
+            SetSyncStatusMessage(StatusMessageType.Warn, $"Remember to backup existing QuickBooks file before starting sync operations.");
         }
         catch (Exception ex)
         {
@@ -348,6 +349,16 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         try
         {
+            var resultBackup = _messageBoxService
+                .ShowQuestionWithYesNo("Important Warning", "Did you backup your existing QB file?\n" +
+                                                            "Please take backup of your existing QB file before starting the sync operation.\n" +
+                                                            "Press YES to start sync operation or Press NO to cancel."
+                                                            );
+            if (resultBackup == MessageBoxResult.No)
+            {
+                return;
+            }
+
             var result =
                 _messageBoxService.ShowQuestionWithYesNo("Confirmation Required",
                     "Do you want to start Students Sync?");
