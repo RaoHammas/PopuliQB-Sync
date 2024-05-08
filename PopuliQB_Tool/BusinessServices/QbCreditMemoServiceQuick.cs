@@ -47,10 +47,8 @@ public class QbCreditMemoServiceQuick
             var requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
             requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-            var qbStudent =
-                _customerService.AllExistingCustomersList
-                    .FirstOrDefault(x => x.QbCustomerFName == person.FirstName!.Trim() 
-                                         && x.QbCustomerLName == person.LastName!.Trim());
+            var qbStudent = _customerService.AllExistingCustomersList
+                .FirstOrDefault(x => QbSettings.Instance.CustomerPredicate(x, person.FirstName!, person.LastName!));
             if (qbStudent == null)
             {
                 OnSyncStatusChanged?.Invoke(this,
@@ -235,8 +233,7 @@ public class QbCreditMemoServiceQuick
             }
 
             var qbStudent = _customerService.AllExistingCustomersList
-                    .FirstOrDefault(x => x.QbCustomerFName == person.FirstName!.Trim() 
-                                         && x.QbCustomerLName == person.LastName!.Trim());
+                    .FirstOrDefault(x => QbSettings.Instance.CustomerPredicate(x, person.FirstName!, person.LastName!));
             if (qbStudent == null)
             {
                 OnSyncStatusChanged?.Invoke(this,

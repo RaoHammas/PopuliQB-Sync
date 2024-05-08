@@ -55,7 +55,7 @@ public class QbCustomerService
                     //await Task.Delay(1000);
 
                     if (AllExistingCustomersList
-                            .FirstOrDefault(x => x.QbCustomerFName == person.FirstName!.Trim() && x.QbCustomerLName == person.LastName!.Trim()) != null)
+                            .FirstOrDefault(x => QbSettings.Instance.CustomerPredicate(x, person.FirstName!, person.LastName!)) != null)
                     {
                         OnSyncStatusChanged?.Invoke(this,
                             new StatusMessageArgs(StatusMessageType.Warn,

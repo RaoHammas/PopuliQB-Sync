@@ -31,6 +31,10 @@ public sealed partial class QbSettings : ObservableObject
     [ObservableProperty] private string _uniquePopuliIdName = "UniquePopuliId";
     [ObservableProperty] private string _appVersion = Assembly.GetExecutingAssembly()!.GetName()!.Version!.ToString();
 
+    public Func<QBCustomer, string, string, bool> CustomerPredicate = (customer, firstName, lastName) 
+        => string.Equals(customer.QbCustomerFName!.Trim(), firstName.Trim(), StringComparison.CurrentCultureIgnoreCase) 
+           && string.Equals(customer.QbCustomerLName!.Trim(), lastName.Trim(), StringComparison.CurrentCultureIgnoreCase);
+
 
     private QbSettings()
     {
