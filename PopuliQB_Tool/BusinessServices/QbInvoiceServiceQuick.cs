@@ -126,7 +126,7 @@ public class QbInvoiceServiceQuick
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId)
                 .ToList();
 
-            var arAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
+            var arAccId = QbSettings.Instance.GetPopuliAccountReceivableId(nonConvEntries);
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
             _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, qbStudent.QbListId!, arQbAccListId!);

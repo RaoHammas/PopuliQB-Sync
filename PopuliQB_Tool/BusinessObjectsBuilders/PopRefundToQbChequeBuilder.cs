@@ -23,7 +23,7 @@ public class PopRefundToQbChequeBuilder
             {
                 var orItem = request.ExpenseLineAddList.Append();
                 orItem.AccountRef.ListID.SetValue(recAccListId);
-                item.Amount = item.Amount ?? 0;
+                item.Amount = Math.Abs(item.Amount ?? 0);
                 orItem.Amount.SetValue(item.Amount ?? 0);
                 orItem.Memo.SetValue(item.Name);
                 // orItem.BillableStatus.SetValue(ENBillableStatus.bsNotBillable);

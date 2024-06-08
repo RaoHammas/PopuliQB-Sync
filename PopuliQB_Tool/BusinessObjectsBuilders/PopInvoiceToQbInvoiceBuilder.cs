@@ -41,7 +41,7 @@ public class PopInvoiceToQbInvoiceBuilder
                 invItem.InvoiceLineAdd.Desc.SetValue(item.Description);
                 invItem.InvoiceLineAdd.Quantity.SetValue(1);
 
-                item.Amount ??= 0;
+                item.Amount = item.Amount ?? 0;
                 invItem.InvoiceLineAdd.ORRatePriceLevel.Rate.SetValue(item.Amount!.Value);
                 invItem.InvoiceLineAdd.Amount.SetValue(item.Amount!.Value);
                 invItem.InvoiceLineAdd.IsTaxable.SetValue(false);
