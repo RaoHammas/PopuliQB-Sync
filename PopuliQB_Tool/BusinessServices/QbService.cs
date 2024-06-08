@@ -256,9 +256,9 @@ public class QbService
                             var resp = false;
                             switch (refund.Type)
                             {
-                                case "refund_to_student":
+                                /*case "refund_to_student":
                                     resp = _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
-                                    break;
+                                    break;*/
                                 case "refund_to_source":
                                     resp = _invoiceServiceQuick.AddInvoiceForRefundToSourceAsync(person, trans, refund, sessionManager);
                                     break;

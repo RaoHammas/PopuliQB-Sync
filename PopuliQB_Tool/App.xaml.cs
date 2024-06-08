@@ -80,6 +80,7 @@ public partial class App : Application
 
         services.AddSingleton<AppConfiguration>();
         services.AddSingleton<IOService>();
+        services.AddSingleton<CommonOperationsService>();
 
         return services.BuildServiceProvider();
     }

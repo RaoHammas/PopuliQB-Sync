@@ -8,10 +8,8 @@ namespace PopuliQB_Tool.BusinessObjects;
 
 public sealed partial class QbSettings : ObservableObject
 {
-    private readonly PopuliAccessService _populiAccessService;
-
     private static readonly Lazy<QbSettings> Lazy = new(() =>
-        new QbSettings(App.Services.GetRequiredService<PopuliAccessService>()));
+        new QbSettings());
 
     public static QbSettings Instance { get; set; } = Lazy.Value;
 
@@ -43,25 +41,7 @@ public sealed partial class QbSettings : ObservableObject
            && string.Equals(customer.QbCustomerLName!.Trim(), lastName.Trim(),
                StringComparison.CurrentCultureIgnoreCase);
 
-    public int GetPopuliAccountReceivableId(List<PopLedgerEntry> entries)
+    private QbSettings()
     {
-        foreach (var nonConvEntry in entries)
-        {
-            if (nonConvEntry.Credit > 0)
-            {
-                var acc = _populiAccessService.AllPopuliAccounts.FirstOrDefault(x => x.Id == nonConvEntry.AccountId);
-                if (acc != null && acc.Type?.ToLower() == "Asset".ToLower())
-                {
-                    return nonConvEntry.AccountId ?? 0;
-                }
-            }
-        }
-
-        return entries.First(x => x.Direction == "debit").AccountId ?? 0;
-    }
-
-    private QbSettings(PopuliAccessService populiAccessService)
-    {
-        _populiAccessService = populiAccessService;
     }
 }

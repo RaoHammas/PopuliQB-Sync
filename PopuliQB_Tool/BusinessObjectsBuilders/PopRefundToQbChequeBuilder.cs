@@ -25,7 +25,7 @@ public class PopRefundToQbChequeBuilder
                 orItem.AccountRef.ListID.SetValue(recAccListId);
                 item.Amount = Math.Abs(item.Amount ?? 0);
                 orItem.Amount.SetValue(item.Amount ?? 0);
-                orItem.Memo.SetValue(item.Name);
+                orItem.Memo.SetValue(item.Description);
                 // orItem.BillableStatus.SetValue(ENBillableStatus.bsNotBillable);
                 orItem.CustomerRef.ListID.SetValue(qbCustomerListId);
             }
