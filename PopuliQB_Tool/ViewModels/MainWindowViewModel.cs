@@ -30,6 +30,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly QbService _qbService;
 
     [ObservableProperty] private ObservableCollection<StatusMessage> _syncStatusMessages = new();
+    [ObservableProperty] private ObservableCollection<string> _operationsHistory = new();
+    [ObservableProperty] private string _currentOperation = "";
     [ObservableProperty] private ICollectionView _filteredLogs;
     [ObservableProperty] private PopuliAccessService _populiAccessService;
     [ObservableProperty] private QbCustomerService _qbCustomerService;
@@ -170,6 +172,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
 
         IsBusy = true;
+        CurrentOperation = "Syncing Students";
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -232,6 +235,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         finally
         {
             IsBusy = false;
+            OperationsHistory.Insert(0, $"{DateTime.Now:hh:mm tt} | Students Sync.".ToUpper());
         }
     }
 
@@ -246,6 +250,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
 
         IsBusy = true;
+        CurrentOperation = "Syncing Invoices & Sale Credits";
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -269,6 +274,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         finally
         {
             IsBusy = false;
+            OperationsHistory.Insert(0, $"{DateTime.Now:hh:mm tt} | Invoices & Sale Credits Sync.".ToUpper());
         }
     }
 
@@ -283,6 +289,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
 
         IsBusy = true;
+        CurrentOperation = "Syncing Payments & Credit Memos";
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -306,6 +313,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         finally
         {
             IsBusy = false;
+            OperationsHistory.Insert(0, $"{DateTime.Now:hh:mm tt} | Payments & Credit Memos Sync.".ToUpper());
         }
     }
 
@@ -320,7 +328,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         }
 
         IsBusy = true;
-
+        CurrentOperation = "Syncing other Refunds.";
         SyncStatusMessages.Clear();
         TotalRecords = 0;
         ProgressCount = 0;
@@ -341,6 +349,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         finally
         {
             IsBusy = false;
+            OperationsHistory.Insert(0, $"{DateTime.Now:hh:mm tt} | Other Refunds Sync.".ToUpper());
         }
     }
 
@@ -368,6 +377,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             }
 
             IsBusy = true;
+            CurrentOperation = "Syncing Accounts";
             SyncStatusMessages.Clear();
             TotalRecords = 0;
             ProgressCount = 0;
@@ -375,7 +385,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
             await Task.Run(async () =>
             {
-                SetSyncStatusMessage(StatusMessageType.Info, "Synching Accounts From QB.");
+                SetSyncStatusMessage(StatusMessageType.Info, "Syncing Accounts From QB.");
                 await QbAccountsService.SyncAllExistingAccountsAsync();
 
 
@@ -413,6 +423,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         finally
         {
             IsBusy = false;
+            OperationsHistory.Insert(0, $"{DateTime.Now:hh:mm tt} | Accounts Sync.".ToUpper());
+
         }
     }
 
@@ -430,6 +442,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             }
 
             IsBusy = true;
+            CurrentOperation = "Syncing Items";
             SyncStatusMessages.Clear();
             TotalRecords = 0;
             ProgressCount = 0;
@@ -437,10 +450,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
             SetSyncStatusMessage(StatusMessageType.Info, "Starting Sync.");
             await Task.Run(async () =>
             {
-                SetSyncStatusMessage(StatusMessageType.Info, "Synching Items From QB.");
+                SetSyncStatusMessage(StatusMessageType.Info, "Syncing Items From QB.");
                 await _qbItemService.SyncAllExistingItemsAsync();
 
-                SetSyncStatusMessage(StatusMessageType.Info, "Synching Items From Excel.");
+                SetSyncStatusMessage(StatusMessageType.Info, "Syncing Items From Excel.");
                 const string path = "QB- Item List.xlsx";
                 var sheetNames = MiniExcel.GetSheetNames(path);
                 List<PopExcelItem> excelItems = new();
@@ -468,6 +481,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         finally
         {
             IsBusy = false;
+            OperationsHistory.Insert(0, $"{DateTime.Now:hh:mm tt} | Items Sync.".ToUpper());
         }
     }
 

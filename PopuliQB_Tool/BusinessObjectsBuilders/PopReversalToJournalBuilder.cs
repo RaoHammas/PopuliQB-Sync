@@ -20,6 +20,8 @@ public class PopReversalToJournalBuilder
         var request = requestMsgSet.AppendJournalEntryAddRq();
         request.TxnDate.SetValue(transPostedOn);
         //request.IsAdjustment.SetValue(true);
+        request.Memo.SetValue($"Reversal of {number} for Student: {studentName}");
+        request.RefNumber.SetValue(number);
 
         if (transaction.LedgerEntries.Any())
         {
