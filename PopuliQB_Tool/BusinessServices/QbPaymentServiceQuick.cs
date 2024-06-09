@@ -4,6 +4,7 @@ using PopuliQB_Tool.BusinessObjectsBuilders;
 using PopuliQB_Tool.EventArgs;
 using PopuliQB_Tool.Helpers;
 using PopuliQB_Tool.Models;
+using PopuliQB_Tool.Services;
 using QBFC16Lib;
 
 namespace PopuliQB_Tool.BusinessServices;
@@ -15,6 +16,7 @@ public class QbPaymentServiceQuick
     private readonly QbCustomerService _customerService;
     private readonly PopuliAccessService _populiAccessService;
     private readonly QbDepositServiceQuick _depositServiceQuick;
+    private readonly CommonOperationsService _commonOperationsService;
 
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
@@ -25,13 +27,15 @@ public class QbPaymentServiceQuick
         PopPaymentToQbPaymentBuilder builder,
         QbCustomerService customerService,
         PopuliAccessService populiAccessService,
-        QbDepositServiceQuick depositServiceQuick
+        QbDepositServiceQuick depositServiceQuick,
+        CommonOperationsService commonOperationsService
     )
     {
         _builder = builder;
         _customerService = customerService;
         _populiAccessService = populiAccessService;
         _depositServiceQuick = depositServiceQuick;
+        _commonOperationsService = commonOperationsService;
     }
 
 
@@ -74,10 +78,10 @@ public class QbPaymentServiceQuick
 
             var nonConvEntries = trans.LedgerEntries.Where(x => x.AccountId != QbSettings.Instance.PopConvenienceAccId).ToList();
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId).ToList();
-            var arAccId = nonConvEntries.First(x => x.Direction == "credit").AccountId!;
-            var adAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
-
+            var arAccId = _commonOperationsService.GetPopuliAccountReceivableId(nonConvEntries);
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
+
+            var adAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
             var adQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == adAccId).QbAccountListId;
 
             _builder.BuildAddRequest(requestMsgSet, payment, qbStudent.QbListId!, arQbAccListId!, adQbAccListId!,

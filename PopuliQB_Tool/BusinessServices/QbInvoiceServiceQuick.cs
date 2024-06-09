@@ -4,6 +4,7 @@ using PopuliQB_Tool.BusinessObjectsBuilders;
 using PopuliQB_Tool.EventArgs;
 using PopuliQB_Tool.Helpers;
 using PopuliQB_Tool.Models;
+using PopuliQB_Tool.Services;
 using QBFC16Lib;
 
 namespace PopuliQB_Tool.BusinessServices;
@@ -17,6 +18,7 @@ public class QbInvoiceServiceQuick
     private readonly PopuliAccessService _populiAccessService;
     private readonly QbCreditMemoServiceQuick _creditMemoServiceQuick;
     private readonly QbDepositServiceQuick _depositServiceQuick;
+    private readonly CommonOperationsService _commonOperationsService;
 
     public EventHandler<StatusMessageArgs>? OnSyncStatusChanged { get; set; }
     public EventHandler<ProgressArgs>? OnSyncProgressChanged { get; set; }
@@ -28,7 +30,8 @@ public class QbInvoiceServiceQuick
         QbItemService itemService,
         PopuliAccessService populiAccessService,
         QbCreditMemoServiceQuick creditMemoServiceQuick,
-        QbDepositServiceQuick depositServiceQuick
+        QbDepositServiceQuick depositServiceQuick,
+        CommonOperationsService commonOperationsService
     )
     {
         _invoiceBuilder = invoiceBuilder;
@@ -37,6 +40,7 @@ public class QbInvoiceServiceQuick
         _populiAccessService = populiAccessService;
         _creditMemoServiceQuick = creditMemoServiceQuick;
         _depositServiceQuick = depositServiceQuick;
+        _commonOperationsService = commonOperationsService;
     }
 
     public async Task<bool> AddInvoiceAsync(PopPerson person, PopTransaction trans, PopInvoice invoice,
@@ -126,7 +130,7 @@ public class QbInvoiceServiceQuick
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId)
                 .ToList();
 
-            var arAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
+            var arAccId = _commonOperationsService.GetPopuliAccountReceivableId(nonConvEntries);
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
             _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, qbStudent.QbListId!, arQbAccListId!);
@@ -242,7 +246,7 @@ public class QbInvoiceServiceQuick
             {
                 Id = refund.Id,
                 Number = refund.RefundId,
-                Amount = refund.Amount,
+                Amount = Math.Abs(refund.Amount ?? 0),
                 Description = $"Refund to Source: {refund.RefundId} as Invoice.",
                 PostedOn = refund.PostedDate!.Value,
                 TransactionId = refund.TransactionId,
@@ -252,7 +256,7 @@ public class QbInvoiceServiceQuick
                 {
                     new()
                     {
-                        Amount = refund.Amount,
+                        Amount = Math.Abs(refund.Amount ?? 0),
                         Description = $"{refund.ReportData.AidType} | {refund.Type}",
                         Name = refund.ReportData.AidName,
                         ItemType = $"{refund.ReportData.AidType}",
@@ -282,7 +286,7 @@ public class QbInvoiceServiceQuick
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId)
                 .ToList();
 
-            var arAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
+            var arAccId = _commonOperationsService.GetPopuliAccountReceivableId(nonConvEntries);
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
             _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, qbStudent.QbListId!, arQbAccListId!);
@@ -413,7 +417,7 @@ public class QbInvoiceServiceQuick
             var convEntries = trans.LedgerEntries.Where(x => x.AccountId == QbSettings.Instance.PopConvenienceAccId)
                 .ToList();
 
-            var arAccId = nonConvEntries.First(x => x.Direction == "debit").AccountId!;
+            var arAccId = _commonOperationsService.GetPopuliAccountReceivableId(nonConvEntries);
             var arQbAccListId = _populiAccessService.AllPopuliAccounts.First(x => x.Id == arAccId).QbAccountListId;
 
             _invoiceBuilder.BuildInvoiceAddRequest(requestMsgSet, invoice, qbStudent.QbListId!, arQbAccListId!);
@@ -479,6 +483,7 @@ public class QbInvoiceServiceQuick
             return false;
         }
     }
+   
     #region INVOICES
 
     public async Task SyncAllExistingInvoicesAsync()

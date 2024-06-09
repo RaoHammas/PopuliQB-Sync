@@ -1,11 +1,16 @@
 ﻿using System.Reflection;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.DependencyInjection;
+using PopuliQB_Tool.BusinessServices;
 
 namespace PopuliQB_Tool.BusinessObjects;
 
 public sealed partial class QbSettings : ObservableObject
 {
-    private static readonly Lazy<QbSettings> Lazy = new(() => new QbSettings());
+    private static readonly Lazy<QbSettings> Lazy = new(() =>
+        new QbSettings());
+
     public static QbSettings Instance { get; set; } = Lazy.Value;
 
     [ObservableProperty] private DateTime _postedFrom = DateTime.UtcNow;
@@ -31,10 +36,10 @@ public sealed partial class QbSettings : ObservableObject
     [ObservableProperty] private string _uniquePopuliIdName = "UniquePopuliId";
     [ObservableProperty] private string _appVersion = Assembly.GetExecutingAssembly()!.GetName()!.Version!.ToString();
 
-    public Func<QBCustomer, string, string, bool> CustomerPredicate = (customer, firstName, lastName) 
-        => string.Equals(customer.QbCustomerFName!.Trim(), firstName.Trim(), StringComparison.CurrentCultureIgnoreCase) 
-           && string.Equals(customer.QbCustomerLName!.Trim(), lastName.Trim(), StringComparison.CurrentCultureIgnoreCase);
-
+    public Func<QBCustomer, string, string, bool> CustomerPredicate = (customer, firstName, lastName)
+        => string.Equals(customer.QbCustomerFName!.Trim(), firstName.Trim(), StringComparison.CurrentCultureIgnoreCase)
+           && string.Equals(customer.QbCustomerLName!.Trim(), lastName.Trim(),
+               StringComparison.CurrentCultureIgnoreCase);
 
     private QbSettings()
     {

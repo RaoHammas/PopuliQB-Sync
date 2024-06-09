@@ -20,6 +20,8 @@ public class PopReversalToJournalBuilder
         var request = requestMsgSet.AppendJournalEntryAddRq();
         request.TxnDate.SetValue(transPostedOn);
         //request.IsAdjustment.SetValue(true);
+        request.Memo.SetValue($"Reversal of {number} for Student: {studentName}");
+        request.RefNumber.SetValue(number);
 
         if (transaction.LedgerEntries.Any())
         {
@@ -31,14 +33,14 @@ public class PopReversalToJournalBuilder
                
                 if (entry.Direction == "debit")
                 {
-                    orItem.JournalDebitLine.Amount.SetValue(Math.Abs(entry.Debit ?? 0));
+                    orItem.JournalDebitLine.Amount.SetValue(entry.Debit ?? 0);
                     orItem.JournalDebitLine.EntityRef.ListID.SetValue(studentQbListId);
                     orItem.JournalDebitLine.AccountRef.ListID.SetValue(accListId);
                     orItem.JournalDebitLine.Memo.SetValue($"Reversal of {number} for Student: {studentName}");
                 }
                 else
                 {
-                    orItem.JournalCreditLine.Amount.SetValue(Math.Abs(entry.Credit ?? 0));
+                    orItem.JournalCreditLine.Amount.SetValue(entry.Credit ?? 0);
                     orItem.JournalCreditLine.EntityRef.ListID.SetValue(studentQbListId);
                     orItem.JournalCreditLine.AccountRef.ListID.SetValue(accListId);
                     orItem.JournalCreditLine.Memo.SetValue($"Reversal of {number} for Student: {studentName}");

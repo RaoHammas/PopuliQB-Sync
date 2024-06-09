@@ -1,7 +1,5 @@
-﻿using System.IO;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Windows;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using PopuliQB_Tool.BusinessObjectsBuilders;
@@ -18,7 +16,7 @@ public partial class App : Application
 {
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    private static IServiceProvider Services => ConfigureServices();
+    public static IServiceProvider Services => ConfigureServices();
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -82,10 +80,11 @@ public partial class App : Application
 
         services.AddSingleton<AppConfiguration>();
         services.AddSingleton<IOService>();
+        services.AddSingleton<CommonOperationsService>();
 
         return services.BuildServiceProvider();
     }
-    
+
     private void SetupExceptionHandling()
     {
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>

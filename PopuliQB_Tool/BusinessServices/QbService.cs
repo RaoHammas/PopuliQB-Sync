@@ -256,21 +256,20 @@ public class QbService
                             var resp = false;
                             switch (refund.Type)
                             {
-                                case "refund_to_student":
+                                /*case "refund_to_student":
                                     resp = _refundServiceQuick.AddRefund(person, trans, refund, sessionManager);
-                                    break;
+                                    break;*/
                                 case "refund_to_source":
                                     resp = _invoiceServiceQuick.AddInvoiceForRefundToSourceAsync(person, trans, refund, sessionManager);
-                                    break;
-                                default:
+
+                                    if (refund.Status != null && refund.Status.ToLower() == "void")
+                                    {
+                                        var transRev = await _populiAccessService.GetTransactionByIdWithLedgerAsync(trans.ReversedById!.Value);
+                                        _qbJournalServiceQuick.AddJournalEntry(person, transRev, refund.RefundId!.Value, sessionManager);
+                                    }
                                     break;
                             }
 
-                            if (refund.Status != null && refund.Status.ToLower() == "void")
-                            {
-                                var transRev = await _populiAccessService.GetTransactionByIdWithLedgerAsync(trans.ReversedById!.Value);
-                                _qbJournalServiceQuick.AddJournalEntry(person, transRev, refund.RefundId!.Value, sessionManager);
-                            }
                         }
                     }
                     else
