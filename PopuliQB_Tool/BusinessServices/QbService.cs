@@ -261,16 +261,15 @@ public class QbService
                                     break;*/
                                 case "refund_to_source":
                                     resp = _invoiceServiceQuick.AddInvoiceForRefundToSourceAsync(person, trans, refund, sessionManager);
-                                    break;
-                                default:
+
+                                    if (refund.Status != null && refund.Status.ToLower() == "void")
+                                    {
+                                        var transRev = await _populiAccessService.GetTransactionByIdWithLedgerAsync(trans.ReversedById!.Value);
+                                        _qbJournalServiceQuick.AddJournalEntry(person, transRev, refund.RefundId!.Value, sessionManager);
+                                    }
                                     break;
                             }
 
-                            if (refund.Status != null && refund.Status.ToLower() == "void")
-                            {
-                                var transRev = await _populiAccessService.GetTransactionByIdWithLedgerAsync(trans.ReversedById!.Value);
-                                _qbJournalServiceQuick.AddJournalEntry(person, transRev, refund.RefundId!.Value, sessionManager);
-                            }
                         }
                     }
                     else
